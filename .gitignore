@@ -1,0 +1,14 @@
+*.dll
+*.exe
+.DS_Store
+*.log
+*.bak
+*~
+.*.swp
+.idea
+.vscode
+*.iml
+*.test
+*.iml
+
+gke-review
