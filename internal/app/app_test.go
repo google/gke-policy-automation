@@ -1,7 +1,6 @@
-package gke
+package app
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -13,7 +12,6 @@ func TestCreateReviewApp(t *testing.T) {
 
 	args := []string{"gke-review", "-c", clusterName, "-l", clusterLocation, "-p", projectName, "-d", policyDirectory}
 	reviewMock := func(c *Config) {
-		fmt.Printf("Got config %+v", c)
 		if c.ClusterName != clusterName {
 			t.Errorf("clusterName = %s; want %s", c.ClusterName, clusterName)
 		}

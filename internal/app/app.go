@@ -1,9 +1,11 @@
-package gke
+package app
 
 import (
 	"context"
 	"fmt"
 
+	"github.com/mikouaj/gke-review/internal/gke"
+	"github.com/mikouaj/gke-review/internal/policy"
 	cli "github.com/urfave/cli/v2"
 )
 
@@ -61,9 +63,9 @@ func CreateReviewApp(review Review) *cli.App {
 
 func GkeReview(c *Config) {
 	ctx := context.Background()
-	gke, err := NewGKEClient(ctx)
+	gke, err := gke.NewGKEClient(ctx)
 	if err != nil {
-		fmt.Printf("error when creating GKE clinet: %s", err)
+		fmt.Printf("error when creating GKE client: %s", err)
 		return
 	}
 	defer gke.Close()
@@ -73,7 +75,7 @@ func GkeReview(c *Config) {
 		return
 	}
 
-	pa := NewPolicyAgent(ctx, c.PolicyDirectory)
+	pa := policy.NewPolicyAgent(ctx, c.PolicyDirectory)
 	results, err := pa.EvaluatePolicies(cluster)
 	if err != nil {
 		fmt.Printf("error when evaluating policies: %s", err)

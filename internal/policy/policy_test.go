@@ -1,8 +1,7 @@
-package gke
+package policy
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -35,7 +34,7 @@ func TestGetStringFromInterfaceMap(t *testing.T) {
 func TestGetBoolFromInterfaceMap(t *testing.T) {
 	inputNames := []string{"test", "testTwo", "missing"}
 	inputMaps := []map[string]interface{}{{"test": true}, {"testTwo": 101}, nil}
-	expectedResults := []interface{}{true, fmt.Errorf("error"), fmt.Errorf("error")}
+	expectedResults := []interface{}{true, errors.New("error"), errors.New("error")}
 
 	for i := range inputNames {
 		result, err := getBoolFromInterfaceMap(inputNames[i], inputMaps[i])

@@ -1,4 +1,4 @@
-package gke
+package policy
 
 import (
 	"context"
@@ -66,7 +66,6 @@ func processRegoResult(regoResult rego.Result) (*PolicyEvaluationResult, error) 
 	for _, result := range regoResultExpressionValueList {
 		policy, err := parseRegoExpressionValue(result)
 		if err != nil {
-			fmt.Printf("error parsing rego expression value: %s", err)
 			//TODO add warn logging or something
 			results.ErroredCount++
 			continue
