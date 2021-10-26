@@ -8,200 +8,26 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 )
 
-func TestGetStringFromInterfaceMap(t *testing.T) {
-	inputNames := []string{"test", "testTwo", "missing"}
-	inputMaps := []map[string]interface{}{{"test": "value"}, {"testTwo": 101}, nil}
-	expectedResults := []interface{}{"value", errors.New(""), errors.New("")}
+func TestPolicyEvaluationResultCounts(t *testing.T) {
+	input := PolicyEvaluationResult{
+		errored:       make([]*Policy, 8),
+		validCount:    10,
+		violatedCount: 5,
+	}
+	if input.ValidCount() != input.validCount {
+		t.Errorf("ValidCount is %d; want %d", input.ValidCount(), input.validCount)
+	}
+	if input.ViolatedCount() != input.violatedCount {
+		t.Errorf("ViolatedCount is %d; want %d", input.ViolatedCount(), input.violatedCount)
 
-	for i := range inputNames {
-		result, err := getStringFromInterfaceMap(inputNames[i], inputMaps[i])
-		if expected, ok := expectedResults[i].(string); ok {
-			if err != nil {
-				t.Errorf("err = %q; want nil", err)
-			}
-			if result != expected {
-				t.Errorf("result = %q; want %q", result, expected)
-			}
-		}
-		if _, ok := expectedResults[i].(error); ok {
-			if err == nil {
-				t.Errorf("err = nil; want error")
-			}
-		}
 	}
-}
-
-func TestGetBoolFromInterfaceMap(t *testing.T) {
-	inputNames := []string{"test", "testTwo", "missing"}
-	inputMaps := []map[string]interface{}{{"test": true}, {"testTwo": 101}, nil}
-	expectedResults := []interface{}{true, errors.New("error"), errors.New("error")}
-
-	for i := range inputNames {
-		result, err := getBoolFromInterfaceMap(inputNames[i], inputMaps[i])
-		if expected, ok := expectedResults[i].(bool); ok {
-			if err != nil {
-				t.Errorf("err = %q; want nil", err)
-			}
-			if result != expected {
-				t.Errorf("result = %v; want %v", result, expected)
-			}
-		}
-		if _, ok := expectedResults[i].(error); ok {
-			if err == nil {
-				t.Errorf("err = nil; want error")
-			}
-		}
-	}
-}
-
-func TestGetStringListFromInterfaceMap(t *testing.T) {
-	inputNames := []string{"test", "testTwo", "testThree", "missing"}
-	inputMaps := []map[string]interface{}{
-		{"test": []interface{}{"str1", "str2"}},
-		{"testTwo": nil},
-		{"testThree": []interface{}{"str1", 100}},
-		nil}
-	expectedResults := []interface{}{
-		[]interface{}{"str1", "str2"},
-		errors.New(""),
-		errors.New(""),
-		errors.New(""),
-	}
-	for i := range inputNames {
-		result, err := getStringListFromInterfaceMap(inputNames[i], inputMaps[i])
-		if expected, ok := expectedResults[i].([]string); ok {
-			if err != nil {
-				t.Errorf("err = %q; want nil", err)
-			}
-			if !reflect.DeepEqual(result, expected) {
-				t.Errorf("result = %v; want %v", result, expected)
-			}
-		}
-		if _, ok := expectedResults[i].(error); ok {
-			if err == nil {
-				t.Errorf("err = nil; want error")
-			}
-		}
-	}
-}
-
-func TestMapRegoPolicyData(t *testing.T) {
-	inputData := []interface{}{
-		map[string]interface{}{
-			"name":        "Test Name",
-			"description": "Test Description",
-			"group":       "Test Group",
-			"valid":       true,
-			"violation":   []interface{}{"violation"},
-		},
-		nil,
-		map[string]interface{}{},
-	}
-	expectedResults := []interface{}{
-		&Policy{
-			FullName:    "Test Name",
-			Description: "Test Description",
-			Group:       "Test Group",
-			Valid:       true,
-			Violations:  []string{"violation"},
-		},
-		errors.New(""),
-		errors.New(""),
-	}
-	for i := range inputData {
-		policy := Policy{}
-		err := policy.mapRegoPolicyData(inputData[i])
-		if expectedPolicy, ok := expectedResults[i].(*Policy); ok {
-			if policy.FullName != expectedPolicy.FullName {
-				t.Errorf("name = %s; want %s", policy.Name, expectedPolicy.FullName)
-			}
-			if policy.Description != expectedPolicy.Description {
-				t.Errorf("description = %s; want %s", policy.Description, expectedPolicy.Description)
-			}
-			if policy.Group != expectedPolicy.Group {
-				t.Errorf("group = %s; want %s", policy.Group, expectedPolicy.Group)
-			}
-			if policy.Valid != expectedPolicy.Valid {
-				t.Errorf("valid = %v; want %v", policy.Valid, expectedPolicy.Valid)
-			}
-			if !reflect.DeepEqual(policy.Violations, expectedPolicy.Violations) {
-				t.Errorf("violations = %v; want %v", policy.Violations, expectedPolicy.Violations)
-			}
-		}
-		if _, ok := expectedResults[i].(error); ok {
-			if err == nil {
-				t.Errorf("err is nil; want error")
-			}
-		}
-	}
-}
-
-func TestParseRegoExpressionValue(t *testing.T) {
-	inputData := []interface{}{
-		map[string]interface{}{
-			"name": "test_policy",
-			"data": map[string]interface{}{
-				"name":        "Test Name",
-				"description": "Test Description",
-				"group":       "Test Group",
-				"valid":       true,
-				"violation":   []interface{}{"violation"},
-			},
-		},
-		nil,
-		map[string]interface{}{
-			"data": nil,
-		},
-		map[string]interface{}{
-			"name": "test_policy",
-		},
-		map[string]interface{}{
-			"name": "test_policy",
-			"data": nil,
-		},
-	}
-	expectedResults := []interface{}{
-		&Policy{
-			Name: "test_policy",
-		},
-		errors.New(""),
-		errors.New(""),
-		&Policy{
-			Name:             "test_policy",
-			ProcessingErrors: []error{errors.New("")},
-		},
-		&Policy{
-			Name:             "test_policy",
-			ProcessingErrors: []error{errors.New("")},
-		},
-	}
-	for i := range inputData {
-		policy, err := parseRegoExpressionValue(inputData[i])
-		if expectedPolicy, ok := expectedResults[i].(*Policy); ok {
-			if policy.Name != expectedPolicy.Name {
-				t.Errorf("name = %s; want %s", policy.Name, expectedPolicy.Name)
-			}
-			if len(policy.ProcessingErrors) != len(expectedPolicy.ProcessingErrors) {
-				t.Errorf("len(ProcessingErrors) = %d; want %d", len(policy.ProcessingErrors), len(expectedPolicy.ProcessingErrors))
-			}
-		}
-		if _, ok := expectedResults[i].(error); ok {
-			if err == nil {
-				t.Errorf("err is nil; want error")
-			}
-		}
+	if input.ErroredCount() != len(input.errored) {
+		t.Errorf("ErroredCount is %d; want %d", input.ErroredCount(), len(input.errored))
 	}
 }
 
 func TestProcessRegoResult(t *testing.T) {
-	inputData := []rego.Result{
-		{Expressions: []*rego.ExpressionValue{
-			{Value: []interface{}{}},
-		}},
-		{},
-		{Expressions: []*rego.ExpressionValue{
-			{Value: nil},
-		}},
+	inputData := []*rego.Result{
 		{Expressions: []*rego.ExpressionValue{
 			{Value: []interface{}{
 				map[string]interface{}{
@@ -231,34 +57,230 @@ func TestProcessRegoResult(t *testing.T) {
 			}},
 		},
 	}
-	expectedResults := []interface{}{
-		&PolicyEvaluationResult{TotalCount: 0, ErroredCount: 0},
-		errors.New(""),
-		errors.New(""),
-		&PolicyEvaluationResult{TotalCount: 1, ErroredCount: 0, SuccessFull: make([]*Policy, 1)},
-		&PolicyEvaluationResult{TotalCount: 1, ErroredCount: 1},
-		&PolicyEvaluationResult{TotalCount: 1, ErroredCount: 0, Failed: make([]*Policy, 1)},
+	expectedResults := []*PolicyEvaluationResult{
+		{successful: map[string][]*Policy{"Test Group": make([]*Policy, 1)}},
+		{errored: make([]*Policy, 1)},
+		{errored: make([]*Policy, 1)},
 	}
 	for i := range inputData {
 		result, err := processRegoResult(inputData[i])
-		if expectedResult, ok := expectedResults[i].(*PolicyEvaluationResult); ok {
-			if result.TotalCount != expectedResult.TotalCount {
-				t.Errorf("totalCount = %d; want %d", result.TotalCount, expectedResult.TotalCount)
-			}
-			if result.ErroredCount != expectedResult.ErroredCount {
-				t.Errorf("erroredCount = %d; want %d", result.ErroredCount, expectedResult.ErroredCount)
-			}
-			if len(result.SuccessFull) != len(expectedResult.SuccessFull) {
-				t.Errorf("len(successFull) = %d; want %d", len(result.SuccessFull), len(expectedResult.SuccessFull))
-			}
-			if len(result.Failed) != len(expectedResult.Failed) {
-				t.Errorf("len(successFull) = %d; want %d", len(result.Failed), len(expectedResult.Failed))
-			}
+		if err != nil {
+			t.Errorf("err is not nil; want nil")
 		}
-		if _, ok := expectedResults[i].(error); ok {
-			if err == nil {
-				t.Errorf("err is nil; want error")
-			}
+		if len(result.successful) != len(expectedResults[i].successful) {
+			t.Errorf("len(successful) = %d; want %d", len(result.successful), len(expectedResults[i].successful))
+		}
+		if len(result.errored) != len(expectedResults[i].errored) {
+			t.Errorf("len(errored) = %d; want %d", len(result.errored), len(expectedResults[i].errored))
+		}
+	}
+}
+
+func TestProcessRegoResult_negative(t *testing.T) {
+	_, err := processRegoResult(&rego.Result{})
+	if err == nil {
+		t.Errorf("err is nil; want error")
+	}
+}
+
+func TestGetExpressionValueList(t *testing.T) {
+	input := &rego.Result{Expressions: []*rego.ExpressionValue{{Value: []interface{}{"test"}}}}
+	expected := []interface{}{"test"}
+	result, err := getExpressionValueList(input, 0)
+	if err != nil {
+		t.Errorf("err is not nil; want nil")
+	}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("result = %v; want %v", result, expected)
+	}
+}
+
+func TestGetExpressionValueList_negative(t *testing.T) {
+	inputs := []*rego.Result{
+		{Expressions: []*rego.ExpressionValue{{}}},
+		{},
+	}
+	for _, input := range inputs {
+		_, err := getExpressionValueList(input, 0)
+		if err == nil {
+			t.Errorf("err is nil; want error")
+		}
+	}
+}
+
+func TestParseRegoExpressionValue(t *testing.T) {
+	inputData := []map[string]interface{}{
+		{
+			"name": "test_policy",
+			"data": map[string]interface{}{
+				"name":        "Test Name",
+				"description": "Test Description",
+				"group":       "Test Group",
+				"valid":       true,
+				"violation":   []interface{}{"violation"},
+			},
+		},
+		{"name": "test_policy"},
+		{"name": "test_policy", "data": nil},
+	}
+	expectedResults := []*Policy{
+		{Name: "test_policy"},
+		{Name: "test_policy", ProcessingErrors: []error{errors.New("")}},
+		{Name: "test_policy", ProcessingErrors: []error{errors.New("")}},
+	}
+	for i := range inputData {
+		policy, err := parseRegoExpressionValue(inputData[i])
+		if err != nil {
+			t.Errorf("err is not nil; want nil")
+		}
+		if policy.Name != expectedResults[i].Name {
+			t.Errorf("name = %s; want %s", policy.Name, expectedResults[i].Name)
+		}
+		if len(policy.ProcessingErrors) != len(expectedResults[i].ProcessingErrors) {
+			t.Errorf("len(ProcessingErrors) = %d; want %d", len(policy.ProcessingErrors), len(expectedResults[i].ProcessingErrors))
+		}
+	}
+}
+
+func TestParseRegoExpressionValue_negative(t *testing.T) {
+	inputData := []map[string]interface{}{
+		nil,
+		{"data": nil},
+	}
+	for _, input := range inputData {
+		_, err := parseRegoExpressionValue(input)
+		if err == nil {
+			t.Errorf("err is nil; want error")
+		}
+	}
+}
+
+func TestMapRegoPolicyData(t *testing.T) {
+	input := map[string]interface{}{
+		"name":        "Test Name",
+		"description": "Test Description",
+		"group":       "Test Group",
+		"valid":       true,
+		"violation":   []interface{}{"violation"},
+	}
+	expected := &Policy{
+		FullName:    "Test Name",
+		Description: "Test Description",
+		Group:       "Test Group",
+		Valid:       true,
+		Violations:  []string{"violation"},
+	}
+
+	policy := Policy{}
+	err := policy.mapRegoPolicyData(input)
+	if err != nil {
+		t.Errorf("err = %q; want nil", err)
+	}
+	if policy.FullName != expected.FullName {
+		t.Errorf("name = %s; want %s", policy.Name, expected.FullName)
+	}
+	if policy.Description != expected.Description {
+		t.Errorf("description = %s; want %s", policy.Description, expected.Description)
+	}
+	if policy.Group != expected.Group {
+		t.Errorf("group = %s; want %s", policy.Group, expected.Group)
+	}
+	if policy.Valid != expected.Valid {
+		t.Errorf("valid = %v; want %v", policy.Valid, expected.Valid)
+	}
+	if !reflect.DeepEqual(policy.Violations, expected.Violations) {
+		t.Errorf("violations = %v; want %v", policy.Violations, expected.Violations)
+	}
+}
+
+func TestMapRegoPolicyData_negative(t *testing.T) {
+	inputData := []interface{}{
+		nil,
+		map[string]interface{}{},
+	}
+	for _, input := range inputData {
+		policy := Policy{}
+		err := policy.mapRegoPolicyData(input)
+		if err == nil {
+			t.Errorf("err is nil; want error")
+		}
+	}
+}
+
+func TestGetStringFromInterfaceMap(t *testing.T) {
+	inputName := "test"
+	inputMap := map[string]interface{}{"test": "value"}
+	expected := "value"
+
+	result, err := getStringFromInterfaceMap(inputName, inputMap)
+	if err != nil {
+		t.Errorf("err = %q; want nil", err)
+	}
+	if result != expected {
+		t.Errorf("result = %q; want %q", result, expected)
+	}
+}
+
+func TestGetStringFromInterfaceMap_negative(t *testing.T) {
+	inputNames := []string{"testTwo", "missing"}
+	inputMaps := []map[string]interface{}{{"testTwo": 101}, nil}
+	for i := range inputNames {
+		_, err := getStringFromInterfaceMap(inputNames[i], inputMaps[i])
+		if err == nil {
+			t.Errorf("err = nil; want error")
+		}
+	}
+}
+
+func TestGetBoolFromInterfaceMap(t *testing.T) {
+	inputName := "test"
+	inputMap := map[string]interface{}{"test": true}
+	expected := true
+
+	result, err := getBoolFromInterfaceMap(inputName, inputMap)
+	if err != nil {
+		t.Errorf("err = %q; want nil", err)
+	}
+	if result != expected {
+		t.Errorf("result = %v; want %v", result, expected)
+	}
+}
+
+func TestGetBoolFromInterfaceMap_negative(t *testing.T) {
+	inputNames := []string{"testTwo", "missing"}
+	inputMaps := []map[string]interface{}{{"testTwo": 101}, nil}
+	for i := range inputNames {
+		_, err := getBoolFromInterfaceMap(inputNames[i], inputMaps[i])
+		if err == nil {
+			t.Errorf("err = nil; want error")
+		}
+	}
+}
+
+func TestGetStringListFromInterfaceMap(t *testing.T) {
+	inputName := "test"
+	inputMap := map[string]interface{}{"test": []interface{}{"str1", "str2"}}
+	expected := []string{"str1", "str2"}
+
+	result, err := getStringListFromInterfaceMap(inputName, inputMap)
+	if err != nil {
+		t.Errorf("err = %q; want nil", err)
+	}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("result = %v; want %v", result, expected)
+	}
+}
+
+func TestGetStringListFromInterfaceMap_negative(t *testing.T) {
+	inputNames := []string{"testTwo", "testThree", "missing"}
+	inputMaps := []map[string]interface{}{
+		{"testTwo": nil},
+		{"testThree": []interface{}{"str1", 100}},
+		nil}
+	for i := range inputNames {
+		_, err := getStringListFromInterfaceMap(inputNames[i], inputMaps[i])
+		if err == nil {
+			t.Errorf("err = nil; want error")
 		}
 	}
 }

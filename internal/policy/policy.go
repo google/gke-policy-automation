@@ -24,10 +24,10 @@ type Policy struct {
 }
 
 type PolicyEvaluationResult struct {
-	SuccessFull  []*Policy
-	Failed       []*Policy
-	TotalCount   int
-	ErroredCount int
+	successful    map[string][]*Policy
+	errored       []*Policy
+	validCount    int
+	violatedCount int
 }
 
 func NewPolicyAgent(ctx context.Context, dataDir string) *PolicyAgent {
@@ -49,34 +49,69 @@ func (p *PolicyAgent) EvaluatePolicies(input interface{}) (*PolicyEvaluationResu
 	if len(rs) < 1 {
 		return nil, fmt.Errorf("rego evaluation returned empty result set")
 	}
-	return processRegoResult(rs[0])
+	return processRegoResult(&rs[0])
 }
 
-func processRegoResult(regoResult rego.Result) (*PolicyEvaluationResult, error) {
-	if len(regoResult.Expressions) < 1 {
-		return nil, fmt.Errorf("rego result has empty expression list")
+func (r *PolicyEvaluationResult) ValidCount() int {
+	return r.validCount
+}
+
+func (r *PolicyEvaluationResult) ViolatedCount() int {
+	return r.violatedCount
+}
+
+func (r *PolicyEvaluationResult) ErroredCount() int {
+	return len(r.errored)
+}
+
+func (r *PolicyEvaluationResult) AppendSuccessfulPolicy(policy *Policy) {
+	if r.successful == nil {
+		r.successful = make(map[string][]*Policy)
 	}
-	regoResultExpressionValue := regoResult.Expressions[0].Value
-	regoResultExpressionValueList, ok := regoResultExpressionValue.([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("rego expression value type is %q (expected []interface{})", reflect.TypeOf(regoResultExpressionValue))
+	slice := r.successful[policy.Group]
+	r.successful[policy.Group] = append(slice, policy)
+	if policy.Valid {
+		r.validCount++
+	} else {
+		r.violatedCount++
+	}
+}
+
+func (r *PolicyEvaluationResult) AppendErroredPolicy(policy *Policy) {
+	r.errored = append(r.errored, policy)
+}
+
+func processRegoResult(regoResult *rego.Result) (*PolicyEvaluationResult, error) {
+	values, err := getExpressionValueList(regoResult, 0)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get experssion value from rego result: %s", err)
 	}
 	results := &PolicyEvaluationResult{}
-	results.TotalCount = len(regoResultExpressionValueList)
-	for _, result := range regoResultExpressionValueList {
+	for _, result := range values {
 		policy, err := parseRegoExpressionValue(result)
 		if err != nil {
-			//TODO add warn logging or something
-			results.ErroredCount++
+			results.AppendErroredPolicy(&Policy{ProcessingErrors: []error{err}})
 			continue
 		}
 		if len(policy.ProcessingErrors) > 0 {
-			results.Failed = append(results.Failed, policy)
-		} else {
-			results.SuccessFull = append(results.SuccessFull, policy)
+			results.AppendErroredPolicy(policy)
+			continue
 		}
+		results.AppendSuccessfulPolicy(policy)
 	}
 	return results, nil
+}
+
+func getExpressionValueList(regoResult *rego.Result, index int) ([]interface{}, error) {
+	if len(regoResult.Expressions) <= index {
+		return nil, fmt.Errorf("no expresion with index %d in rego result", index)
+	}
+	regoResultExpressionValue := regoResult.Expressions[index].Value
+	regoResultExpressionValueList, ok := regoResultExpressionValue.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("rego expression [%d] has value type %q (expected []interface{})", index, reflect.TypeOf(regoResultExpressionValue))
+	}
+	return regoResultExpressionValueList, nil
 }
 
 func parseRegoExpressionValue(value interface{}) (*Policy, error) {
