@@ -14,6 +14,7 @@ type Config struct {
 	ClusterLocation string
 	ProjectName     string
 	PolicyDirectory string
+	out             *Output
 }
 
 type Review func(c *Config)
@@ -63,30 +64,51 @@ func CreateReviewApp(review Review) *cli.App {
 
 func GkeReview(c *Config) {
 	ctx := context.Background()
+	c.out = NewStdOutOutput()
 	gke, err := gke.NewGKEClient(ctx)
 	if err != nil {
 		fmt.Printf("error when creating GKE client: %s", err)
 		return
 	}
 	defer gke.Close()
-	Printf(Color("[white][bold]Fetching GKE cluster details... [projects/%s/locations/%s/clusters/%s]\n"),
+	c.out.Printf(c.out.Color("[white][bold]Fetching GKE cluster details... [projects/%s/locations/%s/clusters/%s]\n"),
 		c.ProjectName,
 		c.ClusterLocation,
 		c.ClusterName)
 	cluster, err := gke.GetCluster(c.ProjectName, c.ClusterLocation, c.ClusterName)
 	if err != nil {
-		ErrorPrint("could not fetch the cluster details", err)
+		c.out.ErrorPrint("could not fetch the cluster details", err)
 		return
 	}
-	Printf(Color("[white][bold]Evaluating REGO policies... [source: %q directory]\n"),
+	c.out.Printf(c.out.Color("[white][bold]Evaluating REGO policies... [source: %q directory]\n"),
 		c.PolicyDirectory)
 	pa := policy.NewPolicyAgent(ctx, c.PolicyDirectory)
 	results, err := pa.EvaluatePolicies(cluster)
 	if err != nil {
-		fmt.Printf("error when evaluating policies: %s", err)
+		c.out.ErrorPrint("could not parse policies", err)
+		return
 	}
 
-	Printf(Color("\n[bold][green]Review complete! Policies: %d valid, %d violated, %d errored.\n"),
+	if len(results.Errored()) > 0 {
+		c.out.Printf(c.out.Color("\n[white][bold]Policy parsing errors:\n\n"))
+		for _, errored := range results.Errored() {
+			c.out.Printf(c.out.Color("[light_yellow][bold]- %s: [reset][yellow]%s\n"), errored.Name, errored.ProcessingErrors[0])
+		}
+	}
+
+	for _, group := range results.Groups() {
+		c.out.Printf(c.out.Color("\n[white][bold]Group %q:\n\n"), group)
+		for _, policy := range results.Policies(group) {
+			if policy.Valid {
+				c.out.Printf(c.out.Color("[bold][green][\u2713] %s: [reset][green]%s\n"), policy.FullName, policy.Description)
+			}
+			if !policy.Valid {
+				c.out.Printf(c.out.Color("[bold][red][x] %s: [reset][red]%s. [bold]Violations:[reset][red] %s\n"), policy.FullName, policy.Description, policy.Violations[0])
+			}
+		}
+	}
+
+	c.out.Printf(c.out.Color("\n[bold][green]Review complete! Policies: %d valid, %d violated, %d errored.\n"),
 		results.ValidCount(),
 		results.ViolatedCount(),
 		results.ErroredCount())
