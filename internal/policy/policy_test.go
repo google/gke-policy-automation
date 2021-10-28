@@ -8,6 +8,60 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 )
 
+func TestAppendSuccessfulPolicy(t *testing.T) {
+	input := PolicyEvaluationResult{}
+	validPolicies := []*Policy{
+		{Group: "testGroup", Valid: true},
+		{Group: "testGroupTwo", Valid: true},
+	}
+	violatedPolicies := []*Policy{
+		{Group: "testGroup", Valid: false},
+	}
+	for _, validPolicy := range validPolicies {
+		input.AppendSuccessfulPolicy(validPolicy)
+	}
+	for _, violatedPolicies := range violatedPolicies {
+		input.AppendSuccessfulPolicy(violatedPolicies)
+	}
+
+	if input.validCount != len(validPolicies) {
+		t.Errorf("ValidCount is %d; want %d", input.validCount, len(validPolicies))
+	}
+	if input.violatedCount != len(violatedPolicies) {
+		t.Errorf("ViolatedCount is %d; want %d", input.violatedCount, len(violatedPolicies))
+	}
+	if len(input.successful) != 2 {
+		t.Errorf("Number of successful policy groups is %d; want %d", len(input.successful), 2)
+	}
+}
+
+func TestPolicyEvaluationResultGroups(t *testing.T) {
+	input := PolicyEvaluationResult{
+		successful: map[string][]*Policy{"group1": nil, "group2": nil, "group3": nil},
+	}
+	expectedGroups := []string{"group1", "group2", "group3"}
+	groups := input.Groups()
+	if !reflect.DeepEqual(groups, expectedGroups) {
+		t.Errorf("groups = %v; want %v", groups, expectedGroups)
+	}
+}
+
+func TestPolicyEvaluationResultPolicies(t *testing.T) {
+	group1Policies := make([]*Policy, 5)
+	group2Policies := make([]*Policy, 2)
+	input := PolicyEvaluationResult{successful: map[string][]*Policy{"group1": group1Policies, "group2": group2Policies}}
+
+	group1 := input.Policies("group1")
+	group2 := input.Policies("group2")
+
+	if len(group1) != len(group1Policies) {
+		t.Errorf("group1 len(policies) = %d; want %d", len(group1), len(group1Policies))
+	}
+	if len(group2) != len(group2Policies) {
+		t.Errorf("group2 len(policies) = %d; want %d", len(group2), len(group2Policies))
+	}
+}
+
 func TestPolicyEvaluationResultCounts(t *testing.T) {
 	input := PolicyEvaluationResult{
 		errored:       make([]*Policy, 8),

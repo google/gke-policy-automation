@@ -52,6 +52,24 @@ func (p *PolicyAgent) EvaluatePolicies(input interface{}) (*PolicyEvaluationResu
 	return processRegoResult(&rs[0])
 }
 
+func (r *PolicyEvaluationResult) Groups() []string {
+	groups := make([]string, len(r.successful))
+	i := 0
+	for k := range r.successful {
+		groups[i] = k
+		i++
+	}
+	return groups
+}
+
+func (r *PolicyEvaluationResult) Policies(group string) []*Policy {
+	return r.successful[group]
+}
+
+func (r *PolicyEvaluationResult) Errored() []*Policy {
+	return r.errored
+}
+
 func (r *PolicyEvaluationResult) ValidCount() int {
 	return r.validCount
 }
