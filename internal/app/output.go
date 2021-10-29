@@ -15,11 +15,14 @@ type Output struct {
 
 func NewStdOutOutput() *Output {
 	return &Output{
-		w: os.Stdout,
-		colorize: &colorstring.Colorize{
-			Colors: colorstring.DefaultColors,
-			Reset:  true,
-		},
+		w:        os.Stdout,
+		colorize: NewColorize(),
+	}
+}
+
+func NewSilentOutput() *Output {
+	return &Output{
+		w: io.Discard,
 	}
 }
 
@@ -39,4 +42,11 @@ func (o *Output) Color(v string) string {
 		return o.colorize.Color(v)
 	}
 	return v
+}
+
+func NewColorize() *colorstring.Colorize {
+	return &colorstring.Colorize{
+		Colors: colorstring.DefaultColors,
+		Reset:  true,
+	}
 }

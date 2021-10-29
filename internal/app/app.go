@@ -14,7 +14,16 @@ type Config struct {
 	ClusterLocation string
 	ProjectName     string
 	PolicyDirectory string
+	SilentMode      bool
 	out             *Output
+}
+
+func (c *Config) init() {
+	if c.SilentMode {
+		c.out = NewSilentOutput()
+	} else {
+		c.out = NewStdOutOutput()
+	}
 }
 
 type Review func(c *Config)
@@ -53,18 +62,25 @@ func CreateReviewApp(review Review) *cli.App {
 				Required:    true,
 				Destination: &config.PolicyDirectory,
 			},
+			&cli.BoolFlag{
+				Name:        "silent",
+				Aliases:     []string{"s"},
+				Usage:       "Silent mode",
+				Required:    false,
+				Destination: &config.SilentMode,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			review(config)
 			return nil
 		},
 	}
+	config.init()
 	return app
 }
 
 func GkeReview(c *Config) {
 	ctx := context.Background()
-	c.out = NewStdOutOutput()
 	gke, err := gke.NewGKEClient(ctx)
 	if err != nil {
 		fmt.Printf("error when creating GKE client: %s", err)

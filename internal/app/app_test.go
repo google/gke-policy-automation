@@ -1,8 +1,20 @@
 package app
 
 import (
+	"io"
+	"reflect"
 	"testing"
 )
+
+func TestConfigInit(t *testing.T) {
+	c := Config{
+		SilentMode: true,
+	}
+	c.init()
+	if !reflect.DeepEqual(c.out.w, io.Discard) {
+		t.Errorf("config out.w = %v; want %v", c.out, io.Discard)
+	}
+}
 
 func TestCreateReviewApp(t *testing.T) {
 	clusterName := "testCluster"
@@ -10,7 +22,11 @@ func TestCreateReviewApp(t *testing.T) {
 	projectName := "testProject"
 	policyDirectory := "./policies"
 
-	args := []string{"gke-review", "-c", clusterName, "-l", clusterLocation, "-p", projectName, "-d", policyDirectory}
+	args := []string{"gke-review",
+		"-c", clusterName, "-l", clusterLocation,
+		"-p", projectName, "-d", policyDirectory,
+		"-s",
+	}
 	reviewMock := func(c *Config) {
 		if c.ClusterName != clusterName {
 			t.Errorf("clusterName = %s; want %s", c.ClusterName, clusterName)
@@ -23,6 +39,9 @@ func TestCreateReviewApp(t *testing.T) {
 		}
 		if c.PolicyDirectory != policyDirectory {
 			t.Errorf("policyDirectory = %s; want %s", c.PolicyDirectory, policyDirectory)
+		}
+		if !c.SilentMode {
+			t.Errorf("SilentMode = %v; want true", c.SilentMode)
 		}
 	}
 	err := CreateReviewApp(reviewMock).Run(args)
