@@ -34,7 +34,7 @@ func (o *Output) ErrorPrint(message string, cause error) (n int, err error) {
 	if o.colorize != nil {
 		return fmt.Fprint(o.w, o.colorize.Color(fmt.Sprintf("[bold][red]Error: [white]%s: [reset][white]%v\n", message, cause)))
 	}
-	return fmt.Fprint(o.w, o.colorize.Color(fmt.Sprintf("Error: %s: %v\n", message, cause)))
+	return fmt.Fprint(o.w, o.colorize.Color(fmt.Sprintf("Error: %s: %s\n", message, cause)))
 }
 
 func (o *Output) Color(v string) string {
