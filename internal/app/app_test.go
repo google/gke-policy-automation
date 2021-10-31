@@ -1,20 +1,8 @@
 package app
 
 import (
-	"io"
-	"reflect"
 	"testing"
 )
-
-func TestConfigInit(t *testing.T) {
-	c := Config{
-		SilentMode: true,
-	}
-	c.init()
-	if !reflect.DeepEqual(c.out.w, io.Discard) {
-		t.Errorf("config out.w = %v; want %v", c.out, io.Discard)
-	}
-}
 
 func TestCreateReviewApp(t *testing.T) {
 	clusterName := "testCluster"

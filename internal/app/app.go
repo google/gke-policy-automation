@@ -4,27 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mikouaj/gke-review/internal/gke"
 	"github.com/mikouaj/gke-review/internal/policy"
 	cli "github.com/urfave/cli/v2"
 )
-
-type Config struct {
-	ClusterName     string
-	ClusterLocation string
-	ProjectName     string
-	PolicyDirectory string
-	SilentMode      bool
-	out             *Output
-}
-
-func (c *Config) init() {
-	if c.SilentMode {
-		c.out = NewSilentOutput()
-	} else {
-		c.out = NewStdOutOutput()
-	}
-}
 
 type Review func(c *Config)
 
@@ -75,30 +57,28 @@ func CreateReviewApp(review Review) *cli.App {
 			return nil
 		},
 	}
-	config.init()
 	return app
 }
 
 func GkeReview(c *Config) {
-	ctx := context.Background()
-	gke, err := gke.NewGKEClient(ctx)
-	if err != nil {
-		fmt.Printf("error when creating GKE client: %s", err)
+	c.Load(context.Background())
+	if err := c.Load(context.Background()); err != nil {
+		fmt.Printf("error when loading config: %s", err)
 		return
 	}
-	defer gke.Close()
+	defer c.Close()
 	c.out.Printf(c.out.Color("[white][bold]Fetching GKE cluster details... [projects/%s/locations/%s/clusters/%s]\n"),
 		c.ProjectName,
 		c.ClusterLocation,
 		c.ClusterName)
-	cluster, err := gke.GetCluster(c.ProjectName, c.ClusterLocation, c.ClusterName)
+	cluster, err := c.gke.GetCluster(c.ProjectName, c.ClusterLocation, c.ClusterName)
 	if err != nil {
 		c.out.ErrorPrint("could not fetch the cluster details", err)
 		return
 	}
 	c.out.Printf(c.out.Color("[white][bold]Evaluating REGO policies... [source: %q directory]\n"),
 		c.PolicyDirectory)
-	pa := policy.NewPolicyAgent(ctx, c.PolicyDirectory)
+	pa := policy.NewPolicyAgent(c.ctx, c.PolicyDirectory)
 	results, err := pa.EvaluatePolicies(cluster)
 	if err != nil {
 		c.out.ErrorPrint("could not parse policies", err)

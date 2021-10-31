@@ -9,6 +9,6 @@ import (
 
 func main() {
 	if err := app.CreateReviewApp(app.GkeReview).Run(os.Args); err != nil {
-		fmt.Printf("error %v", err)
+		fmt.Printf("\nError: %s\n", err)
 	}
 }
