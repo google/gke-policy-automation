@@ -1,0 +1,21 @@
+name: Build
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: 
+        uses: actions/setup-go@v2
+        with: Setup Go
+          go-version: 1.17
+      - name: Build
+        run: make
+
