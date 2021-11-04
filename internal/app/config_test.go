@@ -9,10 +9,10 @@ import (
 )
 
 func TestConfigLoad(t *testing.T) {
-	c := Config{}
+	c := Config{CredentialsFile: "./test-fixtures/test_credentials.json"}
 	err := c.Load(context.Background())
 	if err != nil {
-		t.Errorf("err is not nil; want nil")
+		t.Errorf("err is not nil; want nil; err = %s", err)
 	}
 	if !reflect.DeepEqual(c.out.w, os.Stdout) {
 		t.Errorf("c.out.w is not os.stdout")
@@ -27,10 +27,10 @@ func TestConfigLoad(t *testing.T) {
 }
 
 func TestConfigLoad_silent(t *testing.T) {
-	c := Config{SilentMode: true}
+	c := Config{CredentialsFile: "./test-fixtures/test_credentials.json", SilentMode: true}
 	err := c.Load(context.Background())
 	if err != nil {
-		t.Errorf("err is not nil; want nil")
+		t.Errorf("err is not nil; want nil; err = %s", err)
 	}
 	if !reflect.DeepEqual(c.out.w, io.Discard) {
 		t.Errorf("c.out.w is not io.Discard")
