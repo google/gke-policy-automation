@@ -12,6 +12,7 @@ type Config struct {
 	ProjectName     string
 	PolicyDirectory string
 	SilentMode      bool
+	CredentialsFile string
 
 	ctx context.Context
 	out *Output
@@ -26,7 +27,11 @@ func (c *Config) Load(ctx context.Context) error {
 		c.out = NewStdOutOutput()
 	}
 	var err error
-	c.gke, err = gke.NewGKEClient(ctx)
+	if c.CredentialsFile != "" {
+		c.gke, err = gke.NewClientWithCredentialsFile(ctx, c.CredentialsFile)
+	} else {
+		c.gke, err = gke.NewClient(ctx)
+	}
 	if err != nil {
 		return err
 	}

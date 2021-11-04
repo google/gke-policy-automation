@@ -9,6 +9,8 @@ import (
 
 	container "cloud.google.com/go/container/apiv1"
 	gax "github.com/googleapis/gax-go/v2"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/option"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
 )
 
@@ -32,7 +34,12 @@ func (mockClusterManagerClient) Close() error {
 }
 
 func TestNewGKEClient(t *testing.T) {
-	c, err := NewGKEClient(context.Background())
+	ctx := context.Background()
+	testCreds, err := google.CredentialsFromJSON(ctx, []byte("{\"type\": \"authorized_user\",\"client_id\": \"dummy\"}"), container.DefaultAuthScopes()...)
+	if err != nil {
+		t.Fatalf("error when creating JSON credentials: %v", err)
+	}
+	c, err := newGKEClient(context.Background(), option.WithCredentials(testCreds))
 	if err != nil {
 		t.Fatalf("error when creating client: %v", err)
 	}

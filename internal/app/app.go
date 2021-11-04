@@ -51,6 +51,12 @@ func CreateReviewApp(review Review) *cli.App {
 				Required:    false,
 				Destination: &config.SilentMode,
 			},
+			&cli.StringFlag{
+				Name:        "creds",
+				Usage:       "Path to GCP JSON credentials file",
+				Required:    false,
+				Destination: &config.CredentialsFile,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			review(config)

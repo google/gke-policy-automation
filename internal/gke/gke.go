@@ -6,6 +6,7 @@ import (
 
 	container "cloud.google.com/go/container/apiv1"
 	gax "github.com/googleapis/gax-go/v2"
+	"google.golang.org/api/option"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
 )
 
@@ -19,8 +20,16 @@ type GKEClient struct {
 	client ClusterManagerClient
 }
 
-func NewGKEClient(ctx context.Context) (*GKEClient, error) {
-	cli, err := container.NewClusterManagerClient(ctx)
+func NewClient(ctx context.Context) (*GKEClient, error) {
+	return newGKEClient(ctx)
+}
+
+func NewClientWithCredentialsFile(ctx context.Context, credentialsFile string) (*GKEClient, error) {
+	return newGKEClient(ctx, option.WithCredentialsFile(credentialsFile))
+}
+
+func newGKEClient(ctx context.Context, opts ...option.ClientOption) (*GKEClient, error) {
+	cli, err := container.NewClusterManagerClient(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}

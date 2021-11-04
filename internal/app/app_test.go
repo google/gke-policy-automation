@@ -9,10 +9,12 @@ func TestCreateReviewApp(t *testing.T) {
 	clusterLocation := "europe-warsaw2"
 	projectName := "testProject"
 	policyDirectory := "./policies"
+	credsFile := "./creds"
 
 	args := []string{"gke-review",
 		"-c", clusterName, "-l", clusterLocation,
 		"-p", projectName, "-d", policyDirectory,
+		"-creds", credsFile,
 		"-s",
 	}
 	reviewMock := func(c *Config) {
@@ -27,6 +29,9 @@ func TestCreateReviewApp(t *testing.T) {
 		}
 		if c.PolicyDirectory != policyDirectory {
 			t.Errorf("policyDirectory = %s; want %s", c.PolicyDirectory, policyDirectory)
+		}
+		if c.CredentialsFile != credsFile {
+			t.Errorf("CredentialsFile = %s; want %s", c.CredentialsFile, credsFile)
 		}
 		if !c.SilentMode {
 			t.Errorf("SilentMode = %v; want true", c.SilentMode)
