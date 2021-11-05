@@ -3,6 +3,7 @@ package policy
 import (
 	"errors"
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/open-policy-agent/opa/rego"
@@ -41,6 +42,7 @@ func TestPolicyEvaluationResultGroups(t *testing.T) {
 	}
 	expectedGroups := []string{"group1", "group2", "group3"}
 	groups := input.Groups()
+	sort.Strings(groups)
 	if !reflect.DeepEqual(groups, expectedGroups) {
 		t.Errorf("groups = %v; want %v", groups, expectedGroups)
 	}

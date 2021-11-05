@@ -102,7 +102,7 @@ func (r *PolicyEvaluationResult) AppendErroredPolicy(policy *Policy) {
 func processRegoResult(regoResult *rego.Result) (*PolicyEvaluationResult, error) {
 	values, err := getExpressionValueList(regoResult, 0)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get experssion value from rego result: %s", err)
+		return nil, fmt.Errorf("failed to get expression value from rego result: %s", err)
 	}
 	results := &PolicyEvaluationResult{}
 	for _, result := range values {
