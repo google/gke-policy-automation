@@ -14,12 +14,14 @@ import (
 	"github.com/go-git/go-git/v5/storage/memory"
 )
 
+type CloneFn func(s storage.Storer, worktree billy.Filesystem, o *git.CloneOptions) (*git.Repository, error)
+
 type GitPolicySource struct {
 	repoUrl       string
 	repoBranch    string
 	policyDir     string
 	policyFileExt string
-	cli           GitClient
+	cloneFn       CloneFn
 }
 
 type GitClient interface {
@@ -51,6 +53,7 @@ func NewGitPolicySource(repoURL string, repoBrach string, policyDir string) Poli
 		repoBranch:    repoBrach,
 		policyDir:     policyDir,
 		policyFileExt: "rego",
+		cloneFn:       git.Clone,
 	}
 }
 
@@ -79,10 +82,10 @@ func (src *GitPolicySource) GetPolicyFiles() ([]*PolicyFile, error) {
 }
 
 func (src *GitPolicySource) clone() (*git.Repository, error) {
-	repo, err := src.cli.Clone(memory.NewStorage(), nil, &git.CloneOptions{
+	repo, err := src.cloneFn(memory.NewStorage(), nil, &git.CloneOptions{
 		URL:           src.repoUrl,
 		Depth:         1,
-		ReferenceName: plumbing.ReferenceName("refs/heads" + src.repoBranch),
+		ReferenceName: plumbing.ReferenceName("refs/heads/" + src.repoBranch),
 		SingleBranch:  true,
 	})
 	if err != nil {

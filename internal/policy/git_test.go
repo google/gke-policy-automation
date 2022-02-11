@@ -13,14 +13,6 @@ import (
 	"github.com/go-git/go-git/v5/storage"
 )
 
-type gitClientMock struct {
-	cloneFn func(s storage.Storer, worktree billy.Filesystem, o *git.CloneOptions) (*git.Repository, error)
-}
-
-func (m gitClientMock) Clone(s storage.Storer, worktree billy.Filesystem, o *git.CloneOptions) (*git.Repository, error) {
-	return m.cloneFn(s, worktree, o)
-}
-
 type gitTreeWalkerResult struct {
 	name  string
 	entry *object.TreeEntry
@@ -117,17 +109,15 @@ func TestNewGitPolicySource(t *testing.T) {
 
 func TestClone(t *testing.T) {
 	var opts git.CloneOptions
-	mock := &gitClientMock{
-		cloneFn: func(s storage.Storer, worktree billy.Filesystem, o *git.CloneOptions) (*git.Repository, error) {
-			opts = *o
-			return &git.Repository{}, nil
-		},
+	cloneFn := func(s storage.Storer, worktree billy.Filesystem, o *git.CloneOptions) (*git.Repository, error) {
+		opts = *o
+		return &git.Repository{}, nil
 	}
 
 	policySrc := &GitPolicySource{
 		repoUrl:    "https://test.com/repository",
 		repoBranch: "main",
-		cli:        *mock,
+		cloneFn:    cloneFn,
 	}
 
 	_, err := policySrc.clone()
@@ -137,7 +127,7 @@ func TestClone(t *testing.T) {
 	if opts.URL != policySrc.repoUrl {
 		t.Errorf("URL = %s; want %s", opts.URL, policySrc.repoUrl)
 	}
-	refName := plumbing.ReferenceName("refs/heads" + policySrc.repoBranch)
+	refName := plumbing.ReferenceName("refs/heads/" + policySrc.repoBranch)
 	if opts.ReferenceName != refName {
 		t.Errorf("referenceName = %s; want %s", opts.ReferenceName, refName)
 	}
