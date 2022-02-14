@@ -29,7 +29,8 @@ dockers:
     goarch: amd64
     image_templates:
       - "ghcr.io/mikouaj/{{ .ProjectName }}:latest"
-      - "ghcr.io/mikouaj/{{ .ProjectName }}:{{ .Version }}" 
+      - "ghcr.io/mikouaj/{{ .ProjectName }}:{{ .Tag }}" 
+      - "ghcr.io/mikouaj/{{ .ProjectName }}:v{{ .Major }}.{{ .Minor }}" 
       - "ghcr.io/mikouaj/{{ .ProjectName }}:{{ .ShortCommit }}" 
     use: buildpacks
 archives:
