@@ -85,13 +85,25 @@ func TestCreateReviewApp_Defaults(t *testing.T) {
 
 func TestGetPolicySource(t *testing.T) {
 	c := &Config{
+		GitRepository: DefaultGitRepository,
+		GitBranch:     DefaultGitBranch,
+		GitDirectory:  DefaultGitPolicyDir,
+	}
+	src := getPolicySource(c)
+	if _, ok := src.(*policy.GitPolicySource); !ok {
+		t.Errorf("policySource is not *GitPolicySource; want not *GitPolicySource")
+	}
+}
+
+func TestGetPolicySource_local(t *testing.T) {
+	c := &Config{
 		GitRepository:  DefaultGitRepository,
 		GitBranch:      DefaultGitBranch,
 		GitDirectory:   DefaultGitPolicyDir,
 		LocalDirectory: "some-local-dir",
 	}
 	src := getPolicySource(c)
-	if _, ok := src.(*policy.GitPolicySource); !ok {
-		t.Errorf("policySource is not *GitPolicySource; want not *GitPolicySource")
+	if _, ok := src.(*policy.LocalPolicySource); !ok {
+		t.Errorf("policySource is not *LocalPolicySource; want not *LocalPolicySource")
 	}
 }

@@ -110,6 +110,10 @@ func GkeReview(c *Config) {
 			c.GitBranch,
 			c.GitDirectory)
 	}
+	if _, ok := policySrc.(*policy.LocalPolicySource); ok {
+		c.out.Printf(c.out.Color("[white][bold]Reading policy files from local directory.. [%s]\n"),
+			c.LocalDirectory)
+	}
 	files, err := policySrc.GetPolicyFiles()
 	if err != nil {
 		c.out.ErrorPrint("could not read policy files", err)
@@ -148,6 +152,9 @@ func GkeReview(c *Config) {
 }
 
 func getPolicySource(c *Config) policy.PolicySource {
+	if c.LocalDirectory != "" {
+		return policy.NewLocalPolicySource(c.LocalDirectory)
+	}
 	return policy.NewGitPolicySource(c.GitRepository,
 		c.GitBranch,
 		c.GitDirectory)
