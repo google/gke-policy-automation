@@ -23,6 +23,15 @@ builds:
       - goos: darwin
         goarch: "386"
     binary: "{{ .ProjectName }}_v{{ .Version }}"
+dockers:
+  -
+    goos: linux
+    goarch: amd64
+    image_templates:
+      - "ghcr.io/mikouaj/{{ .ProjectName }}:latest"
+      - "ghcr.io/mikouaj/{{ .ProjectName }}:{{ .Version }}" 
+      - "ghcr.io/mikouaj/{{ .ProjectName }}:{{ .ShortCommit }}" 
+    use: buildpacks
 archives:
   - format: zip
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
