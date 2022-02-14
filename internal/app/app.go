@@ -37,13 +37,6 @@ func CreateReviewApp(review Review) *cli.App {
 				Required:    true,
 				Destination: &config.ClusterLocation,
 			},
-			&cli.StringFlag{
-				Name:        "directory",
-				Aliases:     []string{"d"},
-				Usage:       "Directory with GKE policies",
-				Required:    true,
-				Destination: &config.PolicyDirectory,
-			},
 			&cli.BoolFlag{
 				Name:        "silent",
 				Aliases:     []string{"s"},
@@ -57,6 +50,35 @@ func CreateReviewApp(review Review) *cli.App {
 				Required:    false,
 				Destination: &config.CredentialsFile,
 			},
+			&cli.StringFlag{
+				Name:        "local-policy-dir",
+				Usage:       "Local directory with GKE policies",
+				Required:    false,
+				Destination: &config.LocalDirectory,
+			},
+			&cli.StringFlag{
+				Name:        "git-policy-repo",
+				Usage:       "GIT repository with GKE policies",
+				Value:       DefaultGitRepository,
+				Required:    false,
+				Destination: &config.GitRepository,
+			},
+			&cli.StringFlag{
+				Name:        "git-policy-branch",
+				Usage:       "Branch name for policies GIT repository",
+				Value:       DefaultGitBranch,
+				Required:    false,
+				DefaultText: DefaultGitBranch,
+				Destination: &config.GitBranch,
+			},
+			&cli.StringFlag{
+				Name:        "git-policy-dir",
+				Usage:       "Directory name for policies from GIT repository",
+				Value:       DefaultGitPolicyDir,
+				Required:    false,
+				DefaultText: DefaultGitPolicyDir,
+				Destination: &config.GitDirectory,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			review(config)
@@ -67,7 +89,6 @@ func CreateReviewApp(review Review) *cli.App {
 }
 
 func GkeReview(c *Config) {
-	c.Load(context.Background())
 	if err := c.Load(context.Background()); err != nil {
 		fmt.Printf("error when loading config: %s", err)
 		return
@@ -82,15 +103,25 @@ func GkeReview(c *Config) {
 		c.out.ErrorPrint("could not fetch the cluster details", err)
 		return
 	}
-	c.out.Printf(c.out.Color("[white][bold]Evaluating REGO policies... [source: %q directory]\n"),
-		c.PolicyDirectory)
-	pa := policy.NewPolicyAgent(c.ctx, c.PolicyDirectory)
+	policySrc := getPolicySource(c)
+	if _, ok := policySrc.(*policy.GitPolicySource); ok {
+		c.out.Printf(c.out.Color("[white][bold]Reading policy files from GIT repository... [%s branch=%q directory=%q]\n"),
+			c.GitRepository,
+			c.GitBranch,
+			c.GitDirectory)
+	}
+	files, err := policySrc.GetPolicyFiles()
+	if err != nil {
+		c.out.ErrorPrint("could not read policy files", err)
+		return
+	}
+	c.out.Printf(c.out.Color("[white][bold]Evaluating REGO policies...\n"))
+	pa := policy.NewPolicyAgent(c.ctx, files)
 	results, err := pa.EvaluatePolicies(cluster)
 	if err != nil {
 		c.out.ErrorPrint("could not parse policies", err)
 		return
 	}
-
 	if len(results.Errored()) > 0 {
 		c.out.Printf(c.out.Color("\n[white][bold]Policy parsing errors:\n\n"))
 		for _, errored := range results.Errored() {
@@ -114,4 +145,10 @@ func GkeReview(c *Config) {
 		results.ValidCount(),
 		results.ViolatedCount(),
 		results.ErroredCount())
+}
+
+func getPolicySource(c *Config) policy.PolicySource {
+	return policy.NewGitPolicySource(c.GitRepository,
+		c.GitBranch,
+		c.GitDirectory)
 }

@@ -57,7 +57,7 @@ func NewGitPolicySource(repoURL string, repoBrach string, policyDir string) Poli
 	}
 }
 
-func (src *GitPolicySource) GetPolicyFiles() ([]*PolicyFile, error) {
+func (src GitPolicySource) GetPolicyFiles() ([]*PolicyFile, error) {
 	repo, err := src.clone()
 	if err != nil {
 		return nil, fmt.Errorf("failed to clone GIT repository: %s", err)
@@ -81,7 +81,7 @@ func (src *GitPolicySource) GetPolicyFiles() ([]*PolicyFile, error) {
 	return files, nil
 }
 
-func (src *GitPolicySource) clone() (*git.Repository, error) {
+func (src GitPolicySource) clone() (*git.Repository, error) {
 	repo, err := src.cloneFn(memory.NewStorage(), nil, &git.CloneOptions{
 		URL:           src.repoUrl,
 		Depth:         1,
@@ -95,7 +95,7 @@ func (src *GitPolicySource) clone() (*git.Repository, error) {
 	return repo, nil
 }
 
-func (src *GitPolicySource) getHeadTree(repo *git.Repository) (*object.Tree, error) {
+func (src GitPolicySource) getHeadTree(repo *git.Repository) (*object.Tree, error) {
 	head, err := repo.Head()
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func (src *GitPolicySource) getHeadTree(repo *git.Repository) (*object.Tree, err
 	return commit.Tree()
 }
 
-func (src *GitPolicySource) getGitPolicyEntries(wkr GitTreeWalker) ([]*gitPolicyEntry, error) {
+func (src GitPolicySource) getGitPolicyEntries(wkr GitTreeWalker) ([]*gitPolicyEntry, error) {
 	defer wkr.Close()
 	entries := make([]*gitPolicyEntry, 0)
 	for {
@@ -131,7 +131,7 @@ func (src *GitPolicySource) getGitPolicyEntries(wkr GitTreeWalker) ([]*gitPolicy
 	return entries, nil
 }
 
-func (e *gitPolicyEntry) readPolicyFile(t GitTree) (*GitPolicyFile, error) {
+func (e gitPolicyEntry) readPolicyFile(t GitTree) (*GitPolicyFile, error) {
 	file, err := t.TreeEntryFile(e.entry)
 	if err != nil {
 		return nil, err

@@ -6,13 +6,23 @@ import (
 	"github.com/mikouaj/gke-review/internal/gke"
 )
 
+const (
+	DefaultGitRepository = "https://github.com/mikouaj/gke-review"
+	DefaultGitBranch     = "main"
+	DefaultGitPolicyDir  = "rego"
+)
+
 type Config struct {
 	ClusterName     string
 	ClusterLocation string
 	ProjectName     string
-	PolicyDirectory string
 	SilentMode      bool
 	CredentialsFile string
+
+	GitRepository  string
+	GitBranch      string
+	GitDirectory   string
+	LocalDirectory string
 
 	ctx context.Context
 	out *Output
@@ -21,12 +31,12 @@ type Config struct {
 
 func (c *Config) Load(ctx context.Context) error {
 	c.ctx = ctx
+	var err error
 	if c.SilentMode {
 		c.out = NewSilentOutput()
 	} else {
 		c.out = NewStdOutOutput()
 	}
-	var err error
 	if c.CredentialsFile != "" {
 		c.gke, err = gke.NewClientWithCredentialsFile(ctx, c.CredentialsFile)
 	} else {

@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 )
 
 type PolicyAgent struct {
-	ctx     context.Context
-	dataDir string
+	ctx   context.Context
+	files []*PolicyFile
 }
 
 type Policy struct {
@@ -30,15 +31,24 @@ type PolicyEvaluationResult struct {
 	violatedCount int
 }
 
-func NewPolicyAgent(ctx context.Context, dataDir string) *PolicyAgent {
+func NewPolicyAgent(ctx context.Context, files []*PolicyFile) *PolicyAgent {
 	return &PolicyAgent{
-		ctx:     ctx,
-		dataDir: dataDir,
+		ctx:   ctx,
+		files: files,
 	}
 }
 
 func (p *PolicyAgent) EvaluatePolicies(input interface{}) (*PolicyEvaluationResult, error) {
-	rgo := rego.New(rego.Load([]string{p.dataDir}, nil),
+	modules := make(map[string]string)
+	for _, file := range p.files {
+		modules[file.FullName] = file.Content
+	}
+	compiler, err := ast.CompileModules(modules)
+	if err != nil {
+		return nil, err
+	}
+	rgo := rego.New(
+		rego.Compiler(compiler),
 		rego.Input(input),
 		rego.Query("data.gke.policies_data"))
 
