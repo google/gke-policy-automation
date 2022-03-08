@@ -1,289 +1,483 @@
 package policy
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"reflect"
-	"sort"
 	"testing"
 
+	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 )
 
-func TestAppendSuccessfulPolicy(t *testing.T) {
-	input := PolicyEvaluationResult{}
-	validPolicies := []*Policy{
-		{Group: "testGroup", Valid: true},
-		{Group: "testGroupTwo", Valid: true},
+func TestNewPolicyEvaluationResults(t *testing.T) {
+	r := NewPolicyEvaluationResult()
+	if r.Valid == nil {
+		t.Errorf("valid is nil; want map")
 	}
-	violatedPolicies := []*Policy{
-		{Group: "testGroup", Valid: false},
+	if r.Violated == nil {
+		t.Errorf("violated is nil; want map")
 	}
-	for _, validPolicy := range validPolicies {
-		input.AppendSuccessfulPolicy(validPolicy)
-	}
-	for _, violatedPolicies := range violatedPolicies {
-		input.AppendSuccessfulPolicy(violatedPolicies)
-	}
-
-	if input.validCount != len(validPolicies) {
-		t.Errorf("ValidCount is %d; want %d", input.validCount, len(validPolicies))
-	}
-	if input.violatedCount != len(violatedPolicies) {
-		t.Errorf("ViolatedCount is %d; want %d", input.violatedCount, len(violatedPolicies))
-	}
-	if len(input.successful) != 2 {
-		t.Errorf("Number of successful policy groups is %d; want %d", len(input.successful), 2)
+	if r.Errored == nil {
+		t.Errorf("errored is nil; want map")
 	}
 }
 
-func TestPolicyEvaluationResultGroups(t *testing.T) {
-	input := PolicyEvaluationResult{
-		successful: map[string][]*Policy{"group1": nil, "group2": nil, "group3": nil},
-	}
-	expectedGroups := []string{"group1", "group2", "group3"}
-	groups := input.Groups()
-	sort.Strings(groups)
-	if !reflect.DeepEqual(groups, expectedGroups) {
-		t.Errorf("groups = %v; want %v", groups, expectedGroups)
-	}
-}
-
-func TestPolicyEvaluationResultPolicies(t *testing.T) {
-	group1Policies := make([]*Policy, 5)
-	group2Policies := make([]*Policy, 2)
-	input := PolicyEvaluationResult{successful: map[string][]*Policy{"group1": group1Policies, "group2": group2Policies}}
-
-	group1 := input.Policies("group1")
-	group2 := input.Policies("group2")
-
-	if len(group1) != len(group1Policies) {
-		t.Errorf("group1 len(policies) = %d; want %d", len(group1), len(group1Policies))
-	}
-	if len(group2) != len(group2Policies) {
-		t.Errorf("group2 len(policies) = %d; want %d", len(group2), len(group2Policies))
+func TestEvaluationResultsGroups(t *testing.T) {
+	groupOne := "test-one"
+	groupTwo := "test-two"
+	groupThree := "test-three"
+	r := NewPolicyEvaluationResult()
+	r.AddPolicy(&Policy{Group: groupOne, Valid: true})
+	r.AddPolicy(&Policy{Group: groupOne, Valid: false})
+	r.AddPolicy(&Policy{Group: groupTwo, Valid: true})
+	r.AddPolicy(&Policy{Group: groupTwo, Valid: false})
+	r.AddPolicy(&Policy{Group: groupThree, Valid: false})
+	groups := r.Groups()
+	if len(groups) != 3 {
+		t.Fatalf("number of groups = %v; want %v", len(groups), 3)
 	}
 }
 
-func TestPolicyEvaluationResultCounts(t *testing.T) {
-	input := PolicyEvaluationResult{
-		errored:       make([]*Policy, 8),
-		validCount:    10,
-		violatedCount: 5,
+func TestAddPolicy(t *testing.T) {
+	groupOneName := "groupOne"
+	inputs := []*Policy{
+		{Group: groupOneName, Valid: true},
+		{Group: groupOneName, Valid: true},
+		{Group: groupOneName, Valid: false, Violations: []string{"error"}},
+		{Group: groupOneName, ProcessingErrors: []error{errors.New("error")}},
 	}
-	if input.ValidCount() != input.validCount {
-		t.Errorf("ValidCount is %d; want %d", input.ValidCount(), input.validCount)
+	r := NewPolicyEvaluationResult()
+	for i := range inputs {
+		r.AddPolicy(inputs[i])
 	}
-	if input.ViolatedCount() != input.violatedCount {
-		t.Errorf("ViolatedCount is %d; want %d", input.ViolatedCount(), input.violatedCount)
-
+	if len(r.Valid[groupOneName]) != 2 {
+		t.Errorf("number of valid policies in group %v = %v; want %v", groupOneName, len(r.Valid[groupOneName]), 2)
 	}
-	if input.ErroredCount() != len(input.errored) {
-		t.Errorf("ErroredCount is %d; want %d", input.ErroredCount(), len(input.errored))
+	if len(r.Violated[groupOneName]) != 1 {
+		t.Errorf("number of violated policies in group %v = %v; want %v", groupOneName, len(r.Violated["groupOneName"]), 1)
+	}
+	if len(r.Errored) != 1 {
+		t.Errorf("number of errored policies = %v; want %v", len(r.Errored), 1)
 	}
 }
 
-func TestProcessRegoResult(t *testing.T) {
-	inputData := []*rego.Result{
-		{Expressions: []*rego.ExpressionValue{
-			{Value: []interface{}{
-				map[string]interface{}{
-					"name": "test_policy",
-					"data": map[string]interface{}{
-						"name":        "Test Name",
-						"description": "Test Description",
-						"group":       "Test Group",
-						"valid":       true,
-						"violation":   []interface{}{"violation"},
-					},
-				},
-			}},
-		}},
-		{Expressions: []*rego.ExpressionValue{
-			{Value: []interface{}{
-				map[string]interface{}{},
-			},
-			},
-		}},
-		{Expressions: []*rego.ExpressionValue{
-			{Value: []interface{}{
-				map[string]interface{}{
-					"name": "test_policy",
-				},
-			},
-			}},
-		},
+func TestViolatedCount(t *testing.T) {
+	inputs := []*Policy{
+		{Group: "groupOne", Valid: false, Violations: []string{"error"}},
+		{Group: "groupOne", Valid: false, Violations: []string{"error"}},
+		{Group: "groupTwo", Valid: false, Violations: []string{"error"}},
+		{Group: "groupThree", Valid: false, Violations: []string{"error"}},
 	}
-	expectedResults := []*PolicyEvaluationResult{
-		{successful: map[string][]*Policy{"Test Group": make([]*Policy, 1)}},
-		{errored: make([]*Policy, 1)},
-		{errored: make([]*Policy, 1)},
+	r := NewPolicyEvaluationResult()
+	for i := range inputs {
+		r.AddPolicy(inputs[i])
 	}
-	for i := range inputData {
-		result, err := processRegoResult(inputData[i])
-		if err != nil {
-			t.Errorf("err is not nil; want nil")
+	violatedCount := r.ViolatedCount()
+	if violatedCount != len(inputs) {
+		t.Errorf("violatedCount = %v; want %v", violatedCount, len(inputs))
+	}
+}
+
+func TestValidCount(t *testing.T) {
+	inputs := []*Policy{
+		{Group: "groupOne", Valid: true},
+		{Group: "groupOne", Valid: true},
+		{Group: "groupTwo", Valid: true},
+		{Group: "groupTwo", Valid: true},
+		{Group: "groupThree", Valid: true},
+	}
+	r := NewPolicyEvaluationResult()
+	for i := range inputs {
+		r.AddPolicy(inputs[i])
+	}
+	validCount := r.ValidCount()
+	if validCount != len(inputs) {
+		t.Errorf("validCount = %v; want %v", validCount, len(inputs))
+	}
+}
+
+func TestErroredCount(t *testing.T) {
+	inputs := []*Policy{
+		{Group: "groupOne", ProcessingErrors: []error{errors.New("error")}},
+		{Group: "groupTwo", ProcessingErrors: []error{errors.New("error")}},
+		{Group: "groupThree", ProcessingErrors: []error{errors.New("error")}},
+	}
+	r := NewPolicyEvaluationResult()
+	for i := range inputs {
+		r.AddPolicy(inputs[i])
+	}
+	erroredCount := r.ErroredCount()
+	if erroredCount != len(inputs) {
+		t.Errorf("erroredCount = %v; want %v", erroredCount, len(inputs))
+	}
+}
+
+func TestCompile(t *testing.T) {
+	policyFiles := []*PolicyFile{
+		{"test_one.rego", "folder/test_one.rego", `
+package test_one
+p = 1`},
+		{"test_two.rego", "folder/test_two.rego", `
+package bla.test_two
+p = 2`}}
+	pa := NewPolicyAgent(context.Background())
+
+	err := pa.Compile(policyFiles)
+	if err != nil {
+		t.Fatalf("err = %q; want nil", err)
+	}
+	if pa.compiler == nil {
+		t.Fatalf("compiler = nil; want compiler")
+	}
+	if len(pa.compiler.Modules) != len(policyFiles) {
+		t.Errorf("number of compiled policies = %d; want %d", len(pa.compiler.Modules), len(policyFiles))
+	}
+	for _, file := range policyFiles {
+		if _, ok := pa.compiler.Modules[file.FullName]; !ok {
+			t.Errorf("compiler has no module for file %s", file)
 		}
-		if len(result.successful) != len(expectedResults[i].successful) {
-			t.Errorf("len(successful) = %d; want %d", len(result.successful), len(expectedResults[i].successful))
-		}
-		if len(result.errored) != len(expectedResults[i].errored) {
-			t.Errorf("len(errored) = %d; want %d", len(result.errored), len(expectedResults[i].errored))
-		}
 	}
 }
 
-func TestProcessRegoResult_negative(t *testing.T) {
-	_, err := processRegoResult(&rego.Result{})
+func TestCompile_parseError(t *testing.T) {
+	policyFiles := []*PolicyFile{
+		{"test_one.rego", "folder/test_one.rego", `
+bla bla`}}
+	pa := PolicyAgent{}
+	err := pa.Compile(policyFiles)
 	if err == nil {
 		t.Errorf("err is nil; want error")
 	}
 }
 
-func TestGetExpressionValueList(t *testing.T) {
-	input := &rego.Result{Expressions: []*rego.ExpressionValue{{Value: []interface{}{"test"}}}}
-	expected := []interface{}{"test"}
-	result, err := getExpressionValueList(input, 0)
-	if err != nil {
-		t.Errorf("err is not nil; want nil")
+func TestParseCompiled(t *testing.T) {
+	goodPackage := "gke.policy.testOk"
+	policyContentOk := fmt.Sprintf("# METADATA\n"+
+		"# title: TestTitle\n"+
+		"# description: TestDescription\n"+
+		"# custom:\n"+
+		"#   group: TestGroup\n"+
+		"package %s\n"+
+		"p = 1", goodPackage)
+	policyContentBadMeta := `# METADATA
+# title:  TestTitle
+package gke.policy.badMeta
+p = 1`
+	policyContentBadMetaTwo := `# METADATA
+# title: TestTitle
+# description: TestDescription
+package gke.policy.badMeta
+p = 1`
+
+	policyFiles := []*PolicyFile{
+		{"test_one.rego", "folder/test_one.rego", policyContentOk},
+		{"test_two.rego", "folder/test_two.rego", policyContentBadMeta},
+		{"test_three.rego", "folder/test_three.rego", policyContentBadMetaTwo},
 	}
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("result = %v; want %v", result, expected)
+	pa := PolicyAgent{}
+	if err := pa.Compile(policyFiles); err != nil {
+		t.Fatalf("err is %s; expected nil", err)
+	}
+	policies, errors := pa.ParseCompiled()
+	if len(policies) != 1 {
+		t.Fatalf("len(policies) = %v; want %v", len(policies), 1)
+	}
+	if len(errors) != 2 {
+		t.Fatalf("len(errors) = %v; want %v", len(policies), 2)
+	}
+	if policies[0].Name != goodPackage {
+		t.Errorf("policy[0] name = %v; want %v", policies[0].Name, goodPackage)
 	}
 }
 
-func TestGetExpressionValueList_negative(t *testing.T) {
-	inputs := []*rego.Result{
-		{Expressions: []*rego.ExpressionValue{{}}},
+func TestParseCompiled_noCompiler(t *testing.T) {
+	pa := PolicyAgent{}
+	if _, err := pa.ParseCompiled(); err == nil {
+		t.Fatalf("err is nil; want error")
+	}
+}
+
+func TestWithFiles(t *testing.T) {
+	packageOne := regoPolicyPackage + ".package_one"
+	titleOne := "TitleOne"
+	contentOne := fmt.Sprintf("# METADATA\n"+
+		"# title: %s\n"+
+		"# description: Test\n"+
+		"# custom:\n"+
+		"#   group: Test\n"+
+		"package %s\n"+
+		"p = 1", titleOne, packageOne)
+	packageTwo := regoPolicyPackage + ".package_three"
+	titleTwo := "TitleTwo"
+	contentTwo := fmt.Sprintf("# METADATA\n"+
+		"# title: %s\n"+
+		"# description: Test\n"+
+		"# custom:\n"+
+		"#   group: Test\n"+
+		"package %s\n"+
+		"p = 1", titleTwo, packageTwo)
+	contentThree := fmt.Sprintf("# METADATA\n" +
+		"# title: TitleThree\n" +
+		"# description: Test\n" +
+		"# custom:\n" +
+		"#   group: Test\n" +
+		"package gke.something.invalid\n" +
+		"p = 1")
+	policyFiles := []*PolicyFile{
+		{"test_one.rego", "folder/test_one.rego", contentOne},
+		{"test_two.rego", "folder/test_two.rego", contentTwo},
+		{"test_three.rego", "folder/test_three.rego", contentThree},
+		{"test_one_test.rego", "folder/test_one_test.rego", contentThree},
+	}
+	pa := PolicyAgent{}
+	if err := pa.WithFiles(policyFiles); err != nil {
+		t.Fatalf("error = %v; want nil", err)
+	}
+	if len(pa.compiled) != 2 {
+		t.Fatalf("len(pa.compiled) = %v; want %v", len(pa.compiled), 2)
+	}
+	if pa.compiled[packageOne].Title != titleOne {
+		t.Errorf("Policy %q title = %v; want %v", packageOne, pa.compiled[packageOne].Title, titleOne)
+	}
+	if pa.compiled[packageTwo].Title != titleTwo {
+		t.Errorf("Policy %q title = %v; want %v", packageTwo, pa.compiled[packageTwo].Title, titleTwo)
+	}
+}
+
+func TestProcessRegoResultSet(t *testing.T) {
+	policyOneCompiled := &Policy{
+		Name:        regoPolicyPackage + ".policy_one",
+		File:        "rego/policy_one.rego",
+		Title:       "Policy One test",
+		Description: "This is just for test",
+		Group:       "policy_one",
+	}
+	policyOneResult := rego.Result{
+		Expressions: []*rego.ExpressionValue{
+			{Value: map[string]interface{}{
+				"valid":     true,
+				"violation": []interface{}{},
+			}},
+		},
+		Bindings: map[string]interface{}{
+			"name": "policy_one",
+		},
+	}
+	policyTwoCompiled := &Policy{
+		Name:        regoPolicyPackage + ".policy_two",
+		File:        "rego/policy_two.rego",
+		Title:       "Policy Two test",
+		Description: "This is just for test",
+		Group:       "policy_two",
+	}
+	policyTwoResult := rego.Result{
+		Expressions: []*rego.ExpressionValue{
+			{Value: map[string]interface{}{
+				"valid":     false,
+				"violation": []interface{}{"error"},
+			}},
+		},
+		Bindings: map[string]interface{}{
+			"name": "policy_two",
+		},
+	}
+	policyThreeCompiled := &Policy{
+		Name:        regoPolicyPackage + ".policy_three",
+		File:        "rego/policy_three.rego",
+		Title:       "Policy Three test",
+		Description: "This is just for test",
+	}
+	policyThreeResult := rego.Result{
+		Expressions: []*rego.ExpressionValue{
+			{Value: map[string]interface{}{
+				"valid": false,
+			}},
+		},
+		Bindings: map[string]interface{}{
+			"name": "policy_three",
+		},
+	}
+	resultSet := []rego.Result{policyOneResult, policyTwoResult, policyThreeResult}
+	pa := PolicyAgent{}
+	pa.compiled = map[string]*Policy{
+		policyOneCompiled.Name:   policyOneCompiled,
+		policyTwoCompiled.Name:   policyTwoCompiled,
+		policyThreeCompiled.Name: policyThreeCompiled,
+	}
+
+	result, err := pa.processRegoResultSet(resultSet)
+	if err != nil {
+		t.Fatalf("got error; expected nil")
+	}
+	if _, ok := result.Valid["policy_one"]; !ok {
+		t.Errorf("valid policy not grouped under %v key", "policy_one")
+	}
+	if _, ok := result.Violated["policy_two"]; !ok {
+		t.Errorf("violated policy not grouped under %v key", "policy_two")
+	}
+	if len(result.Errored) != 1 {
+		t.Fatalf("number of errored policies = %v; want %v", len(result.Errored), 1)
+	}
+}
+
+func TestGetResultDataForEval(t *testing.T) {
+	input := []rego.Result{
+		{Expressions: []*rego.ExpressionValue{{Value: "test"}},
+			Bindings: map[string]interface{}{"name": "test"}},
+		{Expressions: []*rego.ExpressionValue{{Text: "test"}}},
+		{Bindings: map[string]interface{}{"name": "test"}},
 		{},
 	}
-	for _, input := range inputs {
-		_, err := getExpressionValueList(input, 0)
-		if err == nil {
-			t.Errorf("err is nil; want error")
-		}
-	}
-}
-
-func TestParseRegoExpressionValue(t *testing.T) {
-	inputData := []map[string]interface{}{
-		{
-			"name": "test_policy",
-			"data": map[string]interface{}{
-				"name":        "Test Name",
-				"description": "Test Description",
-				"group":       "Test Group",
-				"valid":       true,
-				"violation":   []interface{}{"violation"},
-			},
-		},
-		{"name": "test_policy"},
-		{"name": "test_policy", "data": nil},
-	}
-	expectedResults := []*Policy{
-		{Name: "test_policy"},
-		{Name: "test_policy", ProcessingErrors: []error{errors.New("")}},
-		{Name: "test_policy", ProcessingErrors: []error{errors.New("")}},
-	}
-	for i := range inputData {
-		policy, err := parseRegoExpressionValue(inputData[i])
-		if err != nil {
-			t.Errorf("err is not nil; want nil")
-		}
-		if policy.Name != expectedResults[i].Name {
-			t.Errorf("name = %s; want %s", policy.Name, expectedResults[i].Name)
-		}
-		if len(policy.ProcessingErrors) != len(expectedResults[i].ProcessingErrors) {
-			t.Errorf("len(ProcessingErrors) = %d; want %d", len(policy.ProcessingErrors), len(expectedResults[i].ProcessingErrors))
-		}
-	}
-}
-
-func TestParseRegoExpressionValue_negative(t *testing.T) {
-	inputData := []map[string]interface{}{
+	expected := []interface{}{
+		rego.Result{
+			Expressions: []*rego.ExpressionValue{{Value: "test"}},
+			Bindings:    map[string]interface{}{"name": "test"}},
 		nil,
-		{"data": nil},
+		nil,
+		nil,
 	}
-	for _, input := range inputData {
-		_, err := parseRegoExpressionValue(input)
+	for i := range input {
+		value, bindings, err := getResultDataForEval(input[i])
 		if err == nil {
-			t.Errorf("err is nil; want error")
+			expectedResult := expected[i].(rego.Result)
+			if !reflect.DeepEqual(value, expectedResult.Expressions[0].Value) {
+				t.Errorf("value = %v; want %v", value, expectedResult.Expressions[0].Value)
+			}
+			if !reflect.DeepEqual(bindings["name"], expectedResult.Bindings["name"]) {
+				t.Errorf("bindings[name] = %v; want %v", bindings["name"], expectedResult.Bindings["name"])
+			}
+		} else {
+			if expected[i] != nil {
+				t.Errorf("did not expect error; got error")
+			}
 		}
 	}
 }
 
-func TestMapRegoPolicyData(t *testing.T) {
+func TestMapExpressionBindings(t *testing.T) {
+	bindings := []map[string]interface{}{
+		{"name": "policy_name"},
+		{"name": 20},
+		{"bogus": "value"},
+	}
+	expected := []interface{}{
+		"policy_name",
+		nil,
+		nil,
+	}
+	result := RegoEvaluationResult{}
+	for i := range bindings {
+		err := result.mapExpressionBindings(bindings[i])
+		if err == nil {
+			if result.Name != expected[i] {
+				t.Errorf("name = %v; want %v", result.Name, expected[i])
+			}
+		} else {
+			if expected[i] != nil {
+				t.Errorf("did not expect error; got error")
+			}
+		}
+	}
+}
+
+func TestMapExpressionValue(t *testing.T) {
 	input := map[string]interface{}{
-		"name":        "Test Name",
-		"description": "Test Description",
-		"group":       "Test Group",
-		"valid":       true,
-		"violation":   []interface{}{"violation"},
+		"valid":     true,
+		"violation": []interface{}{"violation"},
 	}
-	expected := &Policy{
-		FullName:    "Test Name",
-		Description: "Test Description",
-		Group:       "Test Group",
-		Valid:       true,
-		Violations:  []string{"violation"},
-	}
+	expectedValid := true
+	expectedViolations := []string{"violation"}
 
+	result := RegoEvaluationResult{}
+	if err := result.mapExpressionValue(input); err != nil {
+		t.Errorf("err = %q; want nil", err)
+	}
+	if result.Valid != expectedValid {
+		t.Errorf("valid = %v; want %v", result.Valid, expectedValid)
+	}
+	if !reflect.DeepEqual(result.Violations, expectedViolations) {
+		t.Errorf("valid = %v; want %v", result.Violations, expectedViolations)
+	}
+}
+
+func TestParseRegoPolicyData(t *testing.T) {
+	input := map[string]interface{}{
+		"valid":     true,
+		"violation": []interface{}{"violation"},
+	}
+	expectedValid := true
+	expectedViolations := []string{"violation"}
+
+	valid, violations, err := parseRegoPolicyData(input)
+	if err != nil {
+		t.Errorf("err = %q; want nil", err)
+	}
+	if valid != input["valid"] {
+		t.Errorf("valid = %v; want %v", valid, expectedValid)
+	}
+	if !reflect.DeepEqual(violations, expectedViolations) {
+		t.Errorf("violations = %v; want %v", violations, expectedViolations)
+	}
+}
+
+func TestMapModule(t *testing.T) {
+	file := "folder/test_one.rego"
+	pkg := "gke.policy.test"
+	title := "This is title"
+	desc := "This is long description"
+	group := "TestGroup"
+
+	content := fmt.Sprintf("# METADATA\n"+
+		"# title: %s\n"+
+		"# description: %s\n"+
+		"# custom:\n"+
+		"#   group: %s\n"+
+		"package %s\n"+
+		"p = 1", title, desc, group, pkg)
+
+	modules := map[string]string{file: content}
+	compiler := ast.MustCompileModulesWithOpts(modules,
+		ast.CompileOpts{ParserOptions: ast.ParserOptions{ProcessAnnotation: true}})
+	module := compiler.Modules[file]
 	policy := Policy{}
-	err := policy.mapRegoPolicyData(input)
-	if err != nil {
-		t.Errorf("err = %q; want nil", err)
+	policy.MapModule(module)
+
+	if policy.Name != pkg {
+		t.Errorf("name = %v; want %v", policy.Name, pkg)
 	}
-	if policy.FullName != expected.FullName {
-		t.Errorf("name = %s; want %s", policy.Name, expected.FullName)
+	if policy.File != file {
+		t.Errorf("file = %v; want %v", policy.File, file)
 	}
-	if policy.Description != expected.Description {
-		t.Errorf("description = %s; want %s", policy.Description, expected.Description)
+	if policy.Title != title {
+		t.Errorf("title = %v; want %v", policy.Title, title)
 	}
-	if policy.Group != expected.Group {
-		t.Errorf("group = %s; want %s", policy.Group, expected.Group)
+	if policy.Description != desc {
+		t.Errorf("description = %v; want %v", policy.Description, desc)
 	}
-	if policy.Valid != expected.Valid {
-		t.Errorf("valid = %v; want %v", policy.Valid, expected.Valid)
-	}
-	if !reflect.DeepEqual(policy.Violations, expected.Violations) {
-		t.Errorf("violations = %v; want %v", policy.Violations, expected.Violations)
+	if policy.Group != group {
+		t.Errorf("group = %v; want %v", policy.Group, group)
 	}
 }
 
-func TestMapRegoPolicyData_negative(t *testing.T) {
-	inputData := []interface{}{
-		nil,
-		map[string]interface{}{},
+func TestMetadataErrors(t *testing.T) {
+	input := []Policy{
+		{Title: "title", Description: "description", Group: "group"},
+		{Title: "title", Description: "description"},
+		{Title: "title"},
+		{},
 	}
-	for _, input := range inputData {
-		policy := Policy{}
-		err := policy.mapRegoPolicyData(input)
-		if err == nil {
-			t.Errorf("err is nil; want error")
-		}
+	expErrCnt := []int{
+		0,
+		1,
+		2,
+		3,
 	}
-}
-
-func TestGetStringFromInterfaceMap(t *testing.T) {
-	inputName := "test"
-	inputMap := map[string]interface{}{"test": "value"}
-	expected := "value"
-
-	result, err := getStringFromInterfaceMap(inputName, inputMap)
-	if err != nil {
-		t.Errorf("err = %q; want nil", err)
-	}
-	if result != expected {
-		t.Errorf("result = %q; want %q", result, expected)
-	}
-}
-
-func TestGetStringFromInterfaceMap_negative(t *testing.T) {
-	inputNames := []string{"testTwo", "missing"}
-	inputMaps := []map[string]interface{}{{"testTwo": 101}, nil}
-	for i := range inputNames {
-		_, err := getStringFromInterfaceMap(inputNames[i], inputMaps[i])
-		if err == nil {
-			t.Errorf("err = nil; want error")
+	for i := range input {
+		errors := input[i].MetadataErrors()
+		if len(errors) != expErrCnt[i] {
+			t.Errorf("error cnt = %v; want %v", len(errors), expErrCnt[i])
 		}
 	}
 }

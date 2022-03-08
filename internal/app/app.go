@@ -116,32 +116,34 @@ func GkeReview(c *Config) {
 	}
 	files, err := policySrc.GetPolicyFiles()
 	if err != nil {
-		c.out.ErrorPrint("could not read policy files", err)
+		c.out.ErrorPrint("could not read policy files\n", err)
 		return
 	}
 	c.out.Printf(c.out.Color("[white][bold]Evaluating REGO policies...\n"))
-	pa := policy.NewPolicyAgent(c.ctx, files)
-	results, err := pa.EvaluatePolicies(cluster)
+	pa := policy.NewPolicyAgent(c.ctx)
+	if err := pa.WithFiles(files); err != nil {
+		c.out.ErrorPrint("could not parse policy files", err)
+		return
+	}
+	results, err := pa.Evaluate(cluster)
 	if err != nil {
 		c.out.ErrorPrint("could not parse policies", err)
 		return
 	}
-	if len(results.Errored()) > 0 {
+	if len(results.Errored) > 0 {
 		c.out.Printf(c.out.Color("\n[white][bold]Policy parsing errors:\n\n"))
-		for _, errored := range results.Errored() {
-			c.out.Printf(c.out.Color("[light_yellow][bold]- %s: [reset][yellow]%s\n"), errored.Name, errored.ProcessingErrors[0])
+		for _, errored := range results.Errored {
+			c.out.Printf(c.out.Color("[light_yellow][bold]- %s: [reset][yellow]%s\n"), errored.File, errored.ProcessingErrors[0])
 		}
 	}
 
 	for _, group := range results.Groups() {
 		c.out.Printf(c.out.Color("\n[white][bold]Group %q:\n\n"), group)
-		for _, policy := range results.Policies(group) {
-			if policy.Valid {
-				c.out.Printf(c.out.Color("[bold][green][\u2713] %s: [reset][green]%s\n"), policy.FullName, policy.Description)
-			}
-			if !policy.Valid {
-				c.out.Printf(c.out.Color("[bold][red][x] %s: [reset][red]%s. [bold]Violations:[reset][red] %s\n"), policy.FullName, policy.Description, policy.Violations[0])
-			}
+		for _, policy := range results.Valid[group] {
+			c.out.Printf(c.out.Color("[bold][green][\u2713] %s: [reset][green]%s\n"), policy.Title, policy.Description)
+		}
+		for _, policy := range results.Violated[group] {
+			c.out.Printf(c.out.Color("[bold][red][x] %s: [reset][red]%s. [bold]Violations:[reset][red] %s\n"), policy.Title, policy.Description, policy.Violations[0])
 		}
 	}
 

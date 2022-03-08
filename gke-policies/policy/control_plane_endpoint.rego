@@ -1,8 +1,9 @@
+# METADATA
+# title: Control Plane endpoint visibility
+# description: Control Plane endpoint should be locked from external access
+# custom:
+#   group: Security
 package gke.policy.control_plane_endpoint
-
-name = "Control Plane endpoint visibility"
-description = "Control Plane endpoint should be locked from external access"
-group = "Security: isolation"
 
 default valid = false
 

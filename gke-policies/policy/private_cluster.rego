@@ -1,8 +1,9 @@
+# METADATA
+# title: GKE private cluster
+# description: GKE cluster should be private to ensure network isolation
+# custom:
+#   group: Security
 package gke.policy.private_cluster
-
-name = "GKE private cluster"
-description = "GKE cluster should be private to ensure network isolation"
-group = "Security: isolation"
 
 default valid = false
 

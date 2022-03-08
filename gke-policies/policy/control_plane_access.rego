@@ -1,8 +1,9 @@
+# METADATA
+# title: Control Plane endpoint access
+# description: Control Plane endpoint access should be limited to authorized networks only
+# custom:
+#   group: Security
 package gke.policy.control_plane_access
-
-name = "Control Plane endpoint access"
-description = "Control Plane endpoint access should be limited to authorized networks only"
-group = "Security: isolation"
 
 default valid = false
 

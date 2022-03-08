@@ -1,8 +1,9 @@
+# METADATA
+# title: Control Plane redundancy
+# description: GKE cluster should be regional for maximum availability of control plane during upgrades and zonal outages
+# custom:
+#   group: Availability
 package gke.policy.control_plane_redundancy
-
-name = "Control Plane redundancy"
-description = "GKE cluster should be regional for maximum availability of control plane during upgrades and zonal outages"
-group = "Availability"
 
 default valid = false
 

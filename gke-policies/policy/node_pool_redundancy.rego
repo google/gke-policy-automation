@@ -1,8 +1,9 @@
+# METADATA
+# title: Control Plane redundancy
+# description: GKE node pools should be regional for maximum availability of a node pool during zonal outages
+# custom:
+#   group: Availability
 package gke.policy.node_pool_redundancy
-
-name = "Node pool redundancy"
-description = "GKE node pools should be regional for maximum availability of a node pool during zonal outages"
-group = "Availability"
 
 default valid = false
 

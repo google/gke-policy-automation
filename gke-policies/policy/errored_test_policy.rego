@@ -1,3 +1,8 @@
+# METADATA
+# title: Test of invalid policy
+# description: Test of invalid policy
+# custom:
+#   group: Test
 package gke.policy.errored_test_policy
 
 valid {
