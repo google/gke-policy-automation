@@ -9,6 +9,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.1.1
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 	github.com/open-policy-agent/opa v0.38.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/urfave/cli/v2 v2.3.0
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	google.golang.org/api v0.67.0

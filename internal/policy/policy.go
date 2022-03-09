@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/mikouaj/gke-review/internal/log"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 )
@@ -201,7 +202,7 @@ func (pa *PolicyAgent) processRegoResultSet(results rego.ResultSet) (*PolicyEval
 			compiledPolicy.ProcessingErrors = policy.ProcessingErrors
 			policy = compiledPolicy
 		} else {
-			//log something
+			log.Warnf("rego policy %q has no match with any compiled policy", policyName)
 		}
 		evalResults.AddPolicy(policy)
 	}
