@@ -58,7 +58,7 @@ func TestGetCluster(t *testing.T) {
 	projectID := "test-project"
 	clusterLocation := "europe-central2"
 	clusterName := "warsaw"
-	cluster, err := client.GetCluster(projectID, clusterLocation, clusterName)
+	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName))
 	if err != nil {
 		t.Fatalf("error when fetching cluster: %v", err)
 	}
@@ -77,5 +77,26 @@ func TestClose(t *testing.T) {
 	err := client.Close()
 	if err == nil {
 		t.Errorf("GKEClient close() error is nil; want mocked error")
+	}
+}
+
+func TestGetClusterName(t *testing.T) {
+	projectID := "test-project"
+	clusterLocation := "europe-central2"
+	clusterName := "warsaw"
+	name := GetClusterName(projectID, clusterLocation, clusterName)
+	re := regexp.MustCompile(`^projects/([^/]+)/locations/([^/]+)/clusters/([^/]+)$`)
+	if !re.MatchString(name) {
+		t.Fatalf("name: %q, does not match regexp: %q", name, re.String())
+	}
+	matches := re.FindStringSubmatch(name)
+	if matches[1] != projectID {
+		t.Errorf("match[1] = %v; want %v", matches[1], projectID)
+	}
+	if matches[2] != clusterLocation {
+		t.Errorf("match[2] = %v; want %v", matches[2], clusterLocation)
+	}
+	if matches[3] != clusterName {
+		t.Errorf("match[3] = %v; want %v", matches[3], clusterName)
 	}
 }

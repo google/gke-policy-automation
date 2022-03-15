@@ -1,0 +1,14 @@
+silent: true
+credentialsFile: ./test-fixtures/test_credentials.json
+clusters:
+  - name: warsaw
+    project: my-project
+    location: europe-central2
+  - name: another
+    project: my-project
+    location: europe-central2
+policies:
+  - local: /tmp
+  - repo: https://bla.com
+outputs:
+  - file: /some/file.json

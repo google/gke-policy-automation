@@ -3,161 +3,193 @@ package app
 import (
 	"context"
 	"fmt"
+	"os"
 
+	"github.com/mikouaj/gke-review/internal/gke"
+	"github.com/mikouaj/gke-review/internal/log"
 	"github.com/mikouaj/gke-review/internal/policy"
-	cli "github.com/urfave/cli/v2"
 )
 
-type Review func(c *Config)
-
-func CreateReviewApp(review Review) *cli.App {
-	config := &Config{}
-	app := &cli.App{
-		Name:  "gke-review",
-		Usage: "Review GKE cluster against set of policies",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:        "project",
-				Aliases:     []string{"p"},
-				Usage:       "Name of a GCP project",
-				Required:    true,
-				Destination: &config.ProjectName,
-			},
-			&cli.StringFlag{
-				Name:        "cluster",
-				Aliases:     []string{"c"},
-				Usage:       "Name of a GKE cluster to review",
-				Required:    true,
-				Destination: &config.ClusterName,
-			},
-			&cli.StringFlag{
-				Name:        "location",
-				Aliases:     []string{"l"},
-				Usage:       "GKE cluster location (region or zone)",
-				Required:    true,
-				Destination: &config.ClusterLocation,
-			},
-			&cli.BoolFlag{
-				Name:        "silent",
-				Aliases:     []string{"s"},
-				Usage:       "Silent mode",
-				Required:    false,
-				Destination: &config.SilentMode,
-			},
-			&cli.StringFlag{
-				Name:        "creds",
-				Usage:       "Path to GCP JSON credentials file",
-				Required:    false,
-				Destination: &config.CredentialsFile,
-			},
-			&cli.StringFlag{
-				Name:        "local-policy-dir",
-				Usage:       "Local directory with GKE policies",
-				Required:    false,
-				Destination: &config.LocalDirectory,
-			},
-			&cli.StringFlag{
-				Name:        "git-policy-repo",
-				Usage:       "GIT repository with GKE policies",
-				Value:       DefaultGitRepository,
-				Required:    false,
-				Destination: &config.GitRepository,
-			},
-			&cli.StringFlag{
-				Name:        "git-policy-branch",
-				Usage:       "Branch name for policies GIT repository",
-				Value:       DefaultGitBranch,
-				Required:    false,
-				DefaultText: DefaultGitBranch,
-				Destination: &config.GitBranch,
-			},
-			&cli.StringFlag{
-				Name:        "git-policy-dir",
-				Usage:       "Directory name for policies from GIT repository",
-				Value:       DefaultGitPolicyDir,
-				Required:    false,
-				DefaultText: DefaultGitPolicyDir,
-				Destination: &config.GitDirectory,
-			},
-		},
-		Action: func(c *cli.Context) error {
-			review(config)
-			return nil
-		},
-	}
-	return app
+type PolicyAutomation interface {
+	LoadCliConfig(cliConfig *CliConfig) error
+	Close() error
+	ClusterReview() error
 }
 
-func GkeReview(c *Config) {
-	if err := c.Load(context.Background()); err != nil {
-		fmt.Printf("error when loading config: %s", err)
-		return
+type PolicyAutomationApp struct {
+	ctx    context.Context
+	config *ConfigNg
+	out    *Output
+	gke    *gke.GKEClient
+}
+
+func NewPolicyAutomationApp() PolicyAutomation {
+	return &PolicyAutomationApp{
+		ctx:    context.Background(),
+		config: &ConfigNg{},
+		out:    NewSilentOutput(),
 	}
-	defer c.Close()
-	c.out.Printf(c.out.Color("[white][bold]Fetching GKE cluster details... [projects/%s/locations/%s/clusters/%s]\n"),
-		c.ProjectName,
-		c.ClusterLocation,
-		c.ClusterName)
-	cluster, err := c.gke.GetCluster(c.ProjectName, c.ClusterLocation, c.ClusterName)
+}
+
+func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig) error {
+	var config *ConfigNg
+	var err error
+	if cliConfig.ConfigFile != "" {
+		if config, err = newConfigFromFile(cliConfig.ConfigFile); err != nil {
+			return err
+		}
+	} else {
+		config = newConfigFromCli(cliConfig)
+	}
+	return p.LoadConfig(config)
+}
+
+func (p *PolicyAutomationApp) LoadConfig(config *ConfigNg) (err error) {
+	p.config = config
+	if !p.config.SilentMode {
+		p.out = NewStdOutOutput()
+	}
+	if p.config.CredentialsFile != "" {
+		p.gke, err = gke.NewClientWithCredentialsFile(p.ctx, p.config.CredentialsFile)
+	} else {
+		p.gke, err = gke.NewClient(p.ctx)
+	}
+	return
+}
+
+func (p *PolicyAutomationApp) Close() error {
+	if p.gke != nil {
+		return p.gke.Close()
+	}
+	return nil
+}
+
+func (p *PolicyAutomationApp) ClusterReview() error {
+	files, err := p.loadPolicyFiles()
 	if err != nil {
-		c.out.ErrorPrint("could not fetch the cluster details", err)
-		return
+		return err
 	}
-	policySrc := getPolicySource(c)
-	if _, ok := policySrc.(*policy.GitPolicySource); ok {
-		c.out.Printf(c.out.Color("[white][bold]Reading policy files from GIT repository... [%s branch=%q directory=%q]\n"),
-			c.GitRepository,
-			c.GitBranch,
-			c.GitDirectory)
-	}
-	if _, ok := policySrc.(*policy.LocalPolicySource); ok {
-		c.out.Printf(c.out.Color("[white][bold]Reading policy files from local directory.. [%s]\n"),
-			c.LocalDirectory)
-	}
-	files, err := policySrc.GetPolicyFiles()
-	if err != nil {
-		c.out.ErrorPrint("could not read policy files\n", err)
-		return
-	}
-	c.out.Printf(c.out.Color("[white][bold]Evaluating REGO policies...\n"))
-	pa := policy.NewPolicyAgent(c.ctx)
+	pa := policy.NewPolicyAgent(p.ctx)
+	p.out.ColorPrintf("[white][bold]Parsing REGO policies...\n")
+	log.Info("Parsing rego policies")
 	if err := pa.WithFiles(files); err != nil {
-		c.out.ErrorPrint("could not parse policy files", err)
-		return
-	}
-	results, err := pa.Evaluate(cluster)
-	if err != nil {
-		c.out.ErrorPrint("could not parse policies", err)
-		return
-	}
-	if len(results.Errored) > 0 {
-		c.out.Printf(c.out.Color("\n[white][bold]Policy parsing errors:\n\n"))
-		for _, errored := range results.Errored {
-			c.out.Printf(c.out.Color("[light_yellow][bold]- %s: [reset][yellow]%s\n"), errored.File, errored.ProcessingErrors[0])
-		}
+		p.out.ErrorPrint("could not parse policy files", err)
+		log.Errorf("could not parse policy files: %s", err)
+		return err
 	}
 
-	for _, group := range results.Groups() {
-		c.out.Printf(c.out.Color("\n[white][bold]Group %q:\n\n"), group)
-		for _, policy := range results.Valid[group] {
-			c.out.Printf(c.out.Color("[bold][green][\u2713] %s: [reset][green]%s\n"), policy.Title, policy.Description)
+	evalResults := make([]*policy.PolicyEvaluationResult, 0)
+	for _, cluster := range p.config.Clusters {
+		clusterName, err := getClusterName(cluster)
+		if err != nil {
+			p.out.ErrorPrint("could not get cluster name", err)
+			log.Errorf("could not get cluster name: %s", clusterName)
+			return err
 		}
-		for _, policy := range results.Violated[group] {
-			c.out.Printf(c.out.Color("[bold][red][x] %s: [reset][red]%s. [bold]Violations:[reset][red] %s\n"), policy.Title, policy.Description, policy.Violations[0])
+		p.out.ColorPrintf("[white][bold]Fetching GKE cluster details... [projects/%s/locations/%s/clusters/%s]\n",
+			cluster.Project,
+			cluster.Location,
+			cluster.Name)
+		cluster, err := p.gke.GetCluster(clusterName)
+		if err != nil {
+			p.out.ErrorPrint("could not fetch the cluster details", err)
+			log.Errorf("could not fetch cluster details: %s", err)
+			return err
 		}
+		p.out.ColorPrintf("[white][bold]Evaluating policies against GKE cluster... [%s]\n",
+			cluster.Id)
+		evalResult, err := pa.Evaluate(cluster)
+		if err != nil {
+			p.out.ErrorPrint("failed to evalute policies", err)
+			log.Errorf("could not evaluate rego policies on cluster %s: %s", cluster.Id, err)
+			return err
+		}
+		evalResult.ClusterName = clusterName
+		evalResults = append(evalResults, evalResult)
 	}
-
-	c.out.Printf(c.out.Color("\n[bold][green]Review complete! Policies: %d valid, %d violated, %d errored.\n"),
-		results.ValidCount(),
-		results.ViolatedCount(),
-		results.ErroredCount())
+	p.printEvaluationResults(evalResults)
+	return nil
 }
 
-func getPolicySource(c *Config) policy.PolicySource {
-	if c.LocalDirectory != "" {
-		return policy.NewLocalPolicySource(c.LocalDirectory)
+func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
+	policyFiles := make([]*policy.PolicyFile, 0)
+	for _, policyConfig := range p.config.Policies {
+		var policySrc policy.PolicySource
+		if policyConfig.LocalDirectory != "" {
+			policySrc = policy.NewLocalPolicySource(policyConfig.LocalDirectory)
+		}
+		if policyConfig.GitRepository != "" {
+			policySrc = policy.NewGitPolicySource(policyConfig.GitRepository,
+				policyConfig.GitBranch,
+				policyConfig.GitDirectory)
+		}
+		p.out.ColorPrintf("[white][bold]Reading policy files... [%s]\n", policySrc)
+		log.Infof("Reading policy files from %s", policySrc)
+		files, err := policySrc.GetPolicyFiles()
+		if err != nil {
+			p.out.ErrorPrint("could not read policy files\n", err)
+			log.Errorf("could not read policy files: %s", err)
+			return nil, err
+		}
+		policyFiles = append(policyFiles, files...)
 	}
-	return policy.NewGitPolicySource(c.GitRepository,
-		c.GitBranch,
-		c.GitDirectory)
+	return policyFiles, nil
+}
+
+func newConfigFromFile(path string) (*ConfigNg, error) {
+	return ReadConfig(path, os.ReadFile)
+}
+
+func newConfigFromCli(cliConfig *CliConfig) *ConfigNg {
+	config := &ConfigNg{}
+	config.SilentMode = cliConfig.SilentMode
+	config.CredentialsFile = cliConfig.CredentialsFile
+	config.Clusters = []ConfigCluster{
+		{
+			Name:     cliConfig.ClusterName,
+			Location: cliConfig.ClusterLocation,
+			Project:  cliConfig.ProjectName,
+		},
+	}
+	if cliConfig.LocalDirectory != "" {
+		config.Policies = append(config.Policies, ConfigPolicy{LocalDirectory: cliConfig.LocalDirectory})
+	}
+	if cliConfig.GitRepository != "" {
+		config.Policies = append(config.Policies, ConfigPolicy{
+			GitRepository: cliConfig.GitRepository,
+			GitBranch:     cliConfig.GitBranch,
+			GitDirectory:  cliConfig.GitDirectory,
+		})
+	}
+	return config
+}
+
+func getClusterName(c ConfigCluster) (string, error) {
+	if c.ID != "" {
+		return c.ID, nil
+	}
+	if c.Name != "" && c.Location != "" && c.Project != "" {
+		return gke.GetClusterName(c.Project, c.Location, c.Name), nil
+	}
+	return "", fmt.Errorf("cluster parameters not set")
+}
+
+func (p *PolicyAutomationApp) printEvaluationResults(results []*policy.PolicyEvaluationResult) {
+	for _, result := range results {
+		p.out.ColorPrintf("[yellow][bold]GKE Cluster [%s]:", result.ClusterName)
+		for _, group := range result.Groups() {
+			p.out.ColorPrintf("\n[white][bold]Group %q:\n\n", group)
+			for _, policy := range result.Valid[group] {
+				p.out.ColorPrintf("[bold][green][\u2713] %s: [reset][green]%s\n", policy.Title, policy.Description)
+			}
+			for _, policy := range result.Violated[group] {
+				p.out.ColorPrintf("[bold][red][x] %s: [reset][red]%s. [bold]Violations:[reset][red] %s\n", policy.Title, policy.Description, policy.Violations[0])
+			}
+		}
+		p.out.ColorPrintf("\n[bold][green]GKE cluster [%s]: Policies: %d valid, %d violated, %d errored.\n",
+			result.ClusterName,
+			result.ValidCount(),
+			result.ViolatedCount(),
+			result.ErroredCount())
+	}
 }

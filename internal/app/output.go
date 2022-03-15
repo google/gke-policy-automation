@@ -30,6 +30,10 @@ func (o *Output) Printf(format string, a ...interface{}) (n int, err error) {
 	return fmt.Fprintf(o.w, format, a...)
 }
 
+func (o *Output) ColorPrintf(format string, a ...interface{}) (n int, err error) {
+	return fmt.Fprintf(o.w, o.Color(format), a...)
+}
+
 func (o *Output) ErrorPrint(message string, cause error) (n int, err error) {
 	if o.colorize != nil {
 		return fmt.Fprint(o.w, o.colorize.Color(fmt.Sprintf("[bold][red]Error: [white]%s: [reset][white]%v\n", message, cause)))

@@ -33,7 +33,7 @@ func TestGetLogLevel(t *testing.T) {
 				return k
 			},
 		}
-		level := getLogLevel(m)
+		level, _ := getLogLevel(m)
 		if level != mappings[k] {
 			t.Errorf("value = %v, level = %v; want %v", k, level, v)
 		}

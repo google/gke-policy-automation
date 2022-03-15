@@ -1,56 +1,46 @@
 package app
 
 import (
-	"context"
-
-	"github.com/mikouaj/gke-review/internal/gke"
+	"gopkg.in/yaml.v2"
 )
 
 const (
 	DefaultGitRepository = "https://github.com/mikouaj/gke-review"
 	DefaultGitBranch     = "main"
-	DefaultGitPolicyDir  = "rego"
+	DefaultGitPolicyDir  = "gke-policies"
 )
 
-type Config struct {
-	ClusterName     string
-	ClusterLocation string
-	ProjectName     string
-	SilentMode      bool
-	CredentialsFile string
+type ReadFileFn func(string) ([]byte, error)
 
-	GitRepository  string
-	GitBranch      string
-	GitDirectory   string
-	LocalDirectory string
-
-	ctx context.Context
-	out *Output
-	gke *gke.GKEClient
+type ConfigNg struct {
+	SilentMode      bool            `yaml:"silent"`
+	CredentialsFile string          `yaml:"credentialsFile"`
+	Clusters        []ConfigCluster `yaml:"clusters"`
+	Policies        []ConfigPolicy  `yaml:"policies"`
 }
 
-func (c *Config) Load(ctx context.Context) error {
-	c.ctx = ctx
-	var err error
-	if c.SilentMode {
-		c.out = NewSilentOutput()
-	} else {
-		c.out = NewStdOutOutput()
-	}
-	if c.CredentialsFile != "" {
-		c.gke, err = gke.NewClientWithCredentialsFile(ctx, c.CredentialsFile)
-	} else {
-		c.gke, err = gke.NewClient(ctx)
-	}
+type ConfigPolicy struct {
+	LocalDirectory string `yaml:"local"`
+	GitRepository  string `yaml:"repository"`
+	GitBranch      string `yaml:"branch"`
+	GitDirectory   string `yaml:"directory"`
+}
+
+type ConfigCluster struct {
+	ID       string `yaml:"id"`
+	Name     string `yaml:"name"`
+	Project  string `yaml:"project"`
+	Location string `yaml:"location"`
+}
+
+func ReadConfig(path string, readFn ReadFileFn) (*ConfigNg, error) {
+	data, err := readFn(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
-}
-
-func (c *Config) Close() error {
-	if c.gke != nil {
-		return c.gke.Close()
+	config := &ConfigNg{}
+	if err := yaml.Unmarshal(data, config); err != nil {
+		return nil, err
 	}
-	return nil
+	return config, nil
 }

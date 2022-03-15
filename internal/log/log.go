@@ -1,6 +1,8 @@
 package log
 
 import (
+	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -29,27 +31,30 @@ func (p OsEnvProvider) Getenv(key string) string {
 func NewLogger() *logrus.Logger {
 	envProvider := OsEnvProvider{}
 	logger := logrus.New()
-	logger.SetLevel(getLogLevel(envProvider))
+	level, err := getLogLevel(envProvider)
+	if err != nil {
+		logger.SetOutput(io.Discard)
+	}
+	logger.SetLevel(level)
 	return logger
 }
 
-func getLogLevel(p envProvider) logrus.Level {
+func getLogLevel(p envProvider) (logrus.Level, error) {
 	switch value := p.Getenv(levelVarName); strings.ToLower(value) {
 	case "trace":
-		return logrus.TraceLevel
+		return logrus.TraceLevel, nil
 	case "debug":
-		return logrus.DebugLevel
+		return logrus.DebugLevel, nil
 	case "info":
-		return logrus.InfoLevel
+		return logrus.InfoLevel, nil
 	case "warn":
-		return logrus.WarnLevel
+		return logrus.WarnLevel, nil
 	case "error":
-		return logrus.ErrorLevel
+		return logrus.ErrorLevel, nil
 	case "fatal":
-		return logrus.FatalLevel
-	default:
-		return defaultLogLevel
+		return logrus.FatalLevel, nil
 	}
+	return defaultLogLevel, fmt.Errorf("unsupported or missing log level")
 }
 
 func Debugf(format string, args ...interface{}) {

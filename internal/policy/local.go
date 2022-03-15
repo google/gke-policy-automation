@@ -23,6 +23,10 @@ func NewLocalPolicySource(rootDirectory string) PolicySource {
 	}
 }
 
+func (src LocalPolicySource) String() string {
+	return fmt.Sprintf("local directory: %s", src.directory)
+}
+
 func (src LocalPolicySource) GetPolicyFiles() ([]*PolicyFile, error) {
 	files, err := src.getPolicyFiles(filepath.Walk)
 	if err != nil {

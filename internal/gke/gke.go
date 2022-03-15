@@ -39,12 +39,16 @@ func newGKEClient(ctx context.Context, opts ...option.ClientOption) (*GKEClient,
 	}, nil
 }
 
-func (c *GKEClient) GetCluster(project string, location string, name string) (*containerpb.Cluster, error) {
+func (c *GKEClient) GetCluster(name string) (*containerpb.Cluster, error) {
 	req := &containerpb.GetClusterRequest{
-		Name: fmt.Sprintf("projects/%s/locations/%s/clusters/%s", project, location, name)}
+		Name: name}
 	return c.client.GetCluster(c.ctx, req)
 }
 
 func (c *GKEClient) Close() error {
 	return c.client.Close()
+}
+
+func GetClusterName(project string, location string, name string) string {
+	return fmt.Sprintf("projects/%s/locations/%s/clusters/%s", project, location, name)
 }

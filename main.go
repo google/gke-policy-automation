@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	if err := app.CreateReviewApp(app.GkeReview).Run(os.Args); err != nil {
+	if err := app.NewPolicyAutomationCli(app.NewPolicyAutomationApp()).Run(os.Args); err != nil {
 		fmt.Printf("\nError: %s\n", err)
 	}
 }

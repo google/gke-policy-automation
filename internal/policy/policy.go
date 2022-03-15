@@ -33,9 +33,10 @@ type Policy struct {
 }
 
 type PolicyEvaluationResult struct {
-	Valid    map[string][]*Policy
-	Violated map[string][]*Policy
-	Errored  []*Policy
+	ClusterName string
+	Valid       map[string][]*Policy
+	Violated    map[string][]*Policy
+	Errored     []*Policy
 }
 
 type RegoEvaluationResult struct {

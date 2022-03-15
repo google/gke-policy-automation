@@ -57,6 +57,13 @@ func NewGitPolicySource(repoURL string, repoBrach string, policyDir string) Poli
 	}
 }
 
+func (src GitPolicySource) String() string {
+	return fmt.Sprintf("GIT repository: %s, branch: %s, directory: %s",
+		src.repoUrl,
+		src.repoBranch,
+		src.policyDir)
+}
+
 func (src GitPolicySource) GetPolicyFiles() ([]*PolicyFile, error) {
 	repo, err := src.clone()
 	if err != nil {
