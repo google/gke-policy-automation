@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mikouaj/gke-review/internal/gke"
-	"github.com/mikouaj/gke-review/internal/log"
-	"github.com/mikouaj/gke-review/internal/policy"
+	"github.com/google/gke-policy-automation/internal/gke"
+	"github.com/google/gke-policy-automation/internal/log"
+	"github.com/google/gke-policy-automation/internal/policy"
 )
 
 type PolicyAutomation interface {

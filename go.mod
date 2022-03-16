@@ -1,4 +1,4 @@
-module github.com/mikouaj/gke-review
+module github.com/google/gke-policy-automation
 
 go 1.17
 

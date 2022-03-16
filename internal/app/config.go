@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	DefaultGitRepository = "https://github.com/mikouaj/gke-review"
+	DefaultGitRepository = "https://github.com/google/gke-policy-automation"
 	DefaultGitBranch     = "main"
 	DefaultGitPolicyDir  = "gke-policies"
 )

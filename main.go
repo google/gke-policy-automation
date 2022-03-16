@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mikouaj/gke-review/internal/app"
+	"github.com/google/gke-policy-automation/internal/app"
 )
 
 func main() {

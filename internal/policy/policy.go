@@ -20,7 +20,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/mikouaj/gke-review/internal/log"
+	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 )
