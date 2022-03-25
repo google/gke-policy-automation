@@ -72,20 +72,16 @@ func TestGetPolicyFiles(t *testing.T) {
 	mockObjects := []fsObj{
 		{"rego/policyOne.rego", fileInfoMock{
 			nameFn:  func() string { return "policyOne.rego" },
-			isDirFn: func() bool { return false }},
-		},
+			isDirFn: func() bool { return false }}},
 		{"rego/subDirectory", fileInfoMock{
 			nameFn:  func() string { return "subDirectory" },
-			isDirFn: func() bool { return true }},
-		},
+			isDirFn: func() bool { return true }}},
 		{"rego/subDirectory/policyTwo.rego", fileInfoMock{
 			nameFn:  func() string { return "policyTwo.rego" },
-			isDirFn: func() bool { return false }},
-		},
+			isDirFn: func() bool { return false }}},
 		{"rego/file.txt", fileInfoMock{
 			nameFn:  func() string { return "file.txt" },
-			isDirFn: func() bool { return false }},
-		},
+			isDirFn: func() bool { return false }}},
 	}
 
 	mockWalkFn := func(root string, fn filepath.WalkFunc) error {
@@ -112,6 +108,36 @@ func TestGetPolicyFiles(t *testing.T) {
 		if !strings.HasSuffix(file.FullName, "."+src.policyFileExt) {
 			t.Errorf("file[%d].FullName = %s; want fullName with prefix %s", i, file.FullName, "."+src.policyFileExt)
 		}
+	}
+}
+
+func TestGetPolicyFiles_negative(t *testing.T) {
+	type fsObj struct {
+		path string
+		info fs.FileInfo
+		err  error
+	}
+	mockObjects := []fsObj{
+		{"rego/nonExisting.rego", fileInfoMock{
+			nameFn:  func() string { return "nonExisting.rego" },
+			isDirFn: nil},
+			fmt.Errorf("file not found"),
+		},
+	}
+
+	mockWalkFn := func(root string, fn filepath.WalkFunc) error {
+		for _, mockObj := range mockObjects {
+			if err := fn(mockObj.path, mockObj.info, mockObj.err); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	src := LocalPolicySource{directory: "dir", policyFileExt: "rego"}
+	_, err := src.getPolicyFiles(mockWalkFn)
+	if err == nil {
+		t.Errorf("err is nil; want error")
 	}
 }
 
