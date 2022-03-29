@@ -32,6 +32,7 @@ make build
 
 Tool can be used from command line with [gcloud CLI](https://cloud.google.com/sdk/docs/install) installed.
 CLI can be previously authenticated with `gcloud auth application-default login` command, or credentials may be passed with `--creds` parameter.
+
 Parameters for GKE cluster review can be provided as command parameters or via configuration .yaml file.
 
 ```
@@ -42,11 +43,30 @@ For cluster review with manually provided parameters:
 ```
 ./gke-policy-automation cluster review -p <GCP_PROJECT_ID> -n <CLUSTER_NAME> -l <CLUSTER_LOCATION>
 ```
-Custom policies can be provided via local directory: 
+With .yaml file with format:
+```yaml
+silent: true
+credentialsFile: ./test_credentials.json
+clusters:
+  - name: my-cluster
+    project: my-project
+    location: europe-central2
+  - name: another
+    project: my-project
+    location: europe-central2
+policies:
+  - local: /tmp
+outputs:
+  - file: /some/file.json
+```
+
+
+Custom policies can be provided via local directory or remote Github repository. 
+Example for local directory: 
 ```
 ./gke-policy-automation cluster review -p my_project -n my_cluster -l europe-central2-a  --local-policy-dir ./gke-policies/policy
 ```
-or via github repository:
+and for Github repository:
 ```
 ./gke-policy-automation cluster review -p my_project -n my_cluster -l europe-central2-a  --git-policy-repo "https://github.com/google/gke-policy-automation" --git-policy-branch main --git-policy-dir gka-policies/policy
 
@@ -65,9 +85,10 @@ opa test ./gke-policies/policy
 
 ## Contributing
 
-See [the contributing file](CONTRIBUTING.md)
+See [the contributing file](CONTRIBUTING.md) and [README for policies](./gke-policies/README.md)
 
 
 ## License
 [Apache License 2.0](LICENSE)
+
 ---
