@@ -27,11 +27,6 @@ valid {
 
 violation[msg] {
   
-  not input.node_pools[pool].management
-    
-  msg := sprintf("autorepair not set for GKE node pool %q", [input.node_pools[pool].name])
-} {
-  
   not input.node_pools[pool].management.auto_repair
     
   msg := sprintf("autorepair not set for GKE node pool %q", [input.node_pools[pool].name])

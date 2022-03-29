@@ -27,13 +27,7 @@ valid {
 
 violation[msg] {
   
-  not input.node_pools[pool].management
-    
-  msg := sprintf("autoupgrade not set for GKE node pool %q", [input.node_pools[pool].name])
-} {
-  
   not input.node_pools[pool].management.auto_upgrade
-    
   msg := sprintf("autoupgrade not set for GKE node pool %q", [input.node_pools[pool].name])
 } 
 

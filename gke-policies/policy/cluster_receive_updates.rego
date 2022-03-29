@@ -27,12 +27,6 @@ valid {
 }
 
 violation[msg] {
-  not input.notification_config
-  msg := "GKE cluster is not receiving updates about GKE upgrades and new versions"
-} {
-  not input.notification_config.pubsub
-  msg := "GKE cluster is not receiving updates about GKE upgrades and new versions"
-} {
   not input.notification_config.pubsub.enabled 
   msg := "Pub/Sub notifications are not enabled"
 } {

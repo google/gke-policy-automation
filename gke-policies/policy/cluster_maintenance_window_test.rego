@@ -25,16 +25,16 @@ test_cluster_configured_to_maintanace_window {
             "window": {
                 "Policy": {
                     "RecurringWindow": {
-                    "window": {
-                        "Options": null,
-                        "start_time": {
-                        "seconds": 1648339200
+                        "window": {
+                            "Options": null,
+                            "start_time": {
+                            "seconds": 1648339200
+                            },
+                            "end_time": {
+                            "seconds": 1648360800
+                            }
                         },
-                        "end_time": {
-                        "seconds": 1648360800
-                        }
-                    },
-                    "recurrence": "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU"
+                        "recurrence": "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU"
                     }
                 }
             }

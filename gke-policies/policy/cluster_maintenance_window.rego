@@ -27,12 +27,6 @@ valid {
 }
 
 violation[msg] {
-  not input.maintenance_policy
-  msg := "GKE cluster has not configured maintenance policy"
-} {
-  not input.maintenance_policy.window
-  msg := "GKE cluster has not configured maintenance window"
-} {
   not input.maintenance_policy.window.Policy
   msg := "GKE cluster has not configured maintenance window"
 }
