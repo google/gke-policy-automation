@@ -5,6 +5,8 @@ This is not an officially supported Google product.
 This tool validates selected [GKE](https://cloud.google.com/kubernetes-engine) cluster
 against set of [REGO policies](https://www.openpolicyagent.org/docs/latest/policy-language/).
 
+Please check out [Contributing](https://github.com/google/gke-policy-automation/blob/main/CONTRIBUTING.md) and [Code of Conduct](https://github.com/google/gke-policy-automation/blob/main/docs/code-of-conduct.md) docs before contributing.
+
 [![Go Report Card](https://goreportcard.com/badge/github.com/google/gke-policy-automation)](https://goreportcard.com/report/github.com/google/gke-policy-automation)
 ![GitHub](https://img.shields.io/github/license/google/gke-policy-automation)
 
