@@ -1,5 +1,7 @@
 # Google Kubernetes Cluster review tool
 
+This is not an officially supported Google product.
+
 This tool validates selected [GKE](https://cloud.google.com/kubernetes-engine) cluster
 against set of [REGO policies](https://www.openpolicyagent.org/docs/latest/policy-language/).
 
