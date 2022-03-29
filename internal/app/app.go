@@ -141,7 +141,7 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 		log.Infof("Reading policy files from %s", policySrc)
 		files, err := policySrc.GetPolicyFiles()
 		if err != nil {
-			p.out.ErrorPrint("could not read policy files\n", err)
+			p.out.ErrorPrint("could not read policy files", err)
 			log.Errorf("could not read policy files: %s", err)
 			return nil, err
 		}

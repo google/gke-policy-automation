@@ -55,6 +55,9 @@ func (src LocalPolicySource) GetPolicyFiles() ([]*PolicyFile, error) {
 func (src LocalPolicySource) getPolicyFiles(walkFn WalkFn) ([]*PolicyFile, error) {
 	files := make([]*PolicyFile, 0)
 	err := walkFn(src.directory, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		if !info.IsDir() && strings.HasSuffix(path, "."+src.policyFileExt) {
 			files = append(files, &PolicyFile{
 				Name:     info.Name(),
