@@ -84,7 +84,7 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 		return err
 	}
 	pa := policy.NewPolicyAgent(p.ctx)
-	p.out.ColorPrintf("[white][bold]Parsing REGO policies...\n")
+	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
 	log.Info("Parsing rego policies")
 	if err := pa.WithFiles(files); err != nil {
 		p.out.ErrorPrint("could not parse policy files", err)
@@ -100,7 +100,7 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 			log.Errorf("could not get cluster name: %s", clusterName)
 			return err
 		}
-		p.out.ColorPrintf("[white][bold]Fetching GKE cluster details... [projects/%s/locations/%s/clusters/%s]\n",
+		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [projects/%s/locations/%s/clusters/%s]\n",
 			cluster.Project,
 			cluster.Location,
 			cluster.Name)
@@ -110,7 +110,7 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 			log.Errorf("could not fetch cluster details: %s", err)
 			return err
 		}
-		p.out.ColorPrintf("[white][bold]Evaluating policies against GKE cluster... [%s]\n",
+		p.out.ColorPrintf("[light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
 			cluster.Id)
 		evalResult, err := pa.Evaluate(cluster)
 		if err != nil {
@@ -137,7 +137,7 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 				policyConfig.GitBranch,
 				policyConfig.GitDirectory)
 		}
-		p.out.ColorPrintf("[white][bold]Reading policy files... [%s]\n", policySrc)
+		p.out.ColorPrintf("[light_gray][bold]Reading policy files... [%s]\n", policySrc)
 		log.Infof("Reading policy files from %s", policySrc)
 		files, err := policySrc.GetPolicyFiles()
 		if err != nil {
@@ -192,7 +192,7 @@ func (p *PolicyAutomationApp) printEvaluationResults(results []*policy.PolicyEva
 	for _, result := range results {
 		p.out.ColorPrintf("[yellow][bold]GKE Cluster [%s]:", result.ClusterName)
 		for _, group := range result.Groups() {
-			p.out.ColorPrintf("\n[white][bold]Group %q:\n\n", group)
+			p.out.ColorPrintf("\n[light-gray][bold]Group %q:\n\n", group)
 			for _, policy := range result.Valid[group] {
 				p.out.ColorPrintf("[bold][green][\u2713] %s: [reset][green]%s\n", policy.Title, policy.Description)
 			}
