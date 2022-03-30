@@ -21,6 +21,9 @@ on:
     branches:
       - main
 
+env:
+  GKE_POLICY_DIRECTORY: ./gke-policies
+
 jobs:
   build:
     name: Policy Test
@@ -33,4 +36,4 @@ jobs:
         with:
           version: 0.38
       - name: Run Policy tests
-        run: opa test gke-policies -v
+        run: opa test ${{ env.GKE_POLICY_DIRECTORY }} -v
