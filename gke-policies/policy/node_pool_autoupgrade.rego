@@ -17,7 +17,7 @@
 # description: GKE node pools should have Node Auto-Upgrade enabled to configure Kubernetes Engine
 # custom:
 #   group: Availability
-package gke.policy.node_poll_autoupgrade
+package gke.policy.node_pool_autoupgrade
 
 default valid = false
 
@@ -26,7 +26,6 @@ valid {
 }
 
 violation[msg] {
-  
   not input.node_pools[pool].management.auto_upgrade
   msg := sprintf("autoupgrade not set for GKE node pool %q", [input.node_pools[pool].name])
 } 

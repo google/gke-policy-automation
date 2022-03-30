@@ -12,7 +12,7 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-package gke.policy.node_poll_autorepair
+package gke.policy.node_pool_autorepair
 
 test_autorepair_for_node_pool_enabled {
     valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}

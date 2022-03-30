@@ -17,7 +17,7 @@
 # description: GKE node pools should have Node Auto-Repair enabled to configure Kubernetes Engine
 # custom:
 #   group: Availability
-package gke.policy.node_poll_autorepair
+package gke.policy.node_pool_autorepair
 
 default valid = false
 
@@ -25,10 +25,8 @@ valid {
   count(violation) == 0
 }
 
-violation[msg] {
-  
+violation[msg] {  
   not input.node_pools[pool].management.auto_repair
-    
   msg := sprintf("autorepair not set for GKE node pool %q", [input.node_pools[pool].name])
 } 
 
