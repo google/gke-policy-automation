@@ -1,15 +1,17 @@
-# Google Kubernetes Cluster review tool
-
-[![Go Report Card](https://goreportcard.com/badge/github.com/google/gke-policy-automation)](https://goreportcard.com/report/github.com/google/gke-policy-automation)
-![GitHub](https://img.shields.io/github/license/google/gke-policy-automation)
-
-![GKE review demo](./images/gke-review.gif)
+# GKE Policy Automation
 
 This is not an officially supported Google product.
 
-This tool validates selected [GKE](https://cloud.google.com/kubernetes-engine) cluster
-against set of [REGO policies](https://www.openpolicyagent.org/docs/latest/policy-language/).
-Policies are based mainly on official Google [documentation](https://cloud.google.com/kubernetes-engine/docs/best-practices).
+This repository contains the tool and [policy library](./gke-policies) for validating selected [GKE](https://cloud.google.com/kubernetes-engine)
+clusters against configuration best practices.
+
+[![Build](https://github.com/google/gke-policy-automation/actions/workflows/build.yml/badge.svg)](https://github.com/google/gke-policy-automation/actions/workflows/build.yml)
+[![Policy tests](https://github.com/google/gke-policy-automation/actions/workflows/policy-test.yml/badge.svg)](https://github.com/google/gke-policy-automation/actions/workflows/policy-test.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/google/gke-policy-automation)](https://goreportcard.com/report/github.com/google/gke-policy-automation)
+[![GoDoc](https://godoc.org/github.com/google/gke-policy-automation?status.svg)](https://godoc.org/github.com/google/gke-policy-automation)
+![GitHub](https://img.shields.io/github/license/google/gke-policy-automation)
+
+---
 
 ## Table of Contents
 
