@@ -22,7 +22,7 @@ builds:
     ignore:
       - goos: darwin
         goarch: "386"
-    binary: "{{ .ProjectName }}_v{{ .Version }}"
+    binary: gke-policy
 dockers:
   - goos: linux
     goarch: amd64
