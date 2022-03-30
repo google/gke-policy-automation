@@ -43,7 +43,7 @@ For cluster review with manually provided parameters:
 ```
 ./gke-policy-automation cluster review -p <GCP_PROJECT_ID> -n <CLUSTER_NAME> -l <CLUSTER_LOCATION>
 ```
-With .yaml file with format:
+and with .yaml file with format:
 ```yaml
 silent: true
 credentialsFile: ./test_credentials.json
@@ -59,7 +59,6 @@ policies:
 outputs:
   - file: /some/file.json
 ```
-
 
 Custom policies can be provided via local directory or remote Github repository. 
 Example for local directory: 
@@ -80,13 +79,13 @@ opa test <POLICY_DIR>
 ```
 for project policy folder:
 ```
-opa test ./gke-policies/policy
+opa test gke-policies
 ```
 
 ## Contributing
 
-See [the contributing file](CONTRIBUTING.md) and [README for policies](./gke-policies/README.md)
-
+Please check out [Contributing](./CONTRIBUTING.md) and [Code of Conduct](./docs/code-of-conduct.md) docs before contributing.
+See also [README for policies](./gke-policies/README.md)
 
 ## License
 [Apache License 2.0](LICENSE)
