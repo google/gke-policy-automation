@@ -12,6 +12,7 @@ against set of [REGO policies](https://www.openpolicyagent.org/docs/latest/polic
 Policies are based mainly on official Google [documentation](https://cloud.google.com/kubernetes-engine/docs/best-practices).
 
 ## Table of Contents
+
 - [Install](#install)
 - [Usage](#usage)
 - [Test](#test)
@@ -20,11 +21,13 @@ Policies are based mainly on official Google [documentation](https://cloud.googl
 
 ## Install
 
-```
+```sh
 make
 ```
-or 
-```
+
+or
+
+```sh
 make build
 ```
 
@@ -35,15 +38,18 @@ CLI can be previously authenticated with `gcloud auth application-default login`
 
 Parameters for GKE cluster review can be provided as command parameters or via configuration .yaml file.
 
-```
+```sh
 gke-policy-automation [global options] command [command options] [arguments...]
 ```
 
 For cluster review with manually provided parameters:
-```
+
+```sh
 ./gke-policy-automation cluster review -p <GCP_PROJECT_ID> -n <CLUSTER_NAME> -l <CLUSTER_LOCATION>
 ```
+
 and with .yaml file with format:
+
 ```yaml
 silent: true
 credentialsFile: ./test_credentials.json
@@ -60,25 +66,30 @@ outputs:
   - file: /some/file.json
 ```
 
-Custom policies can be provided via local directory or remote Github repository. 
-Example for local directory: 
-```
+Custom policies can be provided via local directory or remote Github repository.
+Example for local directory:
+
+```sh
 ./gke-policy-automation cluster review -p my_project -n my_cluster -l europe-central2-a  --local-policy-dir ./gke-policies/policy
 ```
-and for Github repository:
-```
-./gke-policy-automation cluster review -p my_project -n my_cluster -l europe-central2-a  --git-policy-repo "https://github.com/google/gke-policy-automation" --git-policy-branch main --git-policy-dir gka-policies/policy
 
+and for Github repository:
+
+```sh
+./gke-policy-automation cluster review -p my_project -n my_cluster -l europe-central2-a  --git-policy-repo "https://github.com/google/gke-policy-automation" --git-policy-branch main --git-policy-dir gka-policies/policy
 ```
 
 ## Test
 
 Testing policy files with [OPA Policy testing framework](https://www.openpolicyagent.org/docs/latest/policy-testing/)
-```
+
+```sh
 opa test <POLICY_DIR>
 ```
+
 for project policy folder:
-```
+
+```sh
 opa test gke-policies
 ```
 
@@ -88,6 +99,7 @@ Please check out [Contributing](./CONTRIBUTING.md) and [Code of Conduct](./docs/
 See also [README for policies](./gke-policies/README.md)
 
 ## License
+
 [Apache License 2.0](LICENSE)
 
 ---
