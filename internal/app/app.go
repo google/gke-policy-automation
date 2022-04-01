@@ -28,6 +28,7 @@ type PolicyAutomation interface {
 	LoadCliConfig(cliConfig *CliConfig) error
 	Close() error
 	ClusterReview() error
+	Version() error
 }
 
 type PolicyAutomationApp struct {
@@ -122,6 +123,11 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 		evalResults = append(evalResults, evalResult)
 	}
 	p.printEvaluationResults(evalResults)
+	return nil
+}
+
+func (p *PolicyAutomationApp) Version() error {
+	p.out.Printf("%s\n", Version)
 	return nil
 }
 

@@ -35,6 +35,7 @@ func NewPolicyAutomationCli(p PolicyAutomation) *cli.App {
 		Usage: "Manage GKE policies",
 		Commands: []*cli.Command{
 			CreateClusterCommand(p),
+			CreateVersionCommand(p),
 		},
 	}
 	return app
@@ -90,6 +91,22 @@ func CreateClusterCommand(p PolicyAutomation) *cli.Command {
 					return nil
 				},
 			},
+		},
+	}
+}
+
+func CreateVersionCommand(p PolicyAutomation) *cli.Command {
+	return &cli.Command{
+		Name:  "version",
+		Usage: "Shows application version",
+		Action: func(c *cli.Context) error {
+			defer p.Close()
+			if err := p.LoadCliConfig(&CliConfig{}); err != nil {
+				cli.ShowSubcommandHelp(c)
+				return err
+			}
+			p.Version()
+			return nil
 		},
 	}
 }
