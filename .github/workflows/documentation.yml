@@ -33,4 +33,4 @@ jobs:
         with:
           python-version: 3.9
       - name: Check license headers
-        run: python3 tools/license_header_check.py $GITHUB_WORKSPACE
+        run: python3 scripts/license_header_check.py $GITHUB_WORKSPACE
