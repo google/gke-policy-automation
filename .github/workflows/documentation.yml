@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     https://www.apache.org/licenses/LICENSE-2.0
+#      https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,17 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# METADATA
-# title: Test of invalid policy
-# description: Test of invalid policy
-# custom:
-#   group: Test
-package gke.policy.errored_test_policy
+name: Documentation checks
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
-valid {
-  count(violation) == 0
-}
-
-violation[msg] {
-  msg := "GKE cluster has not enabled private endpoint" 
-}
+jobs:
+  linting:
+    name: Documentation linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Check license headers
+        run: python3 scripts/license_header_check.py $GITHUB_WORKSPACE
