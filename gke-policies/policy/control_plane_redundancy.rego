@@ -19,6 +19,8 @@
 #   group: Availability
 package gke.policy.control_plane_redundancy
 
+import data.gke.rule.cluster.location.regional
+
 default valid = false
 
 valid {
@@ -31,6 +33,6 @@ violation[msg] {
 }
 
 violation[msg] {
-  not regex.match("^[^-]+-[^-]+$", input.location)
+  not regional(input.location)
   msg := sprintf("Invalid GKE Control plane location %q (not regional)", [input.location])
 }
