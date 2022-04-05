@@ -14,12 +14,10 @@
 
 package gke.rule.cluster.location
 
-regional[location] {
-    location := input.location
-    regex.match("^[^-]+-[^-]+$", location)
+regional(location) {
+  regex.match("^[^-]+-[^-]+$", location)
 }
 
-zonal[location] {
-    location := input.location
+zonal(location) {
     regex.match("^[^-]+-[^-]+-[^-]+$", location)
 }

@@ -12,27 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# METADATA
-# title: Control Plane redundancy
-# description: GKE cluster should be regional for maximum availability of control plane during upgrades and zonal outages
-# custom:
-#   group: Availability
-package gke.policy.control_plane_redundancy
+package gke.rule.cluster.location
 
-import data.gke.rule.cluster.location.regional
-
-default valid = false
-
-valid {
-  count(violation) == 0
+test_regional {
+    location := "europe-central2"
+    regional(location)
+    not zonal(location)
 }
 
-violation[msg] {
-  not input.location
-  msg := "Missing GKE cluster location object"
+test_zonal {
+    location := "europe-central2-a"
+    zonal(location)
+    not regional(location)
 }
 
-violation[msg] {
-  not regional(input.location)
-  msg := sprintf("Invalid GKE Control plane location %q (not regional)", [input.location])
+test_not_regional_nor_zonal {
+    location := "test"
+    not regional(location)
+    not zonal(location)
 }

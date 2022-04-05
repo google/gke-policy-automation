@@ -12,27 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# METADATA
-# title: Control Plane redundancy
-# description: GKE cluster should be regional for maximum availability of control plane during upgrades and zonal outages
-# custom:
-#   group: Availability
-package gke.policy.control_plane_redundancy
+package gke.policy.control_plane_endpoint
 
-import data.gke.rule.cluster.location.regional
-
-default valid = false
-
-valid {
-  count(violation) == 0
+test_private_endpoint_enabled {
+    valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_endpoint": true}}
 }
 
-violation[msg] {
-  not input.location
-  msg := "Missing GKE cluster location object"
+test_private_endpoint_disabled {
+    not valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_endpoint": false}}
 }
 
-violation[msg] {
-  not regional(input.location)
-  msg := sprintf("Invalid GKE Control plane location %q (not regional)", [input.location])
+test_private_cluster_config_missing {
+    not valid with input as {"name": "test-cluster"}
 }
