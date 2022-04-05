@@ -26,7 +26,11 @@ valid {
 }
 
 violation[msg] {
-  some location
-  data.gke.rule.location.zonal[location]
-  msg := sprintf("invalid GKE Control plane location %q (not regional)", [location])
+  not input.location
+  msg := "Missing GKE cluster location object"
+}
+
+violation[msg] {
+  not regex.match("^[^-]+-[^-]+$", input.location)
+  msg := sprintf("Invalid GKE Control plane location %q (not regional)", [input.location])
 }

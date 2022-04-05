@@ -12,17 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# METADATA
-# title: Test of invalid policy
-# description: Test of invalid policy
-# custom:
-#   group: Test
-package gke.policy.errored_test_policy
+package gke.policy.private_cluster
 
-valid {
-  count(violation) == 0
+test_private_nodes_enabled {
+    valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": true}}
 }
 
-violation[msg] {
-  msg := "GKE cluster has not enabled private endpoint" 
+test_private_nodes_disabled {
+    not valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": false}}
+}
+
+test_private_cluster_config_missing {
+    not valid with input as {"name": "test-cluster"}
 }

@@ -12,20 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# METADATA
-# title: Control Plane endpoint visibility
-# description: Control Plane endpoint should be locked from external access
-# custom:
-#   group: Security
 package gke.policy.control_plane_endpoint
 
-default valid = false
-
-valid {
-  count(violation) == 0
+test_private_endpoint_enabled {
+    valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_endpoint": true}}
 }
 
-violation[msg] {
-  not input.private_cluster_config.enable_private_endpoint
-  msg := "GKE cluster has not enabled private endpoint" 
+test_private_endpoint_disabled {
+    not valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_endpoint": false}}
+}
+
+test_private_cluster_config_missing {
+    not valid with input as {"name": "test-cluster"}
 }
