@@ -97,8 +97,8 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 	for _, cluster := range p.config.Clusters {
 		clusterName, err := getClusterName(cluster)
 		if err != nil {
-			p.out.ErrorPrint("could not get cluster name", err)
-			log.Errorf("could not get cluster name: %s", clusterName)
+			p.out.ErrorPrint("could not create cluster path", err)
+			log.Errorf("could not create cluster path: %s", err)
 			return err
 		}
 		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [projects/%s/locations/%s/clusters/%s]\n",
@@ -191,7 +191,7 @@ func getClusterName(c ConfigCluster) (string, error) {
 	if c.Name != "" && c.Location != "" && c.Project != "" {
 		return gke.GetClusterName(c.Project, c.Location, c.Name), nil
 	}
-	return "", fmt.Errorf("cluster parameters not set")
+	return "", fmt.Errorf("cluster mandatory parameters not set (project, name, location)")
 }
 
 func (p *PolicyAutomationApp) printEvaluationResults(results []*policy.PolicyEvaluationResult) {
