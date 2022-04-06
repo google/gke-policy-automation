@@ -81,11 +81,10 @@ func (p *PolicyAutomationApp) Close() error {
 }
 
 func (p *PolicyAutomationApp) ClusterReview() error {
-	_, err := p.loadAndValidatePolicyFiles()
+	pa, err := p.loadAndCompilePolicyFiles()
 	if err != nil {
 		return err
 	}
-	pa := policy.NewPolicyAgent(p.ctx)
 	evalResults := make([]*policy.PolicyEvaluationResult, 0)
 	for _, cluster := range p.config.Clusters {
 		clusterName, err := getClusterName(cluster)
@@ -125,7 +124,7 @@ func (p *PolicyAutomationApp) Version() error {
 }
 
 func (p *PolicyAutomationApp) PolicyCheck() error {
-	_, err := p.loadAndValidatePolicyFiles()
+	_, err := p.loadAndCompilePolicyFiles()
 	if err != nil {
 		p.out.ErrorPrint("validation failed: ", err)
 		log.Errorf("validation failed: %s", err)
@@ -136,7 +135,7 @@ func (p *PolicyAutomationApp) PolicyCheck() error {
 	return nil
 }
 
-func (p *PolicyAutomationApp) loadAndValidatePolicyFiles() ([]*policy.PolicyFile, error) {
+func (p *PolicyAutomationApp) loadAndCompilePolicyFiles() (*policy.PolicyAgent, error) {
 	policyFiles := make([]*policy.PolicyFile, 0)
 	for _, policyConfig := range p.config.Policies {
 		var policySrc policy.PolicySource
@@ -166,7 +165,7 @@ func (p *PolicyAutomationApp) loadAndValidatePolicyFiles() ([]*policy.PolicyFile
 		log.Errorf("could not parse policy files: %s", err)
 		return nil, err
 	}
-	return policyFiles, nil
+	return pa, nil
 }
 
 func newConfigFromFile(path string) (*ConfigNg, error) {
