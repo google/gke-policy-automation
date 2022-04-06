@@ -198,7 +198,7 @@ func (p *PolicyAutomationApp) printEvaluationResults(results []*policy.PolicyEva
 	for _, result := range results {
 		p.out.ColorPrintf("[yellow][bold]GKE Cluster [%s]:", result.ClusterName)
 		for _, group := range result.Groups() {
-			p.out.ColorPrintf("\n[light-gray][bold]Group %q:\n\n", group)
+			p.out.ColorPrintf("\n[light_gray][bold]Group %q:\n\n", group)
 			for _, policy := range result.Valid[group] {
 				p.out.ColorPrintf("[bold][green][\u2713] %s: [reset][green]%s\n", policy.Title, policy.Description)
 			}
