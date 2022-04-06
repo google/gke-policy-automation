@@ -81,10 +81,19 @@ func (p *PolicyAutomationApp) Close() error {
 }
 
 func (p *PolicyAutomationApp) ClusterReview() error {
-	pa, err := p.loadAndCompilePolicyFiles()
+	files, err := p.loadPolicyFiles()
 	if err != nil {
 		return err
 	}
+	pa := policy.NewPolicyAgent(p.ctx)
+	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
+	log.Info("Parsing rego policies")
+	if err := pa.WithFiles(files); err != nil {
+		p.out.ErrorPrint("could not parse policy files", err)
+		log.Errorf("could not parse policy files: %s", err)
+		return err
+	}
+
 	evalResults := make([]*policy.PolicyEvaluationResult, 0)
 	for _, cluster := range p.config.Clusters {
 		clusterName, err := getClusterName(cluster)
@@ -124,24 +133,31 @@ func (p *PolicyAutomationApp) Version() error {
 }
 
 func (p *PolicyAutomationApp) PolicyCheck() error {
-	_, err := p.loadAndCompilePolicyFiles()
+	files, err := p.loadPolicyFiles()
 	if err != nil {
-		p.out.ErrorPrint("validation failed: ", err)
-		log.Errorf("validation failed: %s", err)
+		p.out.ErrorPrint("loading policy files failed: ", err)
+		log.Errorf("loading policy files failed: %s", err)
 		return err
-	} else {
-		p.out.ColorPrintf("[bold][green] All policies validated correctly \n")
 	}
+	pa := policy.NewPolicyAgent(p.ctx)
+	if err := pa.WithFiles(files); err != nil {
+		p.out.ErrorPrint("could not parse policy files", err)
+		log.Errorf("could not parse policy files: %s", err)
+		return err
+	}
+	p.out.ColorPrintf("[bold][green] All policies validated correctly \n")
+	log.Info("All policies validated correctly")
 	return nil
 }
 
-func (p *PolicyAutomationApp) loadAndCompilePolicyFiles() (*policy.PolicyAgent, error) {
+func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 	policyFiles := make([]*policy.PolicyFile, 0)
 	for _, policyConfig := range p.config.Policies {
 		var policySrc policy.PolicySource
 		if policyConfig.LocalDirectory != "" {
 			policySrc = policy.NewLocalPolicySource(policyConfig.LocalDirectory)
-		} else if policyConfig.GitRepository != "" {
+		}
+		if policyConfig.GitRepository != "" {
 			policySrc = policy.NewGitPolicySource(policyConfig.GitRepository,
 				policyConfig.GitBranch,
 				policyConfig.GitDirectory)
@@ -156,16 +172,7 @@ func (p *PolicyAutomationApp) loadAndCompilePolicyFiles() (*policy.PolicyAgent, 
 		}
 		policyFiles = append(policyFiles, files...)
 	}
-	pa := policy.NewPolicyAgent(p.ctx)
-
-	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
-	log.Info("Parsing rego policies")
-	if err := pa.WithFiles(policyFiles); err != nil {
-		p.out.ErrorPrint("could not parse policy files", err)
-		log.Errorf("could not parse policy files: %s", err)
-		return nil, err
-	}
-	return pa, nil
+	return policyFiles, nil
 }
 
 func newConfigFromFile(path string) (*ConfigNg, error) {
@@ -185,7 +192,8 @@ func newConfigFromCli(cliConfig *CliConfig) *ConfigNg {
 	}
 	if cliConfig.LocalDirectory != "" {
 		config.Policies = append(config.Policies, ConfigPolicy{LocalDirectory: cliConfig.LocalDirectory})
-	} else if cliConfig.GitRepository != "" {
+	}
+	if cliConfig.GitRepository != "" {
 		config.Policies = append(config.Policies, ConfigPolicy{
 			GitRepository: cliConfig.GitRepository,
 			GitBranch:     cliConfig.GitBranch,
