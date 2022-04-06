@@ -81,14 +81,11 @@ func (p *PolicyAutomationApp) Close() error {
 }
 
 func (p *PolicyAutomationApp) ClusterReview() error {
-	files, err := p.loadPolicyFiles()
-	pa := policy.NewPolicyAgent(p.ctx)
-
-	validationError := p.validatePolicyFiles(files, err)
-	if validationError != nil {
-		return validationError
+	_, err := p.loadAndValidatePolicyFiles()
+	if err != nil {
+		return err
 	}
-
+	pa := policy.NewPolicyAgent(p.ctx)
 	evalResults := make([]*policy.PolicyEvaluationResult, 0)
 	for _, cluster := range p.config.Clusters {
 		clusterName, err := getClusterName(cluster)
@@ -128,12 +125,10 @@ func (p *PolicyAutomationApp) Version() error {
 }
 
 func (p *PolicyAutomationApp) PolicyCheck() error {
-	files, err := p.loadPolicyFiles()
-	errorResult := p.validatePolicyFiles(files, err)
-
-	if errorResult != nil {
-		p.out.ErrorPrint("validation failed: ", errorResult)
-		log.Errorf("validation failed: %s", errorResult)
+	_, err := p.loadAndValidatePolicyFiles()
+	if err != nil {
+		p.out.ErrorPrint("validation failed: ", err)
+		log.Errorf("validation failed: %s", err)
 		return err
 	} else {
 		p.out.ColorPrintf("[bold][green] All policies validated correctly \n")
@@ -141,7 +136,7 @@ func (p *PolicyAutomationApp) PolicyCheck() error {
 	return nil
 }
 
-func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
+func (p *PolicyAutomationApp) loadAndValidatePolicyFiles() ([]*policy.PolicyFile, error) {
 	policyFiles := make([]*policy.PolicyFile, 0)
 	for _, policyConfig := range p.config.Policies {
 		var policySrc policy.PolicySource
@@ -162,23 +157,16 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 		}
 		policyFiles = append(policyFiles, files...)
 	}
-	return policyFiles, nil
-}
-
-func (p *PolicyAutomationApp) validatePolicyFiles(files []*policy.PolicyFile, err error) error {
-	if err != nil {
-		return err
-	}
 	pa := policy.NewPolicyAgent(p.ctx)
 
 	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
 	log.Info("Parsing rego policies")
-	if err := pa.WithFiles(files); err != nil {
+	if err := pa.WithFiles(policyFiles); err != nil {
 		p.out.ErrorPrint("could not parse policy files", err)
 		log.Errorf("could not parse policy files: %s", err)
-		return err
+		return nil, err
 	}
-	return nil
+	return policyFiles, nil
 }
 
 func newConfigFromFile(path string) (*ConfigNg, error) {
