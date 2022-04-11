@@ -37,7 +37,8 @@ make build
 ## Usage
 
 Tool can be used from command line with [gcloud CLI](https://cloud.google.com/sdk/docs/install) installed.
-CLI can be previously authenticated with `gcloud auth application-default login` command, or credentials may be passed with `--creds` parameter.
+CLI can be previously authenticated with `gcloud auth application-default login` command, or credentials
+may be passed with `--creds` parameter.
 
 Parameters for GKE cluster review can be provided as command parameters or via configuration .yaml file.
 
@@ -73,13 +74,17 @@ Custom policies can be provided via local directory or remote Github repository.
 Example for local directory:
 
 ```sh
-./gke-policy-automation cluster review -p my_project -n my_cluster -l europe-central2-a  --local-policy-dir ./gke-policies/policy
+./gke-policy cluster review -p my_project -n my_cluster -l europe-central2-a \
+--local-policy-dir ./gke-policies/policy
 ```
 
 and for Github repository:
 
 ```sh
-./gke-policy-automation cluster review -p my_project -n my_cluster -l europe-central2-a  --git-policy-repo "https://github.com/google/gke-policy-automation" --git-policy-branch main --git-policy-dir gka-policies/policy
+./gke-policy cluster review -p my_project -n my_cluster -l europe-central2-a \
+--git-policy-repo "https://github.com/google/gke-policy-automation" \
+--git-policy-branch main \
+--git-policy-dir gka-policies
 ```
 
 ## Test
@@ -98,11 +103,9 @@ opa test gke-policies
 
 ## Contributing
 
-Please check out [Contributing](./CONTRIBUTING.md) and [Code of Conduct](./docs/code-of-conduct.md) docs before contributing.
-See also [README for policies](./gke-policies/README.md)
+Please check out [Contributing](./CONTRIBUTING.md) and [Code of Conduct](./docs/code-of-conduct.md)
+docs before contributing. See also [README for policies](./gke-policies/README.md)
 
 ## License
 
 [Apache License 2.0](LICENSE)
-
----
