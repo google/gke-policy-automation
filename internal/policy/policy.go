@@ -30,9 +30,10 @@ const regoQuery = "data." + regoPolicyPackage + "[name]"
 const regoTestFileSuffix = "_test.rego"
 
 type PolicyAgent struct {
-	ctx      context.Context
-	compiler *ast.Compiler
-	compiled map[string]*Policy
+	ctx       context.Context
+	compiler  *ast.Compiler
+	policies  []*Policy
+	evalCache map[string]*Policy
 }
 
 type Policy struct {
@@ -61,8 +62,9 @@ type RegoEvaluationResult struct {
 
 func NewPolicyAgent(ctx context.Context) *PolicyAgent {
 	return &PolicyAgent{
-		ctx:      ctx,
-		compiled: make(map[string]*Policy),
+		ctx:       ctx,
+		policies:  make([]*Policy, 0),
+		evalCache: make(map[string]*Policy),
 	}
 }
 
@@ -137,11 +139,10 @@ func (pa *PolicyAgent) Compile(files []*PolicyFile) error {
 	return nil
 }
 
-func (pa *PolicyAgent) ParseCompiled() ([]*Policy, []error) {
+func (pa *PolicyAgent) ParseCompiled() []error {
 	if pa.compiler == nil {
-		return nil, []error{fmt.Errorf("compiler is nil")}
+		return []error{fmt.Errorf("compiler is nil")}
 	}
-	policies := make([]*Policy, 0)
 	errors := make([]error, 0)
 	for _, m := range pa.compiler.Modules {
 		policy := Policy{}
@@ -153,23 +154,22 @@ func (pa *PolicyAgent) ParseCompiled() ([]*Policy, []error) {
 		if len(metaErrs) > 0 {
 			errors = append(errors, fmt.Errorf("policy %s has metadata errors: %s", policy.Name, strings.Join(metaErrs, ", ")))
 		} else {
-			policies = append(policies, &policy)
+			pa.policies = append(pa.policies, &policy)
 		}
 	}
-	return policies, errors
+	return errors
 }
 
 func (pa *PolicyAgent) WithFiles(files []*PolicyFile) error {
 	if err := pa.Compile(files); err != nil {
 		return err
 	}
-	policies, errors := pa.ParseCompiled()
-	if len(errors) > 0 {
+	if errors := pa.ParseCompiled(); len(errors) > 0 {
+		log.Debugf("parsing compiled policies resulted in %d errors", len(errors))
+		for _, err := range errors {
+			log.Warnf("parsing compiled policies error: %s", err)
+		}
 		return errors[0]
-	}
-	pa.compiled = make(map[string]*Policy)
-	for _, policy := range policies {
-		pa.compiled[policy.Name] = policy
 	}
 	return nil
 }
@@ -194,6 +194,7 @@ func (pa *PolicyAgent) Evaluate(input interface{}) (*PolicyEvaluationResult, err
 }
 
 func (pa *PolicyAgent) processRegoResultSet(results rego.ResultSet) (*PolicyEvaluationResult, error) {
+	pa.initEvalCache()
 	evalResults := NewPolicyEvaluationResult()
 	for _, result := range results {
 		value, bindings, err := getResultDataForEval(result)
@@ -211,7 +212,7 @@ func (pa *PolicyAgent) processRegoResultSet(results rego.ResultSet) (*PolicyEval
 		}
 		policy := NewPolicyFromEvalResult(&regoEvalResult, regoEvalResultErrors)
 		policyName := regoPolicyPackage + "." + regoEvalResult.Name
-		if compiledPolicy, ok := pa.compiled[policyName]; ok {
+		if compiledPolicy, ok := pa.evalCache[policyName]; ok {
 			compiledPolicy.Valid = policy.Valid
 			compiledPolicy.Violations = policy.Violations
 			compiledPolicy.ProcessingErrors = policy.ProcessingErrors
@@ -222,6 +223,14 @@ func (pa *PolicyAgent) processRegoResultSet(results rego.ResultSet) (*PolicyEval
 		evalResults.AddPolicy(policy)
 	}
 	return evalResults, nil
+}
+
+func (pa *PolicyAgent) initEvalCache() {
+	pa.evalCache = make(map[string]*Policy)
+	for _, policy := range pa.policies {
+		policyCopy := *policy
+		pa.evalCache[policyCopy.Name] = &policyCopy
+	}
 }
 
 func getResultDataForEval(regoResult rego.Result) (value interface{}, bindings map[string]interface{}, err error) {

@@ -194,21 +194,21 @@ p = 1`
 	if err := pa.Compile(policyFiles); err != nil {
 		t.Fatalf("err is %s; expected nil", err)
 	}
-	policies, errors := pa.ParseCompiled()
-	if len(policies) != 1 {
-		t.Fatalf("len(policies) = %v; want %v", len(policies), 1)
+	errors := pa.ParseCompiled()
+	if len(pa.policies) != 1 {
+		t.Fatalf("len(policies) = %v; want %v", len(pa.policies), 1)
 	}
 	if len(errors) != 2 {
-		t.Fatalf("len(errors) = %v; want %v", len(policies), 2)
+		t.Fatalf("len(errors) = %v; want %v", len(errors), 2)
 	}
-	if policies[0].Name != goodPackage {
-		t.Errorf("policy[0] name = %v; want %v", policies[0].Name, goodPackage)
+	if pa.policies[0].Name != goodPackage {
+		t.Errorf("policy[0] name = %v; want %v", pa.policies[0].Name, goodPackage)
 	}
 }
 
 func TestParseCompiled_noCompiler(t *testing.T) {
 	pa := PolicyAgent{}
-	if _, err := pa.ParseCompiled(); err == nil {
+	if err := pa.ParseCompiled(); err == nil {
 		t.Fatalf("err is nil; want error")
 	}
 }
@@ -249,14 +249,8 @@ func TestWithFiles(t *testing.T) {
 	if err := pa.WithFiles(policyFiles); err != nil {
 		t.Fatalf("error = %v; want nil", err)
 	}
-	if len(pa.compiled) != 2 {
-		t.Fatalf("len(pa.compiled) = %v; want %v", len(pa.compiled), 2)
-	}
-	if pa.compiled[packageOne].Title != titleOne {
-		t.Errorf("Policy %q title = %v; want %v", packageOne, pa.compiled[packageOne].Title, titleOne)
-	}
-	if pa.compiled[packageTwo].Title != titleTwo {
-		t.Errorf("Policy %q title = %v; want %v", packageTwo, pa.compiled[packageTwo].Title, titleTwo)
+	if len(pa.policies) != 2 {
+		t.Fatalf("len(pa.compiled) = %v; want %v", len(pa.policies), 2)
 	}
 }
 
@@ -315,11 +309,7 @@ func TestProcessRegoResultSet(t *testing.T) {
 	}
 	resultSet := []rego.Result{policyOneResult, policyTwoResult, policyThreeResult}
 	pa := PolicyAgent{}
-	pa.compiled = map[string]*Policy{
-		policyOneCompiled.Name:   policyOneCompiled,
-		policyTwoCompiled.Name:   policyTwoCompiled,
-		policyThreeCompiled.Name: policyThreeCompiled,
-	}
+	pa.policies = []*Policy{policyOneCompiled, policyTwoCompiled, policyThreeCompiled}
 
 	result, err := pa.processRegoResultSet(resultSet)
 	if err != nil {
@@ -333,6 +323,43 @@ func TestProcessRegoResultSet(t *testing.T) {
 	}
 	if len(result.Errored) != 1 {
 		t.Fatalf("number of errored policies = %v; want %v", len(result.Errored), 1)
+	}
+	if len(pa.evalCache) != len(pa.policies) {
+		t.Fatalf("number of policies in eval cache = %v; want %v", len(pa.evalCache), len(pa.policies))
+	}
+}
+
+func TestInitEvalCache(t *testing.T) {
+	pa := &PolicyAgent{}
+	pa.policies = []*Policy{
+		{
+			Name:  regoPolicyPackage + ".policy_one",
+			Title: "policy one",
+		},
+		{
+			Name:  regoPolicyPackage + ".policy_twp",
+			Title: "policy two",
+		},
+		{
+			Name:  regoPolicyPackage + ".policy_three",
+			Title: "policy two",
+		},
+	}
+	pa.initEvalCache()
+	if len(pa.evalCache) != len(pa.policies) {
+		t.Fatalf("number of policies in eval cache = %v; want %v", len(pa.evalCache), len(pa.policies))
+	}
+	for _, policy := range pa.policies {
+		evalPolicy, ok := pa.evalCache[policy.Name]
+		if !ok {
+			t.Fatalf("policy with name %v missing in eval cache", policy.Name)
+		}
+		if evalPolicy.Name != policy.Name {
+			t.Errorf("evalPolicy name = %v; want %v", evalPolicy.Name, policy.Name)
+		}
+		if evalPolicy.Title != policy.Title {
+			t.Errorf("evalPolicy title = %v; want %v", evalPolicy.Title, policy.Title)
+		}
 	}
 }
 
