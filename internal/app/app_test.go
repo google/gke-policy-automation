@@ -54,7 +54,7 @@ func TestLoadCliConfig_file(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read test config file err is not nil; want nil; err = %s", err)
 	}
-	config := &ConfigNg{}
+	config := &Config{}
 	err = yaml.Unmarshal(data, config)
 	if err != nil {
 		t.Fatalf("unmarshal test config file err is not nil; want nil; err = %s", err)
@@ -65,7 +65,7 @@ func TestLoadCliConfig_file(t *testing.T) {
 }
 
 func TestLoadConfig(t *testing.T) {
-	config := &ConfigNg{
+	config := &Config{
 		CredentialsFile: "./test-fixtures/test_credentials.json",
 	}
 	pa := PolicyAutomationApp{ctx: context.Background()}

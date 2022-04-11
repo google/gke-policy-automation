@@ -34,7 +34,7 @@ type PolicyAutomation interface {
 
 type PolicyAutomationApp struct {
 	ctx    context.Context
-	config *ConfigNg
+	config *Config
 	out    *Output
 	gke    *gke.GKEClient
 }
@@ -42,13 +42,13 @@ type PolicyAutomationApp struct {
 func NewPolicyAutomationApp() PolicyAutomation {
 	return &PolicyAutomationApp{
 		ctx:    context.Background(),
-		config: &ConfigNg{},
+		config: &Config{},
 		out:    NewSilentOutput(),
 	}
 }
 
 func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig) error {
-	var config *ConfigNg
+	var config *Config
 	var err error
 	if cliConfig.ConfigFile != "" {
 		if config, err = newConfigFromFile(cliConfig.ConfigFile); err != nil {
@@ -60,7 +60,7 @@ func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig) error {
 	return p.LoadConfig(config)
 }
 
-func (p *PolicyAutomationApp) LoadConfig(config *ConfigNg) (err error) {
+func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 	p.config = config
 	if !p.config.SilentMode {
 		p.out = NewStdOutOutput()
@@ -175,12 +175,12 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 	return policyFiles, nil
 }
 
-func newConfigFromFile(path string) (*ConfigNg, error) {
+func newConfigFromFile(path string) (*Config, error) {
 	return ReadConfig(path, os.ReadFile)
 }
 
-func newConfigFromCli(cliConfig *CliConfig) *ConfigNg {
-	config := &ConfigNg{}
+func newConfigFromCli(cliConfig *CliConfig) *Config {
+	config := &Config{}
 	config.SilentMode = cliConfig.SilentMode
 	config.CredentialsFile = cliConfig.CredentialsFile
 	config.Clusters = []ConfigCluster{

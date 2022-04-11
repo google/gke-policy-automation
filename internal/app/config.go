@@ -26,7 +26,7 @@ const (
 
 type ReadFileFn func(string) ([]byte, error)
 
-type ConfigNg struct {
+type Config struct {
 	SilentMode      bool            `yaml:"silent"`
 	CredentialsFile string          `yaml:"credentialsFile"`
 	Clusters        []ConfigCluster `yaml:"clusters"`
@@ -47,12 +47,12 @@ type ConfigCluster struct {
 	Location string `yaml:"location"`
 }
 
-func ReadConfig(path string, readFn ReadFileFn) (*ConfigNg, error) {
+func ReadConfig(path string, readFn ReadFileFn) (*Config, error) {
 	data, err := readFn(path)
 	if err != nil {
 		return nil, err
 	}
-	config := &ConfigNg{}
+	config := &Config{}
 	if err := yaml.Unmarshal(data, config); err != nil {
 		return nil, err
 	}
