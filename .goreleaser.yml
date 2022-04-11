@@ -16,7 +16,8 @@ before:
   hooks:
     - go mod tidy
 builds:
-  - env:
+  - id: gke-policy
+    env:
       - CGO_ENABLED=0
     mod_timestamp: "{{ .CommitTimestamp }}"
     flags:
@@ -48,6 +49,12 @@ dockers:
 archives:
   - format: zip
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    builds:
+      - gke-policy
+    files:
+      - LICENSE*
+      - README*
+      - CHANGELOG*
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
   algorithm: sha256
