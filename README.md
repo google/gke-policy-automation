@@ -43,13 +43,13 @@ may be passed with `--creds` parameter.
 Parameters for GKE cluster review can be provided as command parameters or via configuration .yaml file.
 
 ```sh
-gke-policy-automation [global options] command [command options] [arguments...]
+gke-policy [global options] command [command options] [arguments...]
 ```
 
 For cluster review with manually provided parameters:
 
 ```sh
-./gke-policy-automation cluster review -p <GCP_PROJECT_ID> -n <CLUSTER_NAME> -l <CLUSTER_LOCATION>
+./gke-policy cluster review -p <GCP_PROJECT_ID> -n <CLUSTER_NAME> -l <CLUSTER_LOCATION>
 ```
 
 and with .yaml file with format:

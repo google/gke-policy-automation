@@ -29,6 +29,7 @@ type PolicyAutomation interface {
 	Close() error
 	ClusterReview() error
 	Version() error
+	PolicyCheck() error
 }
 
 type PolicyAutomationApp struct {
@@ -128,6 +129,24 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 
 func (p *PolicyAutomationApp) Version() error {
 	p.out.Printf("%s\n", Version)
+	return nil
+}
+
+func (p *PolicyAutomationApp) PolicyCheck() error {
+	files, err := p.loadPolicyFiles()
+	if err != nil {
+		p.out.ErrorPrint("loading policy files failed: ", err)
+		log.Errorf("loading policy files failed: %s", err)
+		return err
+	}
+	pa := policy.NewPolicyAgent(p.ctx)
+	if err := pa.WithFiles(files); err != nil {
+		p.out.ErrorPrint("could not parse policy files", err)
+		log.Errorf("could not parse policy files: %s", err)
+		return err
+	}
+	p.out.ColorPrintf("[bold][green] All policies validated correctly \n")
+	log.Info("All policies validated correctly")
 	return nil
 }
 
