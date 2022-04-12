@@ -23,13 +23,19 @@ import (
 func TestNewPolicyAutomationCli(t *testing.T) {
 	app := NewPolicyAutomationApp()
 	cmd := NewPolicyAutomationCli(app)
-	validateCommandsExist(t, cmd.Commands, []string{"cluster", "version"})
+	validateCommandsExist(t, cmd.Commands, []string{"cluster", "version", "policy"})
 }
 
 func TestCreateClusterCommand(t *testing.T) {
 	app := NewPolicyAutomationApp()
 	cmd := CreateClusterCommand(app)
 	validateCommandsExist(t, cmd.Subcommands, []string{"review"})
+}
+
+func TestCreatePolicyCheckCommand(t *testing.T) {
+	app := NewPolicyAutomationApp()
+	cmd := CreatePolicyCheckCommand(app)
+	validateCommandsExist(t, cmd.Subcommands, []string{"check"})
 }
 
 func validateCommandsExist(t *testing.T, commands []*cli.Command, expected []string) {
