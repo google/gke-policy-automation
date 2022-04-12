@@ -36,6 +36,7 @@ func NewPolicyAutomationCli(p PolicyAutomation) *cli.App {
 		Commands: []*cli.Command{
 			CreateClusterCommand(p),
 			CreateVersionCommand(p),
+			CreatePolicyCheckCommand(p),
 		},
 	}
 	return app
@@ -107,6 +108,30 @@ func CreateVersionCommand(p PolicyAutomation) *cli.Command {
 			}
 			p.Version()
 			return nil
+		},
+	}
+}
+
+func CreatePolicyCheckCommand(p PolicyAutomation) *cli.Command {
+	config := &CliConfig{}
+	return &cli.Command{
+		Name:  "policy",
+		Usage: "Manages policy files",
+		Subcommands: []*cli.Command{
+			{
+				Name:  "check",
+				Usage: "Validates policy files from defined source",
+				Flags: (getPolicySourceFlags(config)),
+				Action: func(c *cli.Context) error {
+					defer p.Close()
+					if err := p.LoadCliConfig(config); err != nil {
+						cli.ShowSubcommandHelp(c)
+						return err
+					}
+					p.PolicyCheck()
+					return nil
+				},
+			},
 		},
 	}
 }
