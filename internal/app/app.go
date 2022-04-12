@@ -25,7 +25,7 @@ import (
 )
 
 type PolicyAutomation interface {
-	LoadCliConfig(cliConfig *CliConfig) error
+	LoadCliConfig(cliConfig *CliConfig, validateFn ValidateConfig) error
 	Close() error
 	ClusterReview() error
 	Version() error
@@ -47,7 +47,7 @@ func NewPolicyAutomationApp() PolicyAutomation {
 	}
 }
 
-func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig) error {
+func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, validateFn ValidateConfig) error {
 	var config *Config
 	var err error
 	if cliConfig.ConfigFile != "" {
@@ -56,6 +56,11 @@ func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig) error {
 		}
 	} else {
 		config = newConfigFromCli(cliConfig)
+	}
+	if validateFn != nil {
+		if err := validateFn(*config); err != nil {
+			return err
+		}
 	}
 	return p.LoadConfig(config)
 }
@@ -192,12 +197,26 @@ func newConfigFromCli(cliConfig *CliConfig) *Config {
 	}
 	if cliConfig.LocalDirectory != "" {
 		config.Policies = append(config.Policies, ConfigPolicy{LocalDirectory: cliConfig.LocalDirectory})
-	}
-	if cliConfig.GitRepository != "" {
+	} else {
+		gitRepository := cliConfig.GitRepository
+		gitBranch := cliConfig.GitBranch
+		gitDirectory := cliConfig.GitDirectory
+		if gitRepository == "" {
+			log.Debugf("using default git repository: %s", DefaultGitRepository)
+			gitRepository = DefaultGitRepository
+		}
+		if gitBranch == "" {
+			log.Debugf("using default git branch: %s", gitBranch)
+			gitBranch = DefaultGitBranch
+		}
+		if gitDirectory == "" {
+			log.Debugf("using default git directory: %s", gitDirectory)
+			gitDirectory = DefaultGitPolicyDir
+		}
 		config.Policies = append(config.Policies, ConfigPolicy{
-			GitRepository: cliConfig.GitRepository,
-			GitBranch:     cliConfig.GitBranch,
-			GitDirectory:  cliConfig.GitDirectory,
+			GitRepository: gitRepository,
+			GitBranch:     gitBranch,
+			GitDirectory:  gitDirectory,
 		})
 	}
 	return config

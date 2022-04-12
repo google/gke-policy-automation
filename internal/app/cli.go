@@ -27,6 +27,7 @@ type CliConfig struct {
 	GitBranch       string
 	GitDirectory    string
 	LocalDirectory  string
+	Operation       string
 }
 
 func NewPolicyAutomationCli(p PolicyAutomation) *cli.App {
@@ -52,6 +53,12 @@ func CreateClusterCommand(p PolicyAutomation) *cli.Command {
 				Name:  "review",
 				Usage: "Evaluate policies against given GKE cluster",
 				Flags: append([]cli.Flag{
+					&cli.BoolFlag{
+						Name:        "silent",
+						Aliases:     []string{"s"},
+						Usage:       "",
+						Destination: &config.SilentMode,
+					},
 					&cli.StringFlag{
 						Name:        "config",
 						Aliases:     []string{"c"},
@@ -84,7 +91,7 @@ func CreateClusterCommand(p PolicyAutomation) *cli.Command {
 				}, getPolicySourceFlags(config)...),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config); err != nil {
+					if err := p.LoadCliConfig(config, ValidateClusterReviewConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
@@ -102,7 +109,7 @@ func CreateVersionCommand(p PolicyAutomation) *cli.Command {
 		Usage: "Shows application version",
 		Action: func(c *cli.Context) error {
 			defer p.Close()
-			if err := p.LoadCliConfig(&CliConfig{}); err != nil {
+			if err := p.LoadCliConfig(&CliConfig{}, nil); err != nil {
 				cli.ShowSubcommandHelp(c)
 				return err
 			}
@@ -124,7 +131,7 @@ func CreatePolicyCheckCommand(p PolicyAutomation) *cli.Command {
 				Flags: (getPolicySourceFlags(config)),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config); err != nil {
+					if err := p.LoadCliConfig(config, nil); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
@@ -146,21 +153,16 @@ func getPolicySourceFlags(config *CliConfig) []cli.Flag {
 		&cli.StringFlag{
 			Name:        "git-policy-repo",
 			Usage:       "GIT repository with GKE policies",
-			Value:       DefaultGitRepository,
 			Destination: &config.GitRepository,
 		},
 		&cli.StringFlag{
 			Name:        "git-policy-branch",
 			Usage:       "Branch name for policies GIT repository",
-			Value:       DefaultGitBranch,
-			DefaultText: DefaultGitBranch,
 			Destination: &config.GitBranch,
 		},
 		&cli.StringFlag{
 			Name:        "git-policy-dir",
 			Usage:       "Directory name for policies from GIT repository",
-			Value:       DefaultGitPolicyDir,
-			DefaultText: DefaultGitPolicyDir,
 			Destination: &config.GitDirectory,
 		},
 	}

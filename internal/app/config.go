@@ -15,6 +15,9 @@
 package app
 
 import (
+	"fmt"
+
+	"github.com/google/gke-policy-automation/internal/log"
 	"gopkg.in/yaml.v2"
 )
 
@@ -25,6 +28,7 @@ const (
 )
 
 type ReadFileFn func(string) ([]byte, error)
+type ValidateConfig func(config Config) error
 
 type Config struct {
 	SilentMode      bool            `yaml:"silent"`
@@ -57,4 +61,61 @@ func ReadConfig(path string, readFn ReadFileFn) (*Config, error) {
 		return nil, err
 	}
 	return config, nil
+}
+
+func ValidateClusterReviewConfig(config Config) error {
+	if len(config.Clusters) < 1 {
+		return fmt.Errorf("there are no clusters defined")
+	}
+	var errors = make([]error, 0)
+	for i, cluster := range config.Clusters {
+		if cluster.ID == "" {
+			if cluster.Name == "" {
+				errors = append(errors, fmt.Errorf("cluster [%v]: name is not set", i))
+			}
+			if cluster.Location == "" {
+				errors = append(errors, fmt.Errorf("cluster [%v]: location is not set", i))
+			}
+			if cluster.Project == "" {
+				errors = append(errors, fmt.Errorf("cluster [%v]: project is not set", i))
+			}
+		} else {
+			if cluster.Name != "" || cluster.Location != "" || cluster.Project != "" {
+				errors = append(errors, fmt.Errorf("cluster [%v]: ID is set along with name or location or project", i))
+			}
+		}
+	}
+	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
+	if len(errors) > 0 {
+		for _, err := range errors {
+			log.Warnf("configuration validation error: %s", err)
+		}
+		return errors[0]
+	}
+	return nil
+}
+
+func validatePolicySourceConfig(policies []ConfigPolicy) []error {
+	if len(policies) < 1 {
+		return []error{fmt.Errorf("there are no policy sources defined")}
+	}
+	var errors = make([]error, 0)
+	for i, policy := range policies {
+		if policy.LocalDirectory == "" {
+			if policy.GitRepository == "" {
+				errors = append(errors, fmt.Errorf("policy source [%v]: repository URL is not set", i))
+			}
+			if policy.GitBranch == "" {
+				errors = append(errors, fmt.Errorf("policy source [%v]: repository branch is not set", i))
+			}
+			if policy.GitDirectory == "" {
+				errors = append(errors, fmt.Errorf("policy source [%v]: repository directory is not set", i))
+			}
+		} else {
+			if policy.GitRepository != "" || policy.GitBranch != "" || policy.GitDirectory != "" {
+				errors = append(errors, fmt.Errorf("policy source [%v]: local directory is set along with GIT parameters", i))
+			}
+		}
+	}
+	return errors
 }
