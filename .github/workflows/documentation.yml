@@ -34,3 +34,14 @@ jobs:
           python-version: 3.9
       - name: Check license headers
         run: python3 scripts/license_header_check.py $GITHUB_WORKSPACE
+      - name: Markdown linter
+        uses: avto-dev/markdown-lint@v1
+        with:
+          config: '.markdownlint.yml'
+          args: '**/*.md'
+      - name: Markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          check-modified-files-only: 'yes'
+          config-file: '.mlc_config.json'
+          base-branch: main
