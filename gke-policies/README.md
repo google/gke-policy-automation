@@ -90,8 +90,8 @@ violation[msg] {
 
 ## GKE Policy metadata
 
-GKE Policies use [OPA Annotations](https://www.openpolicyagent.org/docs/latest/annotations/#annotations) to specify
-policy metadata. The required metadata annotations for GKE policy:
+GKE Policies use [OPA Annotations](https://www.openpolicyagent.org/docs/latest/annotations/#annotations)
+to specify policy metadata. The required metadata annotations for GKE policy:
 
 * `title` - human readable name of a policy
 * `description` - more detailed description of a policy
