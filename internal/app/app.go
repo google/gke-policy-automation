@@ -16,6 +16,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -231,4 +232,12 @@ func (p *PolicyAutomationApp) printEvaluationResults(results []*policy.PolicyEva
 			result.ViolatedCount(),
 			result.ErroredCount())
 	}
+}
+
+func prettyJson(data interface{}) (string, error) {
+	val, err := json.MarshalIndent(data, "", "    ")
+	if err != nil {
+		return "", err
+	}
+	return string(val), nil
 }
