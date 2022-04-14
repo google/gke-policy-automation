@@ -29,3 +29,9 @@ violation[msg] {
   not input.node_pools[pool].network_config.pod_range
   msg := sprintf("Nodepool %q of the GKE cluster is not configured to use VPC-native routing", [input.node_pools[pool].name])
 }
+
+violation[msg] {
+  not input.ip_allocation_policy.use_ip_aliases.use_ip_aliases
+  input.ip_allocation_policy.use_ip_aliases.use_routes
+  msg := "the GKE cluster is not configured to use VPC-native routing"
+}
