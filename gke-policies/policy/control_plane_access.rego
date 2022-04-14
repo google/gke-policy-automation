@@ -32,10 +32,10 @@ violation[msg] {
 
 violation[msg] {
   not input.master_authorized_networks_config.cidr_blocks
-  msg := "GKE cluster's master authoreized networks has no CIDR blocks element" 
+  msg := "GKE cluster's master authorized networks has no CIDR blocks element" 
 }
 
 violation[msg] {
   count(input.master_authorized_networks_config.cidr_blocks) < 1
-  msg := "GKE cluster's master authoreized networks has no CIDR blocks defined" 
+  msg := "GKE cluster's master authorized networks has no CIDR blocks defined" 
 }

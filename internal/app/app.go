@@ -21,6 +21,7 @@ import (
 
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/log"
+	"github.com/google/gke-policy-automation/internal/outputs"
 	"github.com/google/gke-policy-automation/internal/policy"
 )
 
@@ -33,17 +34,18 @@ type PolicyAutomation interface {
 }
 
 type PolicyAutomationApp struct {
-	ctx    context.Context
-	config *ConfigNg
-	out    *Output
-	gke    *gke.GKEClient
+	ctx       context.Context
+	config    *ConfigNg
+	out       *outputs.Output
+	collector outputs.ValidationResultCollector
+	gke       *gke.GKEClient
 }
 
 func NewPolicyAutomationApp() PolicyAutomation {
 	return &PolicyAutomationApp{
 		ctx:    context.Background(),
 		config: &ConfigNg{},
-		out:    NewSilentOutput(),
+		out:    outputs.NewSilentOutput(),
 	}
 }
 
@@ -63,13 +65,16 @@ func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig) error {
 func (p *PolicyAutomationApp) LoadConfig(config *ConfigNg) (err error) {
 	p.config = config
 	if !p.config.SilentMode {
-		p.out = NewStdOutOutput()
+		p.out = outputs.NewStdOutOutput()
 	}
 	if p.config.CredentialsFile != "" {
 		p.gke, err = gke.NewClientWithCredentialsFile(p.ctx, p.config.CredentialsFile)
 	} else {
 		p.gke, err = gke.NewClient(p.ctx)
 	}
+	//p.collector = NewConsoleResultCollector(p.out)
+	p.collector = outputs.NewJSONResultCollector("sample1.json")
+	// ustawiac collector na podstawie konfiguracji
 	return
 }
 
@@ -123,7 +128,9 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 		evalResult.ClusterName = clusterName
 		evalResults = append(evalResults, evalResult)
 	}
-	p.printEvaluationResults(evalResults)
+	p.collector.RegisterResult(evalResults)
+	p.collector.Close()
+	// p.printEvaluationResults(evalResults)
 	return nil
 }
 
@@ -211,24 +218,4 @@ func getClusterName(c ConfigCluster) (string, error) {
 		return gke.GetClusterName(c.Project, c.Location, c.Name), nil
 	}
 	return "", fmt.Errorf("cluster mandatory parameters not set (project, name, location)")
-}
-
-func (p *PolicyAutomationApp) printEvaluationResults(results []*policy.PolicyEvaluationResult) {
-	for _, result := range results {
-		p.out.ColorPrintf("[yellow][bold]GKE Cluster [%s]:", result.ClusterName)
-		for _, group := range result.Groups() {
-			p.out.ColorPrintf("\n[light_gray][bold]Group %q:\n\n", group)
-			for _, policy := range result.Valid[group] {
-				p.out.ColorPrintf("[bold][green][\u2713] %s: [reset][green]%s\n", policy.Title, policy.Description)
-			}
-			for _, policy := range result.Violated[group] {
-				p.out.ColorPrintf("[bold][red][x] %s: [reset][red]%s. [bold]Violations:[reset][red] %s\n", policy.Title, policy.Description, policy.Violations[0])
-			}
-		}
-		p.out.ColorPrintf("\n[bold][green]GKE cluster [%s]: Policies: %d valid, %d violated, %d errored.\n",
-			result.ClusterName,
-			result.ValidCount(),
-			result.ViolatedCount(),
-			result.ErroredCount())
-	}
 }

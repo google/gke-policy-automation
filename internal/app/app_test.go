@@ -16,7 +16,6 @@ package app
 
 import (
 	"context"
-	"io"
 	"os"
 	"reflect"
 	"testing"
@@ -35,9 +34,6 @@ func TestNewPolicyAutomationApp(t *testing.T) {
 	}
 	if paApp.out == nil {
 		t.Fatalf("policyAutomationApp output is nil")
-	}
-	if !reflect.DeepEqual(paApp.out.w, io.Discard) {
-		t.Errorf("policyAutomationApp output is not io.Discard")
 	}
 }
 

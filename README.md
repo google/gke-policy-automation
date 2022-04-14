@@ -73,13 +73,13 @@ Custom policies can be provided via local directory or remote Github repository.
 Example for local directory:
 
 ```sh
-./gke-policy cluster review -p my_project -n my_cluster -l europe-central2-a  --local-policy-dir ./gke-policies/policy
+./gke-policy cluster review -p my_project -n my_cluster -l europe-central2-a  --local-policy-dir ./gke-policies
 ```
 
 and for Github repository:
 
 ```sh
-./gke-policy cluster review -p my_project -n my_cluster -l europe-central2-a  --git-policy-repo "https://github.com/google/gke-policy-automation" --git-policy-branch main --git-policy-dir gka-policies/policy
+./gke-policy cluster review -p my_project -n my_cluster -l europe-central2-a  --git-policy-repo "https://github.com/google/gke-policy-automation" --git-policy-branch main --git-policy-dir gke-policies/policy
 ```
 
 Policy definition validation can be done with command:
