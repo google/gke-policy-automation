@@ -131,7 +131,7 @@ func CreatePolicyCheckCommand(p PolicyAutomation) *cli.Command {
 				Flags: (getPolicySourceFlags(config)),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config, nil); err != nil {
+					if err := p.LoadCliConfig(config, ValidatePolicyCheckConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}

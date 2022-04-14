@@ -141,3 +141,36 @@ func TestValidateClusterReviewConfig_negative(t *testing.T) {
 		}
 	}
 }
+
+func TestValidatePolicyCheckConfig(t *testing.T) {
+	config := Config{
+		Policies: []ConfigPolicy{
+			{LocalDirectory: "./directory"},
+			{GitRepository: "repo", GitBranch: "main", GitDirectory: "./dir"},
+		},
+	}
+	if err := ValidatePolicyCheckConfig(config); err != nil {
+		t.Errorf("expected no error, got: %v", err)
+	}
+}
+
+func TestValidatePolicyCheckConfig_negative(t *testing.T) {
+	badConfigs := []Config{
+		{
+			Policies: []ConfigPolicy{
+				{LocalDirectory: "./directory"},
+				{GitRepository: "repo"},
+				{GitRepository: "repo", GitBranch: "main"},
+				{GitDirectory: "dir"},
+				{LocalDirectory: "./directory", GitRepository: "somerepo"},
+			},
+		},
+		{},
+	}
+
+	for i, config := range badConfigs {
+		if err := ValidatePolicyCheckConfig(config); err == nil {
+			t.Errorf("expected error on invalid cluster config [%d]", i)
+		}
+	}
+}

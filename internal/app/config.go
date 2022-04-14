@@ -95,6 +95,17 @@ func ValidateClusterReviewConfig(config Config) error {
 	return nil
 }
 
+func ValidatePolicyCheckConfig(config Config) error {
+	errors := validatePolicySourceConfig(config.Policies)
+	if len(errors) > 0 {
+		for _, err := range errors {
+			log.Warnf("configuration validation error: %s", err)
+		}
+		return errors[0]
+	}
+	return nil
+}
+
 func validatePolicySourceConfig(policies []ConfigPolicy) []error {
 	if len(policies) < 1 {
 		return []error{fmt.Errorf("there are no policy sources defined")}
