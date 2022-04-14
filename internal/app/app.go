@@ -72,9 +72,8 @@ func (p *PolicyAutomationApp) LoadConfig(config *ConfigNg) (err error) {
 	} else {
 		p.gke, err = gke.NewClient(p.ctx)
 	}
-	//p.collector = NewConsoleResultCollector(p.out)
-	p.collector = outputs.NewJSONResultCollector("sample1.json")
-	// ustawiac collector na podstawie konfiguracji
+	p.collector = outputs.NewConsoleResultCollector(p.out)
+	//p.collector = outputs.NewJSONResultCollector("sample1.json")
 	return
 }
 
