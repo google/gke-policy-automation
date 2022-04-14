@@ -49,6 +49,44 @@ func CreateClusterCommand(p PolicyAutomation) *cli.Command {
 		Usage: "Manage policies against GKE clusters",
 		Subcommands: []*cli.Command{
 			{
+				Name:  "json-data",
+				Usage: "Print cluster api raw json data",
+				Flags: append([]cli.Flag{
+					&cli.StringFlag{
+						Name:        "creds",
+						Usage:       "Path to GCP JSON credentials file",
+						Destination: &config.CredentialsFile,
+					},
+					&cli.StringFlag{
+						Name:        "project",
+						Aliases:     []string{"p"},
+						Usage:       "Name of a GCP project",
+						Destination: &config.ProjectName,
+					},
+					&cli.StringFlag{
+						Name:        "name",
+						Aliases:     []string{"n"},
+						Usage:       "Name of a GKE cluster to review",
+						Destination: &config.ClusterName,
+					},
+					&cli.StringFlag{
+						Name:        "location",
+						Aliases:     []string{"l"},
+						Usage:       "GKE cluster location (region or zone)",
+						Destination: &config.ClusterLocation,
+					},
+				}, getPolicySourceFlags(config)...),
+				Action: func(c *cli.Context) error {
+					defer p.Close()
+					if err := p.LoadCliConfig(config); err != nil {
+						cli.ShowSubcommandHelp(c)
+						return err
+					}
+					p.ClusterJSONData()
+					return nil
+				},
+			},
+			{
 				Name:  "review",
 				Usage: "Evaluate policies against given GKE cluster",
 				Flags: append([]cli.Flag{

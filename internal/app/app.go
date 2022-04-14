@@ -29,6 +29,7 @@ type PolicyAutomation interface {
 	LoadCliConfig(cliConfig *CliConfig) error
 	Close() error
 	ClusterReview() error
+	ClusterJSONData() error
 	Version() error
 	PolicyCheck() error
 }
@@ -125,6 +126,36 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 		evalResults = append(evalResults, evalResult)
 	}
 	p.printEvaluationResults(evalResults)
+	return nil
+}
+
+func (p *PolicyAutomationApp) ClusterJSONData() error {
+	for _, cluster := range p.config.Clusters {
+		clusterName, err := getClusterName(cluster)
+		if err != nil {
+			p.out.ErrorPrint("could not create cluster path", err)
+			log.Errorf("could not create cluster path: %s", err)
+			return err
+		}
+		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [projects/%s/locations/%s/clusters/%s]\n",
+			cluster.Project,
+			cluster.Location,
+			cluster.Name)
+		cluster, err := p.gke.GetCluster(clusterName)
+		if err != nil {
+			p.out.ErrorPrint("could not fetch the cluster details", err)
+			log.Errorf("could not fetch cluster details: %s", err)
+			return err
+		}
+		p.out.ColorPrintf("[light_gray][bold]Printing GKE cluster JSON data... [%s]\n",
+			cluster.Id)
+		data, error := prettyJson(cluster)
+		if error != nil {
+			log.Errorf("could not print cluster data: %s", err)
+			return err
+		}
+		p.out.Printf("%s\n", (data))
+	}
 	return nil
 }
 
