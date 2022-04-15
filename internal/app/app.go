@@ -25,7 +25,7 @@ import (
 )
 
 type PolicyAutomation interface {
-	LoadCliConfig(cliConfig *CliConfig) error
+	LoadCliConfig(cliConfig *CliConfig, validateFn ValidateConfig) error
 	Close() error
 	ClusterReview() error
 	Version() error
@@ -34,7 +34,7 @@ type PolicyAutomation interface {
 
 type PolicyAutomationApp struct {
 	ctx    context.Context
-	config *ConfigNg
+	config *Config
 	out    *Output
 	gke    *gke.GKEClient
 }
@@ -42,13 +42,13 @@ type PolicyAutomationApp struct {
 func NewPolicyAutomationApp() PolicyAutomation {
 	return &PolicyAutomationApp{
 		ctx:    context.Background(),
-		config: &ConfigNg{},
+		config: &Config{},
 		out:    NewSilentOutput(),
 	}
 }
 
-func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig) error {
-	var config *ConfigNg
+func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, validateFn ValidateConfig) error {
+	var config *Config
 	var err error
 	if cliConfig.ConfigFile != "" {
 		if config, err = newConfigFromFile(cliConfig.ConfigFile); err != nil {
@@ -57,10 +57,15 @@ func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig) error {
 	} else {
 		config = newConfigFromCli(cliConfig)
 	}
+	if validateFn != nil {
+		if err := validateFn(*config); err != nil {
+			return err
+		}
+	}
 	return p.LoadConfig(config)
 }
 
-func (p *PolicyAutomationApp) LoadConfig(config *ConfigNg) (err error) {
+func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 	p.config = config
 	if !p.config.SilentMode {
 		p.out = NewStdOutOutput()
@@ -175,12 +180,12 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 	return policyFiles, nil
 }
 
-func newConfigFromFile(path string) (*ConfigNg, error) {
+func newConfigFromFile(path string) (*Config, error) {
 	return ReadConfig(path, os.ReadFile)
 }
 
-func newConfigFromCli(cliConfig *CliConfig) *ConfigNg {
-	config := &ConfigNg{}
+func newConfigFromCli(cliConfig *CliConfig) *Config {
+	config := &Config{}
 	config.SilentMode = cliConfig.SilentMode
 	config.CredentialsFile = cliConfig.CredentialsFile
 	config.Clusters = []ConfigCluster{
@@ -190,14 +195,19 @@ func newConfigFromCli(cliConfig *CliConfig) *ConfigNg {
 			Project:  cliConfig.ProjectName,
 		},
 	}
-	if cliConfig.LocalDirectory != "" {
-		config.Policies = append(config.Policies, ConfigPolicy{LocalDirectory: cliConfig.LocalDirectory})
-	}
-	if cliConfig.GitRepository != "" {
+	if cliConfig.LocalDirectory == "" && cliConfig.GitRepository == "" {
+		log.Debugf("using default git policy source: repo %s, branch %s, directory %s", DefaultGitRepository, DefaultGitBranch, DefaultGitPolicyDir)
 		config.Policies = append(config.Policies, ConfigPolicy{
-			GitRepository: cliConfig.GitRepository,
-			GitBranch:     cliConfig.GitBranch,
-			GitDirectory:  cliConfig.GitDirectory,
+			GitRepository: DefaultGitRepository,
+			GitBranch:     DefaultGitBranch,
+			GitDirectory:  DefaultGitPolicyDir,
+		})
+	} else {
+		config.Policies = append(config.Policies, ConfigPolicy{
+			LocalDirectory: cliConfig.LocalDirectory,
+			GitRepository:  cliConfig.GitRepository,
+			GitBranch:      cliConfig.GitBranch,
+			GitDirectory:   cliConfig.GitDirectory,
 		})
 	}
 	return config
