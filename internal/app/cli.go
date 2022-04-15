@@ -27,7 +27,6 @@ type CliConfig struct {
 	GitBranch       string
 	GitDirectory    string
 	LocalDirectory  string
-	Operation       string
 }
 
 func NewPolicyAutomationCli(p PolicyAutomation) *cli.App {

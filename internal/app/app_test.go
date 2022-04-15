@@ -102,7 +102,7 @@ func TestLoadConfig(t *testing.T) {
 	}
 }
 
-func TestNewConfigFromCli_base(t *testing.T) {
+func TestNewConfigFromCli(t *testing.T) {
 	input := &CliConfig{
 		SilentMode:      true,
 		CredentialsFile: "/path/to/creds.json",
@@ -139,19 +139,6 @@ func TestNewConfigFromCli_base(t *testing.T) {
 	if policySrc.LocalDirectory != input.LocalDirectory {
 		t.Errorf("policy localDirectory = %v; want %v", policySrc.LocalDirectory, input.LocalDirectory)
 	}
-}
-
-func TestNewConfigFromCli_gitPolicySrc(t *testing.T) {
-	input := &CliConfig{
-		GitRepository: "https://github.com/test/test",
-		GitBranch:     "main",
-		GitDirectory:  "policies",
-	}
-	config := newConfigFromCli(input)
-	if len(config.Policies) != 1 {
-		t.Fatalf("len(policies) = %v; want %v", len(config.Policies), 1)
-	}
-	policySrc := config.Policies[0]
 	if policySrc.GitRepository != input.GitRepository {
 		t.Errorf("policy gitRepository = %v; want %v", policySrc.LocalDirectory, input.GitRepository)
 	}
@@ -160,6 +147,24 @@ func TestNewConfigFromCli_gitPolicySrc(t *testing.T) {
 	}
 	if policySrc.GitDirectory != input.GitDirectory {
 		t.Errorf("policy gitDirectory = %v; want %v", policySrc.GitDirectory, input.GitDirectory)
+	}
+}
+
+func TestNewConfigFromCli_defaults(t *testing.T) {
+	input := &CliConfig{}
+	config := newConfigFromCli(input)
+	if len(config.Policies) != 1 {
+		t.Fatalf("len(policies) = %v; want %v", len(config.Policies), 1)
+	}
+	policySrc := config.Policies[0]
+	if policySrc.GitRepository != DefaultGitRepository {
+		t.Errorf("policy gitRepository = %v; want %v (default)", policySrc.LocalDirectory, DefaultGitRepository)
+	}
+	if policySrc.GitBranch != DefaultGitBranch {
+		t.Errorf("policy gitBranch = %v; want %v (default)", policySrc.GitBranch, DefaultGitBranch)
+	}
+	if policySrc.GitDirectory != DefaultGitPolicyDir {
+		t.Errorf("policy gitDirectory = %v; want %v (default)", policySrc.GitDirectory, DefaultGitPolicyDir)
 	}
 }
 
