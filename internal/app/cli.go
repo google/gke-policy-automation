@@ -49,42 +49,26 @@ func CreateClusterCommand(p PolicyAutomation) *cli.Command {
 		Usage: "Manage policies against GKE clusters",
 		Subcommands: []*cli.Command{
 			{
-				Name:  "review",
-				Usage: "Evaluate policies against given GKE cluster",
-				Flags: append([]cli.Flag{
-					&cli.StringFlag{
-						Name:        "config",
-						Aliases:     []string{"c"},
-						Usage:       "Path to the configuration file",
-						Destination: &config.ConfigFile,
-					},
-					&cli.StringFlag{
-						Name:        "creds",
-						Usage:       "Path to GCP JSON credentials file",
-						Destination: &config.CredentialsFile,
-					},
-					&cli.StringFlag{
-						Name:        "project",
-						Aliases:     []string{"p"},
-						Usage:       "Name of a GCP project",
-						Destination: &config.ProjectName,
-					},
-					&cli.StringFlag{
-						Name:        "name",
-						Aliases:     []string{"n"},
-						Usage:       "Name of a GKE cluster to review",
-						Destination: &config.ClusterName,
-					},
-					&cli.StringFlag{
-						Name:        "location",
-						Aliases:     []string{"l"},
-						Usage:       "GKE cluster location (region or zone)",
-						Destination: &config.ClusterLocation,
-					},
-				}, getPolicySourceFlags(config)...),
+				Name:  "print",
+				Usage: "Print cluster api raw json data",
+				Flags: getClusterSourceFlags(config),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config); err != nil {
+					if err := p.LoadCliConfig(config, ValidateClusterJSONDataConfig); err != nil {
+						cli.ShowSubcommandHelp(c)
+						return err
+					}
+					p.ClusterJSONData()
+					return nil
+				},
+			},
+			{
+				Name:  "review",
+				Usage: "Evaluate policies against given GKE cluster",
+				Flags: append(getClusterSourceFlags(config), getPolicySourceFlags(config)...),
+				Action: func(c *cli.Context) error {
+					defer p.Close()
+					if err := p.LoadCliConfig(config, ValidateClusterReviewConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
@@ -102,7 +86,7 @@ func CreateVersionCommand(p PolicyAutomation) *cli.Command {
 		Usage: "Shows application version",
 		Action: func(c *cli.Context) error {
 			defer p.Close()
-			if err := p.LoadCliConfig(&CliConfig{}); err != nil {
+			if err := p.LoadCliConfig(&CliConfig{}, nil); err != nil {
 				cli.ShowSubcommandHelp(c)
 				return err
 			}
@@ -124,7 +108,7 @@ func CreatePolicyCheckCommand(p PolicyAutomation) *cli.Command {
 				Flags: (getPolicySourceFlags(config)),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config); err != nil {
+					if err := p.LoadCliConfig(config, ValidatePolicyCheckConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
@@ -132,6 +116,46 @@ func CreatePolicyCheckCommand(p PolicyAutomation) *cli.Command {
 					return nil
 				},
 			},
+		},
+	}
+}
+
+func getClusterSourceFlags(config *CliConfig) []cli.Flag {
+	return []cli.Flag{
+		&cli.BoolFlag{
+			Name:        "silent",
+			Aliases:     []string{"s"},
+			Usage:       "",
+			Destination: &config.SilentMode,
+		},
+		&cli.StringFlag{
+			Name:        "config",
+			Aliases:     []string{"c"},
+			Usage:       "Path to the configuration file",
+			Destination: &config.ConfigFile,
+		},
+		&cli.StringFlag{
+			Name:        "creds",
+			Usage:       "Path to GCP JSON credentials file",
+			Destination: &config.CredentialsFile,
+		},
+		&cli.StringFlag{
+			Name:        "project",
+			Aliases:     []string{"p"},
+			Usage:       "Name of a GCP project",
+			Destination: &config.ProjectName,
+		},
+		&cli.StringFlag{
+			Name:        "name",
+			Aliases:     []string{"n"},
+			Usage:       "Name of a GKE cluster to review",
+			Destination: &config.ClusterName,
+		},
+		&cli.StringFlag{
+			Name:        "location",
+			Aliases:     []string{"l"},
+			Usage:       "GKE cluster location (region or zone)",
+			Destination: &config.ClusterLocation,
 		},
 	}
 }
@@ -146,21 +170,16 @@ func getPolicySourceFlags(config *CliConfig) []cli.Flag {
 		&cli.StringFlag{
 			Name:        "git-policy-repo",
 			Usage:       "GIT repository with GKE policies",
-			Value:       DefaultGitRepository,
 			Destination: &config.GitRepository,
 		},
 		&cli.StringFlag{
 			Name:        "git-policy-branch",
 			Usage:       "Branch name for policies GIT repository",
-			Value:       DefaultGitBranch,
-			DefaultText: DefaultGitBranch,
 			Destination: &config.GitBranch,
 		},
 		&cli.StringFlag{
 			Name:        "git-policy-dir",
 			Usage:       "Directory name for policies from GIT repository",
-			Value:       DefaultGitPolicyDir,
-			DefaultText: DefaultGitPolicyDir,
 			Destination: &config.GitDirectory,
 		},
 	}
