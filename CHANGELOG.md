@@ -9,7 +9,6 @@ FEATURES:
 * Cluster JSON data print command ([#37](https://github.com/google/gke-policy-automation/pull/37))
 * Policy check command ([#7](https://github.com/google/gke-policy-automation/issues/7))
 
-
 IMPROVEMENTS:
 
 * Mandatory params check and color fix ([#26](https://github.com/google/gke-policy-automation/pull/26))
