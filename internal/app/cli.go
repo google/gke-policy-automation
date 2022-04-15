@@ -54,7 +54,7 @@ func CreateClusterCommand(p PolicyAutomation) *cli.Command {
 				Flags: append(getClusterSourceFlags(config), getPolicySourceFlags(config)...),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config); err != nil {
+					if err := p.LoadCliConfig(config, ValidateClusterJSONDataConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
