@@ -16,6 +16,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"reflect"
@@ -45,7 +46,7 @@ func TestLoadCliConfig_file(t *testing.T) {
 	testConfigPath := "./test-fixtures/test_config.yaml"
 	cliConfig := &CliConfig{ConfigFile: testConfigPath}
 	pa := PolicyAutomationApp{ctx: context.Background()}
-	err := pa.LoadCliConfig(cliConfig)
+	err := pa.LoadCliConfig(cliConfig, nil)
 	if err != nil {
 		t.Fatalf("err is not nil; want nil; err = %s", err)
 	}
@@ -54,7 +55,7 @@ func TestLoadCliConfig_file(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read test config file err is not nil; want nil; err = %s", err)
 	}
-	config := &ConfigNg{}
+	config := &Config{}
 	err = yaml.Unmarshal(data, config)
 	if err != nil {
 		t.Fatalf("unmarshal test config file err is not nil; want nil; err = %s", err)
@@ -64,8 +65,24 @@ func TestLoadCliConfig_file(t *testing.T) {
 	}
 }
 
+func TestLoadCliConfig_with_validation(t *testing.T) {
+	validationErrMsg := "wrong validation"
+	validateFnMock := func(config Config) error {
+		return fmt.Errorf(validationErrMsg)
+	}
+	cliConfig := &CliConfig{}
+	pa := PolicyAutomationApp{ctx: context.Background()}
+	err := pa.LoadCliConfig(cliConfig, validateFnMock)
+	if err == nil {
+		t.Fatalf("expected error for loadCliConfig; got nil")
+	}
+	if err.Error() != validationErrMsg {
+		t.Fatalf("error msg = %v; want %v", err.Error(), validationErrMsg)
+	}
+}
+
 func TestLoadConfig(t *testing.T) {
-	config := &ConfigNg{
+	config := &Config{
 		CredentialsFile: "./test-fixtures/test_credentials.json",
 	}
 	pa := PolicyAutomationApp{ctx: context.Background()}
@@ -115,20 +132,57 @@ func TestNewConfigFromCli(t *testing.T) {
 	if config.Clusters[0].Project != input.ProjectName {
 		t.Errorf("cluster[0] project = %v; want %v", config.Clusters[0].Project, input.ProjectName)
 	}
-	if len(config.Policies) != 2 {
-		t.Fatalf("len(policies) = %v; want %v", len(config.Policies), 2)
+	if len(config.Policies) != 1 {
+		t.Fatalf("len(policies) = %v; want %v", len(config.Policies), 1)
 	}
-	if config.Policies[0].LocalDirectory != input.LocalDirectory {
-		t.Errorf("policies[0] localDirectory = %v; want %v", config.Policies[0].LocalDirectory, input.LocalDirectory)
+	policySrc := config.Policies[0]
+	if policySrc.LocalDirectory != input.LocalDirectory {
+		t.Errorf("policy localDirectory = %v; want %v", policySrc.LocalDirectory, input.LocalDirectory)
 	}
-	if config.Policies[1].GitRepository != input.GitRepository {
-		t.Errorf("policies[1] gitRepository = %v; want %v", config.Policies[1].GitRepository, input.GitRepository)
+	if policySrc.GitRepository != input.GitRepository {
+		t.Errorf("policy gitRepository = %v; want %v", policySrc.LocalDirectory, input.GitRepository)
 	}
-	if config.Policies[1].GitBranch != input.GitBranch {
-		t.Errorf("policies[1] gitBranch = %v; want %v", config.Policies[1].GitBranch, input.GitBranch)
+	if policySrc.GitBranch != input.GitBranch {
+		t.Errorf("policy gitBranch = %v; want %v", policySrc.GitBranch, input.GitBranch)
 	}
-	if config.Policies[1].GitDirectory != input.GitDirectory {
-		t.Errorf("policies[1] gitDirectory = %v; want %v", config.Policies[1].GitDirectory, input.GitDirectory)
+	if policySrc.GitDirectory != input.GitDirectory {
+		t.Errorf("policy gitDirectory = %v; want %v", policySrc.GitDirectory, input.GitDirectory)
+	}
+}
+
+func TestNewConfigFromCli_defaults(t *testing.T) {
+	input := &CliConfig{}
+	config := newConfigFromCli(input)
+	if len(config.Policies) != 1 {
+		t.Fatalf("len(policies) = %v; want %v", len(config.Policies), 1)
+	}
+	policySrc := config.Policies[0]
+	if policySrc.GitRepository != DefaultGitRepository {
+		t.Errorf("policy gitRepository = %v; want %v (default)", policySrc.LocalDirectory, DefaultGitRepository)
+	}
+	if policySrc.GitBranch != DefaultGitBranch {
+		t.Errorf("policy gitBranch = %v; want %v (default)", policySrc.GitBranch, DefaultGitBranch)
+	}
+	if policySrc.GitDirectory != DefaultGitPolicyDir {
+		t.Errorf("policy gitDirectory = %v; want %v (default)", policySrc.GitDirectory, DefaultGitPolicyDir)
+	}
+}
+
+func TestNewConfigFromCli_defaultPolicySrc(t *testing.T) {
+	input := &CliConfig{}
+	config := newConfigFromCli(input)
+	if len(config.Policies) != 1 {
+		t.Fatalf("len(policies) = %v; want %v", len(config.Policies), 1)
+	}
+	policySrc := config.Policies[0]
+	if policySrc.GitRepository != DefaultGitRepository {
+		t.Errorf("policy gitRepository = %v; want %v", policySrc.GitRepository, DefaultGitRepository)
+	}
+	if policySrc.GitBranch != DefaultGitBranch {
+		t.Errorf("policy gitBranch = %v; want %v", policySrc.GitBranch, DefaultGitBranch)
+	}
+	if policySrc.GitDirectory != DefaultGitPolicyDir {
+		t.Errorf("policy gitDirectory = %v; want %v", policySrc.GitDirectory, DefaultGitPolicyDir)
 	}
 }
 
@@ -156,107 +210,3 @@ func TestGetClusterName_negative(t *testing.T) {
 		t.Errorf("error is nil; want error")
 	}
 }
-
-/*
-func TestCreateReviewApp(t *testing.T) {
-	clusterName := "testCluster"
-	clusterLocation := "europe-warsaw2"
-	projectName := "testProject"
-	credsFile := "./creds"
-	gitRepo := "https://github.com/user/repo"
-	gitBranch := "my-branch"
-	gitDirectory := "rego-remote"
-	localDirectory := "rego-local"
-
-	args := []string{"gke-review",
-		"-c", clusterName, "-l", clusterLocation,
-		"-p", projectName,
-		"-creds", credsFile,
-		"-git-policy-repo", gitRepo,
-		"-git-policy-branch", gitBranch,
-		"-git-policy-dir", gitDirectory,
-		"-local-policy-dir", localDirectory,
-		"-s",
-	}
-	reviewMock := func(c *Config) {
-		if c.ClusterName != clusterName {
-			t.Errorf("clusterName = %s; want %s", c.ClusterName, clusterName)
-		}
-		if c.ClusterLocation != clusterLocation {
-			t.Errorf("clusterLocation = %s; want %s", c.ClusterLocation, clusterLocation)
-		}
-		if c.ProjectName != projectName {
-			t.Errorf("projectName = %s; want %s", c.ProjectName, projectName)
-		}
-		if c.CredentialsFile != credsFile {
-			t.Errorf("CredentialsFile = %s; want %s", c.CredentialsFile, credsFile)
-		}
-		if !c.SilentMode {
-			t.Errorf("SilentMode = %v; want true", c.SilentMode)
-		}
-		if c.GitRepository != gitRepo {
-			t.Errorf("GitRepository = %s; want %s", c.GitRepository, gitRepo)
-		}
-		if c.GitBranch != gitBranch {
-			t.Errorf("GitBranch = %s; want %s", c.GitBranch, gitBranch)
-		}
-		if c.GitDirectory != gitDirectory {
-			t.Errorf("GitDirectory = %s; want %s", c.GitDirectory, gitDirectory)
-		}
-		if c.LocalDirectory != localDirectory {
-			t.Errorf("LocalDirectory = %s; want %s", c.LocalDirectory, localDirectory)
-		}
-	}
-	err := CreateReviewApp(reviewMock).Run(args)
-	if err != nil {
-		t.Fatalf("error when running the review application: %v", err)
-	}
-}
-
-func TestCreateReviewApp_Defaults(t *testing.T) {
-	args := []string{"gke-review",
-		"-c", "testCluster", "-l", "europe-warsaw2",
-		"-p", "testProject"}
-
-	reviewMock := func(c *Config) {
-		if c.GitRepository != DefaultGitRepository {
-			t.Errorf("GitRepository = %s; want %s", c.GitRepository, DefaultGitRepository)
-		}
-		if c.GitBranch != DefaultGitBranch {
-			t.Errorf("GitBranch = %s; want %s", c.GitBranch, DefaultGitBranch)
-		}
-		if c.GitDirectory != DefaultGitPolicyDir {
-			t.Errorf("GitDirectory = %s; want %s", c.GitDirectory, DefaultGitPolicyDir)
-		}
-	}
-	err := CreateReviewApp(reviewMock).Run(args)
-	if err != nil {
-		t.Fatalf("error when running the review application: %v", err)
-	}
-}
-
-func TestGetPolicySource(t *testing.T) {
-	c := &Config{
-		GitRepository: DefaultGitRepository,
-		GitBranch:     DefaultGitBranch,
-		GitDirectory:  DefaultGitPolicyDir,
-	}
-	src := getPolicySource(c)
-	if _, ok := src.(*policy.GitPolicySource); !ok {
-		t.Errorf("policySource is not *GitPolicySource; want not *GitPolicySource")
-	}
-}
-
-func TestGetPolicySource_local(t *testing.T) {
-	c := &Config{
-		GitRepository:  DefaultGitRepository,
-		GitBranch:      DefaultGitBranch,
-		GitDirectory:   DefaultGitPolicyDir,
-		LocalDirectory: "some-local-dir",
-	}
-	src := getPolicySource(c)
-	if _, ok := src.(*policy.LocalPolicySource); !ok {
-		t.Errorf("policySource is not *LocalPolicySource; want not *LocalPolicySource")
-	}
-}
-*/

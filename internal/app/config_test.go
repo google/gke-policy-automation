@@ -95,3 +95,82 @@ func TestReadConfig(t *testing.T) {
 		t.Errorf("config policies[1] gitDirectory = %v; want %v", config.Policies[1].GitDirectory, policy2Directory)
 	}
 }
+
+func TestValidateClusterReviewConfig(t *testing.T) {
+	config := Config{
+		Clusters: []ConfigCluster{
+			{ID: "some/cluster/id"},
+			{Name: "cluster", Location: "region", Project: "project"},
+		},
+		Policies: []ConfigPolicy{
+			{LocalDirectory: "./directory"},
+			{GitRepository: "repo", GitBranch: "main", GitDirectory: "./dir"},
+		},
+	}
+	if err := ValidateClusterReviewConfig(config); err != nil {
+		t.Errorf("expected no error, got: %v", err)
+	}
+}
+
+func TestValidateClusterReviewConfig_negative(t *testing.T) {
+	badConfigs := []Config{
+		{
+			Clusters: []ConfigCluster{
+				{ID: "some/cluster/id", Name: "someName"},
+				{Name: "someName"},
+				{Name: "someName", Location: "location"},
+				{Project: "project"},
+			},
+			Policies: []ConfigPolicy{
+				{LocalDirectory: "./directory"},
+				{GitRepository: "repo"},
+				{GitRepository: "repo", GitBranch: "main"},
+				{GitDirectory: "dir"},
+				{LocalDirectory: "./directory", GitRepository: "somerepo"},
+			},
+		},
+		{
+			Clusters: []ConfigCluster{{ID: "Some/cluster"}},
+		},
+		{},
+	}
+
+	for i, config := range badConfigs {
+		if err := ValidateClusterReviewConfig(config); err == nil {
+			t.Errorf("expected error on invalid cluster config [%d]", i)
+		}
+	}
+}
+
+func TestValidatePolicyCheckConfig(t *testing.T) {
+	config := Config{
+		Policies: []ConfigPolicy{
+			{LocalDirectory: "./directory"},
+			{GitRepository: "repo", GitBranch: "main", GitDirectory: "./dir"},
+		},
+	}
+	if err := ValidatePolicyCheckConfig(config); err != nil {
+		t.Errorf("expected no error, got: %v", err)
+	}
+}
+
+func TestValidatePolicyCheckConfig_negative(t *testing.T) {
+	badConfigs := []Config{
+		{
+			Policies: []ConfigPolicy{
+				{LocalDirectory: "./directory"},
+				{GitRepository: "repo"},
+				{GitRepository: "repo", GitBranch: "main"},
+				{GitDirectory: "dir"},
+				{LocalDirectory: "./directory", GitRepository: "somerepo"},
+			},
+		},
+		{},
+	}
+
+	for i, config := range badConfigs {
+		if err := ValidatePolicyCheckConfig(config); err == nil {
+			t.Errorf("expected error on invalid cluster config [%d]", i)
+		}
+	}
+}
