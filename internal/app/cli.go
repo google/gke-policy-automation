@@ -51,31 +51,7 @@ func CreateClusterCommand(p PolicyAutomation) *cli.Command {
 			{
 				Name:  "json-data",
 				Usage: "Print cluster api raw json data",
-				Flags: append([]cli.Flag{
-					&cli.StringFlag{
-						Name:        "creds",
-						Usage:       "Path to GCP JSON credentials file",
-						Destination: &config.CredentialsFile,
-					},
-					&cli.StringFlag{
-						Name:        "project",
-						Aliases:     []string{"p"},
-						Usage:       "Name of a GCP project",
-						Destination: &config.ProjectName,
-					},
-					&cli.StringFlag{
-						Name:        "name",
-						Aliases:     []string{"n"},
-						Usage:       "Name of a GKE cluster to review",
-						Destination: &config.ClusterName,
-					},
-					&cli.StringFlag{
-						Name:        "location",
-						Aliases:     []string{"l"},
-						Usage:       "GKE cluster location (region or zone)",
-						Destination: &config.ClusterLocation,
-					},
-				}, getPolicySourceFlags(config)...),
+				Flags: append(getClusterSourceFlags(config), getPolicySourceFlags(config)...),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
 					if err := p.LoadCliConfig(config); err != nil {
@@ -89,37 +65,7 @@ func CreateClusterCommand(p PolicyAutomation) *cli.Command {
 			{
 				Name:  "review",
 				Usage: "Evaluate policies against given GKE cluster",
-				Flags: append([]cli.Flag{
-					&cli.StringFlag{
-						Name:        "config",
-						Aliases:     []string{"c"},
-						Usage:       "Path to the configuration file",
-						Destination: &config.ConfigFile,
-					},
-					&cli.StringFlag{
-						Name:        "creds",
-						Usage:       "Path to GCP JSON credentials file",
-						Destination: &config.CredentialsFile,
-					},
-					&cli.StringFlag{
-						Name:        "project",
-						Aliases:     []string{"p"},
-						Usage:       "Name of a GCP project",
-						Destination: &config.ProjectName,
-					},
-					&cli.StringFlag{
-						Name:        "name",
-						Aliases:     []string{"n"},
-						Usage:       "Name of a GKE cluster to review",
-						Destination: &config.ClusterName,
-					},
-					&cli.StringFlag{
-						Name:        "location",
-						Aliases:     []string{"l"},
-						Usage:       "GKE cluster location (region or zone)",
-						Destination: &config.ClusterLocation,
-					},
-				}, getPolicySourceFlags(config)...),
+				Flags: append(getClusterSourceFlags(config), getPolicySourceFlags(config)...),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
 					if err := p.LoadCliConfig(config); err != nil {
@@ -170,6 +116,40 @@ func CreatePolicyCheckCommand(p PolicyAutomation) *cli.Command {
 					return nil
 				},
 			},
+		},
+	}
+}
+
+func getClusterSourceFlags(config *CliConfig) []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:        "config",
+			Aliases:     []string{"c"},
+			Usage:       "Path to the configuration file",
+			Destination: &config.ConfigFile,
+		},
+		&cli.StringFlag{
+			Name:        "creds",
+			Usage:       "Path to GCP JSON credentials file",
+			Destination: &config.CredentialsFile,
+		},
+		&cli.StringFlag{
+			Name:        "project",
+			Aliases:     []string{"p"},
+			Usage:       "Name of a GCP project",
+			Destination: &config.ProjectName,
+		},
+		&cli.StringFlag{
+			Name:        "name",
+			Aliases:     []string{"n"},
+			Usage:       "Name of a GKE cluster to review",
+			Destination: &config.ClusterName,
+		},
+		&cli.StringFlag{
+			Name:        "location",
+			Aliases:     []string{"l"},
+			Usage:       "GKE cluster location (region or zone)",
+			Destination: &config.ClusterLocation,
 		},
 	}
 }
