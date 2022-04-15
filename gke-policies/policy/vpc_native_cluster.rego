@@ -26,12 +26,11 @@ valid {
 }
 
 violation[msg] {
-  not input.node_pools[pool].network_config.pod_range
+  not input.node_pools[pool].network_config.pod_ipv4_cidr_block
   msg := sprintf("Nodepool %q of the GKE cluster is not configured to use VPC-native routing", [input.node_pools[pool].name])
 }
 
 violation[msg] {
-  not input.ip_allocation_policy.use_ip_aliases.use_ip_aliases
-  input.ip_allocation_policy.use_ip_aliases.use_routes
+  not input.ip_allocation_policy.use_ip_aliases
   msg := "the GKE cluster is not configured to use VPC-native routing"
 }

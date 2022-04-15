@@ -21,9 +21,17 @@ package gke.policy.vpc_native_cluster
 
 
 test_vpc_native_cluster_with_pods_range {
-    valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "network_config": { "pod_range": "gke-cluster-1-vpc-pods-273c12cd", "pod_ipv4_cidr_block": "10.48.0.0/14" }, "management": {"auto_repair": true, "auto_upgrade": true }}]}
+    valid with input as {"name": "cluster-not-repairing", "ip_allocation_policy": {"use_ip_aliases": true}, "node_pools": [{"name": "default", "network_config": { "pod_range": "gke-cluster-1-vpc-pods-273c12cd", "pod_ipv4_cidr_block": "10.48.0.0/14" }, "management": {"auto_repair": true, "auto_upgrade": true }}]}
 }
 
 test_vpc_native_cluster_without_pods_range {
     not valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}
+}
+
+test_vpc_native_cluster_using_ip_aliases {
+    valid with input as {"name": "cluster-not-repairing", "ip_allocation_policy": {"use_ip_aliases": true}}
+}
+
+test_vpc_native_cluster_not_using_ip_aliases {
+    not valid with input as {"name": "cluster-not-repairing", "ip_allocation_policy": {"use_ip_aliases": false}}
 }
