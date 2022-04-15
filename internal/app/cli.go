@@ -49,9 +49,9 @@ func CreateClusterCommand(p PolicyAutomation) *cli.Command {
 		Usage: "Manage policies against GKE clusters",
 		Subcommands: []*cli.Command{
 			{
-				Name:  "json-data",
+				Name:  "print",
 				Usage: "Print cluster api raw json data",
-				Flags: append(getClusterSourceFlags(config), getPolicySourceFlags(config)...),
+				Flags: getClusterSourceFlags(config),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
 					if err := p.LoadCliConfig(config, ValidateClusterJSONDataConfig); err != nil {
