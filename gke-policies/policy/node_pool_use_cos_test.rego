@@ -18,12 +18,16 @@ test_node_pool_using_cos {
     valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos"}}]}
 }
 
-test_node_pool_using_cos_prefix {
+test_node_pool_using_cos_containerd {
     valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos_containerd"}}]}
 }
 
 test_node_pool_using_cos_uppercase {
-    valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "COS_DIFFERENT_KIND"}}]}
+    valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "COS"}}]}
+}
+
+test_node_pool_using_cos_containerd_uppercase {
+    valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "COS_CONTAINERD"}}]}
 }
 
 test_node_pool_not_using_cos {

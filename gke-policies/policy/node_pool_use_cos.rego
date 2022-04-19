@@ -19,6 +19,8 @@
 #   group: Security
 package gke.policy.node_pool_use_cos
 
+import future.keywords.in
+
 default valid = false
 
 valid {
@@ -26,6 +28,6 @@ valid {
 }
 
 violation[msg] {  
-  not startswith(lower(input.node_pools[pool].config.image_type), "cos")
+  not lower(input.node_pools[pool].config.image_type) in {"cos", "cos_containerd"}
   msg := sprintf("Node pool %q does not use Container-Optimized OS.", [input.node_pools[pool].name])
 } 
