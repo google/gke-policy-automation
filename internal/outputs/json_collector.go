@@ -17,6 +17,7 @@ package outputs
 import (
 	"encoding/json"
 	"os"
+	"time"
 
 	"github.com/google/gke-policy-automation/internal/policy"
 )
@@ -42,7 +43,9 @@ func (p *JSONResultCollector) RegisterResult(results []*policy.PolicyEvaluationR
 
 func (p *JSONResultCollector) Close() error {
 
-	res, err := json.Marshal(p.validationResults.ClusterValidationResults)
+	p.validationResults.ValidationDate = time.Now()
+
+	res, err := json.Marshal(p.validationResults)
 	if err != nil {
 		return err
 	}

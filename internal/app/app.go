@@ -78,8 +78,8 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 	} else {
 		p.gke, err = gke.NewClient(p.ctx)
 	}
-	p.collector = outputs.NewConsoleResultCollector(p.out)
-	//p.collector = outputs.NewJSONResultCollector("sample1.json")
+	//p.collector = outputs.NewConsoleResultCollector(p.out)
+	p.collector = outputs.NewJSONResultCollector("sample2.json")
 	return
 }
 

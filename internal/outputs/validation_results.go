@@ -14,8 +14,11 @@
 
 package outputs
 
+import "time"
+
 type ValidationResults struct {
-	ClusterValidationResults []ClusterValidationResult `json:"clusters"` //data sprawdzenia
+	ValidationDate           time.Time                 `json:"validationDate"`
+	ClusterValidationResults []ClusterValidationResult `json:"clusters"`
 }
 
 type ClusterValidationResult struct {
