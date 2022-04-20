@@ -32,7 +32,7 @@ valid {
 violation[msg] {
 	input.addons_config.network_policy_config.disabled
 	not input.network_policy
-	input.network_config.datapath_provider != 2
+	not input.network_config.datapath_provider == 2
 
 	msg := "No Network Policies Engines enabled"
 }
@@ -42,19 +42,20 @@ violation[msg] {
 # Network Policy config is not enabled AND
 # Dataplane v2 is not used
 violation[msg] {
-	not input.addons_config.network_policy_config
+	count(input.addons_config.network_policy_config) == 0
 	not input.network_policy.enabled
-	input.network_config.datapath_provider != 2
+	not input.network_config.datapath_provider == 2
 	msg := "Network Policies enabled but without configuration"
 }
 
 # 3rd
 # Network policy addon is not enabled AND
 # Network Policy config is enabled AND
-# Dataplane v2 is not used
+# Dataplane v2 is in use
 violation[msg] {
 	input.addons_config.network_policy_config.disabled
-	input.network_config.datapath_provider != 2
+	count(input.network_policy) == 0
+	not input.network_config.datapath_provider == 2
 
 	msg := "Not DPv2 nor Network Policies are enabled onto the cluster"
 }
