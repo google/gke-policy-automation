@@ -22,30 +22,39 @@ package gke.policy.network_policies_engine
 default valid = false
 
 valid {
-   count(violation) == 0
+	count(violation) == 0
 }
 
-
-dataplane_v1_netpol_config {
-  not input.addons_config.network_policy_config.disabled
-}
-
-dataplane_v1_netpol_enabled {
-  not input.network_policy.enabled
-}
-
-dataplane_v1 {
-  dataplane_v1_netpol_config
-  dataplane_v1_netpol_enabled
-}
-
-dataplane_v2 {
-  not input.addons_config.network_policy_config.disabled
-  not input.network_config.datapath_provider == 2
-}
-
+# 1st
+# Network policy addon is not enabled AND
+# Network Policy config is not enabled AND
+# Dataplane v2 is not used
 violation[msg] {
-  dataplane_v1
-  dataplane_v2
-  msg := "GKE cluster has no active Network Policies engines"
+	input.addons_config.network_policy_config.disabled
+	not input.network_policy
+	input.network_config.datapath_provider != 2
+
+	msg := "No Network Policies Engines enabled"
+}
+
+# 2nd
+# Network policy addon is enabled AND
+# Network Policy config is not enabled AND
+# Dataplane v2 is not used
+violation[msg] {
+	not input.addons_config.network_policy_config
+	not input.network_policy.enabled
+	input.network_config.datapath_provider != 2
+	msg := "Network Policies enabled but without configuration"
+}
+
+# 3rd
+# Network policy addon is not enabled AND
+# Network Policy config is enabled AND
+# Dataplane v2 is not used
+violation[msg] {
+	input.addons_config.network_policy_config.disabled
+	input.network_config.datapath_provider != 2
+
+	msg := "Not DPv2 nor Network Policies are enabled onto the cluster"
 }
