@@ -25,10 +25,6 @@ valid {
 	count(violation) == 0
 }
 
-# 1st
-# Network policy addon is not enabled AND
-# Network Policy config is not enabled AND
-# Dataplane v2 is not used
 violation[msg] {
 	input.addons_config.network_policy_config.disabled
 	not input.network_policy
@@ -37,10 +33,6 @@ violation[msg] {
 	msg := "No Network Policies Engines enabled"
 }
 
-# 2nd
-# Network policy addon is enabled AND
-# Network Policy config is not enabled AND
-# Dataplane v2 is not used
 violation[msg] {
 	count(input.addons_config.network_policy_config) == 0
 	not input.network_policy.enabled
@@ -48,10 +40,6 @@ violation[msg] {
 	msg := "Network Policies enabled but without configuration"
 }
 
-# 3rd
-# Network policy addon is not enabled AND
-# Network Policy config is enabled AND
-# Dataplane v2 is in use
 violation[msg] {
 	input.addons_config.network_policy_config.disabled
 	count(input.network_policy) == 0
