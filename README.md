@@ -2,7 +2,7 @@
 
 This is not an officially supported Google product.
 
-This repository contains the tool and [policy library](./gke-policies) for validating selected [GKE](https://cloud.google.com/kubernetes-engine)
+This repository contains the tool and the [policy library](./gke-policies) for validating [GKE](https://cloud.google.com/kubernetes-engine)
 clusters against configuration best practices.
 
 [![Build](https://github.com/google/gke-policy-automation/actions/workflows/build.yml/badge.svg)](https://github.com/google/gke-policy-automation/actions/workflows/build.yml)
@@ -16,95 +16,76 @@ clusters against configuration best practices.
 
 ## Table of Contents
 
-- [Install](#install)
-- [Usage](#usage)
-- [Test](#test)
-- [Contributing](#contributing)
-- [License](#license)
+* [Installation](#installation)
+* [Usage](#usage)
+* [Contributing](#contributing)
+* [License](#license)
 
-## Install
+## Installation
+
+### Container image
 
 ```sh
-make
+docker pull ghcr.io/google/gke-policy-automation:latest
+docker run --rm ghcr.io/google/gke-policy-automation cluster review \
+-project my-project -location europe-west2 -name my-cluster
 ```
 
-or
+### Binary
+
+Binaries for Linux, Windows and Mac are available as tarballs in the
+[release page](https://github.com/google/gke-policy-automation/releases).
+
+### Source code
+
+Go [v1.17](https://go.dev/doc/install) or newer is required. Check [GKE Policy Automation development](./DEVELOPMENT.md)
+for more guides on building and developing the application.
 
 ```sh
+git clone https://github.com/google/gke-policy-automation.git
+cd gke-policy-automation
 make build
+./gke-policy cluster review \
+-project my-project -location europe-west2 -name my-cluster
 ```
 
 ## Usage
 
-Tool can be used from command line with [gcloud CLI](https://cloud.google.com/sdk/docs/install) installed.
-CLI can be previously authenticated with `gcloud auth application-default login` command, or credentials
-may be passed with `--creds` parameter.
+**Full user guide**: please refer to [GKE Policy Automation user guide](./docs/user-guide.md).
 
-Parameters for GKE cluster review can be provided as command parameters or via configuration .yaml file.
+### Checking the cluster
 
-```sh
-gke-policy [global options] command [command options] [arguments...]
-```
+### Checking multiple clusters
 
-For cluster review with manually provided parameters:
+### Custom Policy repository
 
-```sh
-./gke-policy cluster review -p <GCP_PROJECT_ID> -n <CLUSTER_NAME> -l <CLUSTER_LOCATION>
-```
+### Authentication
 
-and with .yaml file with format:
+The tool is using [application default credentials](https://cloud.google.com/docs/authentication/production)
+by default.
 
-```yaml
-silent: true
-credentialsFile: ./test_credentials.json
-clusters:
-  - name: my-cluster
-    project: my-project
-    location: europe-central2
-  - name: another
-    project: my-project
-    location: europe-central2
-policies:
-  - local: /tmp
-outputs:
-  - file: /some/file.json
-```
+* When running the tool in GCP environment, the tool will use the [attached service account](https://cloud.google.com/iam/docs/impersonating-service-accounts#attaching-to-resources)
+by default
+* When running locally, use `gcloud auth application-default login` command to obtain application
+default credentials
 
-Custom policies can be provided via local directory or remote Github repository.
-Example for local directory:
-
-```sh
-./gke-policy cluster review -p my_project -n my_cluster -l europe-central2-a \
---local-policy-dir ./gke-policies/policy
-```
-
-and for Github repository:
-
-```sh
-./gke-policy cluster review -p my_project -n my_cluster -l europe-central2-a \
---git-policy-repo "https://github.com/google/gke-policy-automation" \
---git-policy-branch main \
---git-policy-dir gka-policies
-```
-
-## Test
-
-Testing policy files with [OPA Policy testing framework](https://www.openpolicyagent.org/docs/latest/policy-testing/)
-
-```sh
-opa test <POLICY_DIR>
-```
-
-for project policy folder:
-
-```sh
-opa test gke-policies
-```
+It is also possible to use credentials from service account key file by passing `--creds` parameter
+with a path to the file.
 
 ## Contributing
 
 Please check out [Contributing](./CONTRIBUTING.md) and [Code of Conduct](./docs/code-of-conduct.md)
-docs before contributing. See also [README for policies](./gke-policies/README.md)
+docs before contributing.
+
+### Development
+
+Please check [GKE Policy Automation development](./DEVELOPMENT.md) for guides on building and developing
+the application.
+
+### Policy authoring
+
+Please check [GKE Policy authoring guide](./gke-policies/README.md) for guides on authoring REGO rules
+for GKE Policy Automation.
 
 ## License
 
