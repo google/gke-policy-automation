@@ -30,10 +30,6 @@ test_dataplane_v1_with_netpol {
 	valid with input as {"name": "test-cluster", "addons_config": {"network_policy_config": {}}, "private_cluster_config": {"enable_private_nodes": false}, "network_policy": {"provider": 1, "enabled": true}}
 }
 
-test_dataplane_v1_with_netpol {
-	valid with input as {"name": "test-cluster", "addons_config": {"network_policy_config": {}}, "private_cluster_config": {"enable_private_nodes": false}, "network_policy": {"provider": 1, "enabled": true}}
-}
-
 test_dataplane_v2_with_netpol {
 	valid with input as {"name": "test-cluster", "addons_config": {"network_policy_config": {"disabled": true}}, "network_config": {"datapath_provider": 2}}
 }
