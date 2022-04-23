@@ -79,7 +79,7 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 		p.gke, err = gke.NewClient(p.ctx)
 	}
 	//p.collector = outputs.NewConsoleResultCollector(p.out)
-	p.collector = outputs.NewJSONResultCollector("sample2.json")
+	p.collector = outputs.NewJSONResultToFileCollector("sample3.json")
 	return
 }
 
@@ -135,7 +135,6 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 	}
 	p.collector.RegisterResult(evalResults)
 	p.collector.Close()
-	// p.printEvaluationResults(evalResults)
 	return nil
 }
 

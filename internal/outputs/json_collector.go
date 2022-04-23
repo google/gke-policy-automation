@@ -23,13 +23,34 @@ import (
 )
 
 type JSONResultCollector struct {
+	fileWriter        FileWriter
 	filename          string
 	validationResults ValidationResults
 }
 
-func NewJSONResultCollector(filename string) ValidationResultCollector {
+type FileWriter interface {
+	WriteFile(filename string, data []byte, perm os.FileMode) error
+}
+
+type OSFileWriter struct {
+}
+
+// WriteFile implements the Writer interface that's been created so that ioutil.WriteFile can be mocked
+func (w OSFileWriter) WriteFile(filename string, data []byte, perm os.FileMode) error {
+	return os.WriteFile(filename, data, perm)
+}
+
+func NewJSONResultToFileCollector(filename string) ValidationResultCollector {
 	return &JSONResultCollector{
-		filename: filename,
+		filename:   filename,
+		fileWriter: OSFileWriter{},
+	}
+}
+
+func NewJSONResultToCustomWriterCollector(filename string, writer FileWriter) ValidationResultCollector {
+	return &JSONResultCollector{
+		filename:   filename,
+		fileWriter: writer,
 	}
 }
 
@@ -51,7 +72,10 @@ func (p *JSONResultCollector) Close() error {
 	}
 
 	d1 := []byte(res)
-	os.WriteFile(p.filename, d1, 0644)
+	err = p.fileWriter.WriteFile(p.filename, d1, 0644)
+	if err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }
