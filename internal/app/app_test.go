@@ -36,6 +36,9 @@ func TestNewPolicyAutomationApp(t *testing.T) {
 	if paApp.out == nil {
 		t.Fatalf("policyAutomationApp output is nil")
 	}
+	if paApp.collector == nil {
+		t.Fatalf("policyAutomationApp collector is nil")
+	}
 }
 
 func TestLoadCliConfig_file(t *testing.T) {

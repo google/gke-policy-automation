@@ -44,10 +44,12 @@ type PolicyAutomationApp struct {
 }
 
 func NewPolicyAutomationApp() PolicyAutomation {
+	out := outputs.NewSilentOutput()
 	return &PolicyAutomationApp{
-		ctx:    context.Background(),
-		config: &Config{},
-		out:    outputs.NewSilentOutput()}
+		ctx:       context.Background(),
+		config:    &Config{},
+		out:       out,
+		collector: outputs.NewConsoleResultCollector(out)}
 }
 
 func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, validateFn ValidateConfig) error {
@@ -72,14 +74,14 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 	p.config = config
 	if !p.config.SilentMode {
 		p.out = outputs.NewStdOutOutput()
+		p.collector = outputs.NewConsoleResultCollector(p.out)
+		//p.collector = outputs.NewJSONResultToFileCollector("sample3.json")
 	}
 	if p.config.CredentialsFile != "" {
 		p.gke, err = gke.NewClientWithCredentialsFile(p.ctx, p.config.CredentialsFile)
 	} else {
 		p.gke, err = gke.NewClient(p.ctx)
 	}
-	p.collector = outputs.NewConsoleResultCollector(p.out)
-	//p.collector = outputs.NewJSONResultToFileCollector("sample3.json")
 	return
 }
 
