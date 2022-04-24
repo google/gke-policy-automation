@@ -38,8 +38,8 @@ Binaries for Linux, Windows and Mac are available as tarballs in the
 
 ### Source code
 
-Go [v1.17](https://go.dev/doc/install) or newer is required. Check [GKE Policy Automation development](./DEVELOPMENT.md)
-for more guides on building and developing the application.
+Go [v1.17](https://go.dev/doc/install) or newer is required. Check [development guide](./DEVELOPMENT.md)
+for more details.
 
 ```sh
 git clone https://github.com/google/gke-policy-automation.git
@@ -51,13 +51,39 @@ make build
 
 ## Usage
 
-**Full user guide**: please refer to [GKE Policy Automation user guide](./docs/user-guide.md).
+**Full user guide**: please check [GKE Policy Automation user guide](./docs/user-guide.md).
 
 ### Checking the cluster
 
+Simple check using command line with configuration flags.
+
+```sh
+./gke-policy cluster review \
+-project my-project -location europe-west2 -name my-cluster
+```
+
 ### Checking multiple clusters
 
+Use configuration file to specify multiple clusters.
+
+```sh
+./gke-policy cluster review -c config.yaml
+```
+
+The `config.yaml` file:
+
+```yaml
+clusters:
+  - name: prod-west
+    project: my-project-one
+    location: europe-west2
+  - name: prod-east
+    project: my-project-teo
+    location: europe-east
+```
+
 ### Custom Policy repository
+
 
 ### Authentication
 
@@ -66,11 +92,11 @@ by default.
 
 * When running the tool in GCP environment, the tool will use the [attached service account](https://cloud.google.com/iam/docs/impersonating-service-accounts#attaching-to-resources)
 by default
-* When running locally, use `gcloud auth application-default login` command to obtain application
+* When running locally, use `gcloud auth application-default login` command to get application
 default credentials
+* To use credentials from service account key file pass `--creds` parameter with a path to the file.
 
-It is also possible to use credentials from service account key file by passing `--creds` parameter
-with a path to the file.
+The IAM `roles/container.clusterViewer` is required as a minimum.
 
 ## Contributing
 
