@@ -21,6 +21,7 @@ import (
 func MapClusterToJson(evaluationResult *policy.PolicyEvaluationResult) ClusterValidationResult {
 
 	policyList := make([]PolicyValidationResult, 0)
+	errorList := make([]error, 0)
 	result := evaluationResult
 	for _, group := range result.Groups() {
 		for _, policy := range result.Valid[group] {
@@ -30,9 +31,13 @@ func MapClusterToJson(evaluationResult *policy.PolicyEvaluationResult) ClusterVa
 			policyList = append(policyList, MapPolicyToJson(policy, false))
 		}
 	}
+	for _, policy := range result.Errored {
+		errorList = append(errorList, policy.ProcessingErrors...)
+	}
 	return ClusterValidationResult{
 		ClusterPath:       evaluationResult.ClusterName,
 		ValidationResults: policyList,
+		ProcessingErrors:  errorList,
 	}
 }
 

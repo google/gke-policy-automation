@@ -78,8 +78,8 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 	} else {
 		p.gke, err = gke.NewClient(p.ctx)
 	}
-	//p.collector = outputs.NewConsoleResultCollector(p.out)
-	p.collector = outputs.NewJSONResultToFileCollector("sample3.json")
+	p.collector = outputs.NewConsoleResultCollector(p.out)
+	//p.collector = outputs.NewJSONResultToFileCollector("sample3.json")
 	return
 }
 
@@ -133,8 +133,18 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 		evalResult.ClusterName = clusterName
 		evalResults = append(evalResults, evalResult)
 	}
-	p.collector.RegisterResult(evalResults)
-	p.collector.Close()
+	err = p.collector.RegisterResult(evalResults)
+	if err != nil {
+		p.out.ErrorPrint("failed to register evaluation results", err)
+		log.Errorf("could not register evaluation results: %s", err)
+		return err
+	}
+	err = p.collector.Close()
+	if err != nil {
+		p.out.ErrorPrint("failed to close results registration", err)
+		log.Errorf("could not finalize registering evaluation results: %s", err)
+		return err
+	}
 	return nil
 }
 

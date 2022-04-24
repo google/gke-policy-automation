@@ -24,6 +24,7 @@ type ValidationResults struct {
 type ClusterValidationResult struct {
 	ClusterPath       string                   `json:"cluster"`
 	ValidationResults []PolicyValidationResult `json:"result"`
+	ProcessingErrors  []error                  `json:"processingErrors"`
 }
 
 type PolicyValidationResult struct {

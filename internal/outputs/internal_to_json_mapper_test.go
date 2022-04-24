@@ -15,6 +15,7 @@
 package outputs
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/google/gke-policy-automation/internal/policy"
@@ -87,5 +88,33 @@ func TestMapViolatedPolicyToJson(t *testing.T) {
 	}
 	if len(result.ValidationResults[0].Violations) != 1 {
 		t.Errorf("policy not mapped correctly: violations length != %d", len(result.ValidationResults[0].Violations))
+	}
+	if result.ValidationResults[0].Violations[0].ErrorMessage != violationMessage {
+		t.Errorf("policy not mapped correctly: violation error message != %s", violationMessage)
+	}
+}
+
+func TestErroredMapping(t *testing.T) {
+	r := policy.NewPolicyEvaluationResult()
+
+	policyTitle := "title"
+	policyDescription := "description"
+	policyGroup := "group"
+	errorMessage := "error"
+
+	r.AddPolicy(&policy.Policy{
+		Title:            policyTitle,
+		Description:      policyDescription,
+		Group:            policyGroup,
+		ProcessingErrors: []error{errors.New(errorMessage)},
+	})
+
+	result := MapClusterToJson(r)
+
+	if len(result.ProcessingErrors) != 1 {
+		t.Errorf("policy not mapped correctly: errors length != %d", len(result.ProcessingErrors))
+	}
+	if result.ProcessingErrors[0].Error() != errorMessage {
+		t.Errorf("policy not mapped correctly: error message != %s", errorMessage)
 	}
 }
