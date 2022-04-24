@@ -59,6 +59,7 @@ func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, validateFn Val
 	} else {
 		config = newConfigFromCli(cliConfig)
 	}
+	setConfigDefaults(config)
 	if validateFn != nil {
 		if err := validateFn(*config); err != nil {
 			return err
@@ -227,14 +228,7 @@ func newConfigFromCli(cliConfig *CliConfig) *Config {
 			Project:  cliConfig.ProjectName,
 		},
 	}
-	if cliConfig.LocalDirectory == "" && cliConfig.GitRepository == "" {
-		log.Debugf("using default git policy source: repo %s, branch %s, directory %s", DefaultGitRepository, DefaultGitBranch, DefaultGitPolicyDir)
-		config.Policies = append(config.Policies, ConfigPolicy{
-			GitRepository: DefaultGitRepository,
-			GitBranch:     DefaultGitBranch,
-			GitDirectory:  DefaultGitPolicyDir,
-		})
-	} else {
+	if cliConfig.LocalDirectory != "" || cliConfig.GitRepository != "" {
 		config.Policies = append(config.Policies, ConfigPolicy{
 			LocalDirectory: cliConfig.LocalDirectory,
 			GitRepository:  cliConfig.GitRepository,
