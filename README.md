@@ -46,25 +46,25 @@ git clone https://github.com/google/gke-policy-automation.git
 cd gke-policy-automation
 make build
 ./gke-policy cluster review \
--project my-project -location europe-west2 -name my-cluster
+--project my-project --location europe-west2 --name my-cluster
 ```
 
 ## Usage
 
-**Full user guide**: please check [GKE Policy Automation user guide](./docs/user-guide.md).
+**Full user guide**: [GKE Policy Automation User Guide](./docs/user-guide.md).
 
 ### Checking the cluster
 
-Simple check using command line with configuration flags.
+Check the GKE cluster against the default set of best practices with command line flags.
 
 ```sh
 ./gke-policy cluster review \
--project my-project -location europe-west2 -name my-cluster
+--project my-project --location europe-west2 --name my-cluster
 ```
 
 ### Checking multiple clusters
 
-Use configuration file to specify multiple clusters.
+Check multiple GKE clusters against the default set of best practices with a config file.
 
 ```sh
 ./gke-policy cluster review -c config.yaml
@@ -84,11 +84,41 @@ clusters:
 
 ### Custom Policy repository
 
+Specify custom repository with the GKE cluster best practices and check the cluster against them.
+
+* Custom policies source with command line flags
+
+  ```sh
+  ./gke-policy cluster review \
+  --project my-project --location europe-west2 --name my-cluster \
+  --git-policy-repo "https://github.com/google/gke-policy-automation" \
+  --git-policy-branch "main" \
+  --git-policy-dir "gke-policies"
+  ```
+
+* Custom policies source with configuration file
+
+  ```sh
+  ./gke-policy cluster review -c config.yaml
+  ```
+
+  The `config.yaml` file:
+
+  ```yaml
+  clusters:
+    - name: my-cluster
+      project: my-project
+      location: europe-west2
+  policies:
+    - repository: https://github.com/google/gke-policy-automation
+      branch: main
+      directory: gke-policies
+  ```
 
 ### Authentication
 
-The tool is using [application default credentials](https://cloud.google.com/docs/authentication/production)
-by default.
+The tool is fetching GKE cluster details using GCP APIs. The [application default credentials](https://cloud.google.com/docs/authentication/production)
+are used by default.
 
 * When running the tool in GCP environment, the tool will use the [attached service account](https://cloud.google.com/iam/docs/impersonating-service-accounts#attaching-to-resources)
 by default
@@ -96,7 +126,8 @@ by default
 default credentials
 * To use credentials from service account key file pass `--creds` parameter with a path to the file.
 
-The IAM `roles/container.clusterViewer` is required as a minimum.
+The minimum required IAM role is `roles/container.clusterViewer`
+on a cluster projects.
 
 ## Contributing
 
