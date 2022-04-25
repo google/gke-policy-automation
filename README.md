@@ -25,6 +25,8 @@ clusters against configuration best practices.
 
 ### Container image
 
+The container images with GKE Policy Automation tool are hosted on `ghcr.io`.
+
 ```sh
 docker pull ghcr.io/google/gke-policy-automation:latest
 docker run --rm ghcr.io/google/gke-policy-automation cluster review \
@@ -74,12 +76,10 @@ The `config.yaml` file:
 
 ```yaml
 clusters:
-  - name: prod-west
+  - name: prod-central
     project: my-project-one
-    location: europe-west2
-  - name: prod-east
-    project: my-project-teo
-    location: europe-east
+    location: europe-central2
+  - id: projects/my-project-two/locations/europe-west2/clusters/prod-west
 ```
 
 ### Custom Policy repository
