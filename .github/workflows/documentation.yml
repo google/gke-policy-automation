@@ -44,4 +44,4 @@ jobs:
         with:
           config-file: '.mlc_config.json'
           base-branch: main
-          use-verbose-mode: true
+          use-verbose-mode: yes
