@@ -95,6 +95,33 @@ func ValidateClusterJSONDataConfig(config Config) error {
 	return nil
 }
 
+func ValidateClusterOfflineReviewConfig(config Config) error {
+	if len(config.Clusters) < 1 {
+		return fmt.Errorf("there are no clusters defined")
+	}
+	var errors = make([]error, 0)
+	for i, cluster := range config.Clusters {
+		if cluster.ID == "" {
+			if cluster.Name == "" {
+				errors = append(errors, fmt.Errorf("cluster [%v]: name is not set", i))
+			}
+			// TODO check
+		} else {
+			if cluster.Name != "" || cluster.Location != "" || cluster.Project != "" {
+				errors = append(errors, fmt.Errorf("cluster [%v]: ID is set along with name or location or project", i))
+			}
+		}
+	}
+	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
+	if len(errors) > 0 {
+		for _, err := range errors {
+			log.Warnf("configuration validation error: %s", err)
+		}
+		return errors[0]
+	}
+	return nil
+}
+
 func ValidateClusterReviewConfig(config Config) error {
 	if len(config.Clusters) < 1 {
 		return fmt.Errorf("there are no clusters defined")

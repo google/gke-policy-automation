@@ -1,6 +1,14 @@
 package gke
 
-import "context"
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+
+	containerpb "google.golang.org/genproto/googleapis/container/v1"
+)
 
 type GKELocalClient struct {
 	ctx context.Context
@@ -14,45 +22,31 @@ func (c *GKELocalClient) GetClusterName(name string) {
 
 }
 
-// type ClusterManagerClient interface {
-// 	GetCluster(ctx context.Context, req *containerpb.GetClusterRequest, opts ...gax.CallOption) (*containerpb.Cluster, error)
-// 	Close() error
-// }
+// to add json file path
+func (c *GKELocalClient) GetCluster() (*containerpb.Cluster, error) {
+	var cluster containerpb.Cluster
 
-// type GKEClient struct {
-// 	ctx    context.Context
-// 	client ClusterManagerClient
-// }
+	clusterDumpFile, err := os.Open("test.json")
+	if err != nil {
+		return &cluster, err
+	}
+	defer clusterDumpFile.Close()
 
-// func NewClient(ctx context.Context) (*GKEClient, error) {
-// 	return newGKEClient(ctx)
-// }
+	byteValue, err := ioutil.ReadAll(clusterDumpFile)
+	if err != nil {
+		return &cluster, err
+	}
 
-// func NewClientWithCredentialsFile(ctx context.Context, credentialsFile string) (*GKEClient, error) {
-// 	return newGKEClient(ctx, option.WithCredentialsFile(credentialsFile))
-// }
+	err = json.Unmarshal(byteValue, &cluster)
+	if err != nil {
+		return &cluster, err
+	}
+	// if we os.Open returns an error then handle it
+	if err != nil {
+		return &cluster, err
+	}
+	fmt.Println("Successfully Opened cluster data file")
+	// defer the closing of our jsonFile so that we can parse it later on
 
-// func newGKEClient(ctx context.Context, opts ...option.ClientOption) (*GKEClient, error) {
-// 	cli, err := container.NewClusterManagerClient(ctx, opts...)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return &GKEClient{
-// 		ctx:    ctx,
-// 		client: cli,
-// 	}, nil
-// }
-
-// func (c *GKEClient) GetCluster(name string) (*containerpb.Cluster, error) {
-// 	req := &containerpb.GetClusterRequest{
-// 		Name: name}
-// 	return c.client.GetCluster(c.ctx, req)
-// }
-
-// func (c *GKEClient) Close() error {
-// 	return c.client.Close()
-// }
-
-// func GetClusterName(project string, location string, name string) string {
-// 	return fmt.Sprintf("projects/%s/locations/%s/clusters/%s", project, location, name)
-// }
+	return &cluster, err
+}

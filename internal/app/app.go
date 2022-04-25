@@ -159,7 +159,22 @@ func (p *PolicyAutomationApp) ClusterOfflineReview() error {
 	}
 
 	evalResults := make([]*policy.PolicyEvaluationResult, 0)
-	log.Info("Finished test processing")
+	cluster, err := p.gkeLocal.GetCluster()
+	if err != nil {
+		p.out.ErrorPrint("could not fetch the cluster details", err)
+		log.Errorf("could not fetch cluster details: %s", err)
+		return err
+	}
+	p.out.ColorPrintf("[light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
+		cluster.Id)
+	evalResult, err := pa.Evaluate(cluster)
+	if err != nil {
+		p.out.ErrorPrint("failed to evalute policies", err)
+		// log.Errorf("could not evaluate rego policies on cluster %s: %s", cluster.Id, err)
+		return err
+	}
+	// evalResult.ClusterName = clusterName
+	evalResults = append(evalResults, evalResult)
 
 	p.printEvaluationResults(evalResults)
 	return nil
