@@ -32,6 +32,7 @@ type ValidateConfig func(config Config) error
 
 type Config struct {
 	SilentMode      bool            `yaml:"silent"`
+	DumpFile        string          `yaml:"dumpFile"`
 	CredentialsFile string          `yaml:"credentialsFile"`
 	Clusters        []ConfigCluster `yaml:"clusters"`
 	Policies        []ConfigPolicy  `yaml:"policies"`

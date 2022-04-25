@@ -29,16 +29,18 @@ type PolicyAutomation interface {
 	LoadCliConfig(cliConfig *CliConfig, validateFn ValidateConfig) error
 	Close() error
 	ClusterReview() error
+	ClusterOfflineReview() error
 	ClusterJSONData() error
 	Version() error
 	PolicyCheck() error
 }
 
 type PolicyAutomationApp struct {
-	ctx    context.Context
-	config *Config
-	out    *Output
-	gke    *gke.GKEClient
+	ctx      context.Context
+	config   *Config
+	out      *Output
+	gke      *gke.GKEClient
+	gkeLocal *gke.GKELocalClient
 }
 
 func NewPolicyAutomationApp() PolicyAutomation {
@@ -72,6 +74,11 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 	if !p.config.SilentMode {
 		p.out = NewStdOutOutput()
 	}
+	if p.config.DumpFile != "" {
+		// read file and instantate the configuration
+		p.gkeLocal, err = gke.NewLocalClient(p.ctx, p.config.DumpFile)
+		return
+	}
 	if p.config.CredentialsFile != "" {
 		p.gke, err = gke.NewClientWithCredentialsFile(p.ctx, p.config.CredentialsFile)
 	} else {
@@ -102,6 +109,7 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 	}
 
 	evalResults := make([]*policy.PolicyEvaluationResult, 0)
+	// FIX
 	for _, cluster := range p.config.Clusters {
 		clusterName, err := getClusterName(cluster)
 		if err != nil {
@@ -113,6 +121,56 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 			cluster.Project,
 			cluster.Location,
 			cluster.Name)
+		cluster, err := p.gke.GetCluster(clusterName)
+		if err != nil {
+			p.out.ErrorPrint("could not fetch the cluster details", err)
+			log.Errorf("could not fetch cluster details: %s", err)
+			return err
+		}
+		p.out.ColorPrintf("[light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
+			cluster.Id)
+		evalResult, err := pa.Evaluate(cluster)
+		if err != nil {
+			p.out.ErrorPrint("failed to evalute policies", err)
+			log.Errorf("could not evaluate rego policies on cluster %s: %s", cluster.Id, err)
+			return err
+		}
+		evalResult.ClusterName = clusterName
+		evalResults = append(evalResults, evalResult)
+	}
+	p.printEvaluationResults(evalResults)
+	return nil
+}
+
+func (p *PolicyAutomationApp) ClusterOfflineReview() error {
+	// Loading the policies
+	files, err := p.loadPolicyFiles()
+	if err != nil {
+		return err
+	}
+	// Creating the Policy Agent instance and check the policies
+	pa := policy.NewPolicyAgent(p.ctx)
+	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
+	log.Info("Parsing rego policies")
+	if err := pa.WithFiles(files); err != nil {
+		p.out.ErrorPrint("could not parse policy files", err)
+		log.Errorf("could not parse policy files: %s", err)
+		return err
+	}
+
+	evalResults := make([]*policy.PolicyEvaluationResult, 0)
+	for _, cluster := range p.config.Clusters {
+		// clusterName, err := getClusterName(cluster)
+		// if err != nil {
+		// 	p.out.ErrorPrint("could not create cluster path", err)
+		// 	log.Errorf("could not create cluster path: %s", err)
+		// 	return err
+		// }
+		// p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [projects/%s/locations/%s/clusters/%s]\n",
+		// 	cluster.Project,
+		// 	cluster.Location,
+		// 	cluster.Name)
+		clusterName := "" // read clustername from the file
 		cluster, err := p.gke.GetCluster(clusterName)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)

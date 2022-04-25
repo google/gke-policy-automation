@@ -20,6 +20,7 @@ type CliConfig struct {
 	ConfigFile      string
 	SilentMode      bool
 	CredentialsFile string
+	DumpFile        string
 	ClusterName     string
 	ClusterLocation string
 	ProjectName     string
@@ -59,6 +60,20 @@ func CreateClusterCommand(p PolicyAutomation) *cli.Command {
 						return err
 					}
 					p.ClusterJSONData()
+					return nil
+				},
+			},
+			{
+				Name:  "offline-review",
+				Usage: "Evaluate policies against given GKE cluster",
+				Flags: append(getClusterDumpSourceFlags(config), getPolicySourceFlags(config)...),
+				Action: func(c *cli.Context) error {
+					defer p.Close()
+					if err := p.LoadCliConfig(config, ValidateClusterReviewConfig); err != nil {
+						cli.ShowSubcommandHelp(c)
+						return err
+					}
+					p.ClusterOfflineReview()
 					return nil
 				},
 			},
@@ -156,6 +171,23 @@ func getClusterSourceFlags(config *CliConfig) []cli.Flag {
 			Aliases:     []string{"l"},
 			Usage:       "GKE cluster location (region or zone)",
 			Destination: &config.ClusterLocation,
+		},
+	}
+}
+
+func getClusterDumpSourceFlags(config *CliConfig) []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:        "dump",
+			Aliases:     []string{"d"},
+			Usage:       "Path to the configuration file",
+			Destination: &config.DumpFile,
+		},
+		&cli.StringFlag{
+			Name:        "name",
+			Aliases:     []string{"n"},
+			Usage:       "Name of a GKE cluster to review",
+			Destination: &config.ClusterName,
 		},
 	}
 }
