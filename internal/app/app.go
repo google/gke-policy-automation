@@ -159,35 +159,8 @@ func (p *PolicyAutomationApp) ClusterOfflineReview() error {
 	}
 
 	evalResults := make([]*policy.PolicyEvaluationResult, 0)
-	for _, cluster := range p.config.Clusters {
-		// clusterName, err := getClusterName(cluster)
-		// if err != nil {
-		// 	p.out.ErrorPrint("could not create cluster path", err)
-		// 	log.Errorf("could not create cluster path: %s", err)
-		// 	return err
-		// }
-		// p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [projects/%s/locations/%s/clusters/%s]\n",
-		// 	cluster.Project,
-		// 	cluster.Location,
-		// 	cluster.Name)
-		clusterName := "" // read clustername from the file
-		cluster, err := p.gke.GetCluster(clusterName)
-		if err != nil {
-			p.out.ErrorPrint("could not fetch the cluster details", err)
-			log.Errorf("could not fetch cluster details: %s", err)
-			return err
-		}
-		p.out.ColorPrintf("[light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
-			cluster.Id)
-		evalResult, err := pa.Evaluate(cluster)
-		if err != nil {
-			p.out.ErrorPrint("failed to evalute policies", err)
-			log.Errorf("could not evaluate rego policies on cluster %s: %s", cluster.Id, err)
-			return err
-		}
-		evalResult.ClusterName = clusterName
-		evalResults = append(evalResults, evalResult)
-	}
+	log.Info("Finished test processing")
+
 	p.printEvaluationResults(evalResults)
 	return nil
 }
@@ -200,18 +173,12 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 			log.Errorf("could not create cluster path: %s", err)
 			return err
 		}
-		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [projects/%s/locations/%s/clusters/%s]\n",
-			cluster.Project,
-			cluster.Location,
-			cluster.Name)
 		cluster, err := p.gke.GetCluster(clusterName)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
 			return err
 		}
-		p.out.ColorPrintf("[light_gray][bold]Printing GKE cluster JSON data... [%s]\n",
-			cluster.Id)
 		data, error := prettyJson(cluster)
 		if error != nil {
 			log.Errorf("could not print cluster data: %s", err)
