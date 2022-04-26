@@ -25,7 +25,7 @@ clusters against configuration best practices.
 
 ### Container image
 
-The container images with GKE Policy Automation tool are hosted on `ghcr.io`. Check [packages page](https://github.com/google/gke-policy-automation/pkgs/container/gke-policy-automation)
+The container images with GKE Policy Automation tool are hosted on `ghcr.io`. Check the [packages page](https://github.com/google/gke-policy-automation/pkgs/container/gke-policy-automation)
 for a list of all tags and versions.
 
 ```sh
@@ -41,7 +41,7 @@ Binaries for Linux, Windows and Mac are available as tarballs in the
 
 ### Source code
 
-Go [v1.17](https://go.dev/doc/install) or newer is required. Check [development guide](./DEVELOPMENT.md)
+Go [v1.17](https://go.dev/doc/install) or newer is required. Check the [development guide](./DEVELOPMENT.md)
 for more details.
 
 ```sh
