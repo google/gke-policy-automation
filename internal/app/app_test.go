@@ -22,6 +22,8 @@ import (
 	"testing"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/google/gke-policy-automation/internal/outputs"
 )
 
 func TestNewPolicyAutomationApp(t *testing.T) {
@@ -38,6 +40,9 @@ func TestNewPolicyAutomationApp(t *testing.T) {
 	}
 	if paApp.collector == nil {
 		t.Fatalf("policyAutomationApp collector is nil")
+	}
+	if _, ok := paApp.collector.(*outputs.ConsoleResultCollector); !ok {
+		t.Fatalf("policyAutomationApp collector is not ConsoleResultCollector (default)")
 	}
 }
 

@@ -51,12 +51,15 @@ func TestCollectingToJson(t *testing.T) {
 
 	var collector = NewJSONResultToCustomWriterCollector("sample.json", MockFileWriter{})
 
-	collector.RegisterResult(evalResults)
+	err := collector.RegisterResult(evalResults)
 
-	result := collector.Close()
-
-	if result != nil {
-		t.Errorf("json serialization failed: %s", result)
+	if err != nil {
+		t.Errorf("registering result failed: %s", err)
 	}
 
+	err = collector.Close()
+
+	if err != nil {
+		t.Errorf("json serialization failed: %s", err)
+	}
 }

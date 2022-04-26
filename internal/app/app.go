@@ -75,7 +75,6 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 	if !p.config.SilentMode {
 		p.out = outputs.NewStdOutOutput()
 		p.collector = outputs.NewConsoleResultCollector(p.out)
-		//p.collector = outputs.NewJSONResultToFileCollector("sample3.json")
 	}
 	if p.config.CredentialsFile != "" {
 		p.gke, err = gke.NewClientWithCredentialsFile(p.ctx, p.config.CredentialsFile)
