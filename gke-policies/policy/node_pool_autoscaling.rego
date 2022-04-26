@@ -13,8 +13,8 @@
 # limitations under the License.
 
 # METADATA
-# title: Use node pool autoscaler
-# description: GKE node pools should have autoscaler configured to proper resize nodes according to traffic
+# title: Use node pool autoscaling
+# description: GKE node pools should have autoscaling configured to proper resize nodes according to traffic
 # custom:
 #   group: Availability
 package gke.policy.node_pool_autoscaling
