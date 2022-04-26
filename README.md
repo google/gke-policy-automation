@@ -25,7 +25,8 @@ clusters against configuration best practices.
 
 ### Container image
 
-The container images with GKE Policy Automation tool are hosted on `ghcr.io`.
+The container images with GKE Policy Automation tool are hosted on `ghcr.io`. Check [packages page](https://github.com/google/gke-policy-automation/pkgs/container/gke-policy-automation)
+for a list of all tags and versions.
 
 ```sh
 docker pull ghcr.io/google/gke-policy-automation:latest
