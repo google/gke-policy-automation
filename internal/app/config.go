@@ -100,15 +100,13 @@ func ValidateClusterOfflineReviewConfig(config Config) error {
 		return fmt.Errorf("there are no clusters defined")
 	}
 	var errors = make([]error, 0)
+	if config.DumpFile == "" {
+		errors = append(errors, fmt.Errorf("cluster dump file is not set"))
+	}
 	for i, cluster := range config.Clusters {
 		if cluster.ID == "" {
 			if cluster.Name == "" {
 				errors = append(errors, fmt.Errorf("cluster [%v]: name is not set", i))
-			}
-			// TODO check
-		} else {
-			if cluster.Name != "" || cluster.Location != "" || cluster.Project != "" {
-				errors = append(errors, fmt.Errorf("cluster [%v]: ID is set along with name or location or project", i))
 			}
 		}
 	}

@@ -76,7 +76,7 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 	}
 	if p.config.DumpFile != "" {
 		// read file and instantate the configuration
-		p.gkeLocal, err = gke.NewLocalClient(p.ctx, p.config.DumpFile)
+		p.gkeLocal, err = gke.NewGKELocalClient(p.ctx, p.config.DumpFile)
 		return
 	}
 	if p.config.CredentialsFile != "" {
@@ -268,6 +268,7 @@ func newConfigFromCli(cliConfig *CliConfig) *Config {
 	config := &Config{}
 	config.SilentMode = cliConfig.SilentMode
 	config.CredentialsFile = cliConfig.CredentialsFile
+	config.DumpFile = cliConfig.DumpFile
 	config.Clusters = []ConfigCluster{
 		{
 			Name:     cliConfig.ClusterName,
