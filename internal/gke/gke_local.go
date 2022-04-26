@@ -11,22 +11,42 @@ import (
 )
 
 type GKELocalClient struct {
-	ctx context.Context
+	ctx      context.Context
+	dumpFile string
 }
 
 func NewLocalClient(ctx context.Context, dumpFile string) (*GKELocalClient, error) {
-	return nil, nil
+	fmt.Printf("log file: %s\n", dumpFile)
+	return &GKELocalClient{ctx: ctx, dumpFile: dumpFile}, nil
 }
 
-func (c *GKELocalClient) GetClusterName(name string) {
+func (c *GKELocalClient) GetClusterName() (string, error) {
+	var cluster containerpb.Cluster
 
+	clusterDumpFile, err := os.Open(c.dumpFile)
+	if err != nil {
+		return "", err
+	}
+	defer clusterDumpFile.Close()
+
+	byteValue, err := ioutil.ReadAll(clusterDumpFile)
+	if err != nil {
+		return "", err
+	}
+
+	err = json.Unmarshal(byteValue, &cluster)
+	if err != nil {
+		return "", err
+	}
+	fmt.Println("Successfully Opened cluster data file")
+	return cluster.Name, err
 }
 
 // to add json file path
 func (c *GKELocalClient) GetCluster() (*containerpb.Cluster, error) {
 	var cluster containerpb.Cluster
 
-	clusterDumpFile, err := os.Open("test.json")
+	clusterDumpFile, err := os.Open(c.dumpFile)
 	if err != nil {
 		return &cluster, err
 	}
@@ -38,10 +58,6 @@ func (c *GKELocalClient) GetCluster() (*containerpb.Cluster, error) {
 	}
 
 	err = json.Unmarshal(byteValue, &cluster)
-	if err != nil {
-		return &cluster, err
-	}
-	// if we os.Open returns an error then handle it
 	if err != nil {
 		return &cluster, err
 	}
