@@ -75,7 +75,7 @@ Example for local directory:
 
 ```sh
 ./gke-policy cluster review -p my_project -n my_cluster -l europe-central2-a \
---local-policy-dir ./gke-policies/policy
+--local-policy-dir ./gke-policies
 ```
 
 and for Github repository:
@@ -84,7 +84,7 @@ and for Github repository:
 ./gke-policy cluster review -p my_project -n my_cluster -l europe-central2-a \
 --git-policy-repo "https://github.com/google/gke-policy-automation" \
 --git-policy-branch main \
---git-policy-dir gka-policies
+--git-policy-dir gke-policies
 ```
 
 ## Test

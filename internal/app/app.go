@@ -22,6 +22,7 @@ import (
 
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/log"
+	"github.com/google/gke-policy-automation/internal/outputs"
 	"github.com/google/gke-policy-automation/internal/policy"
 )
 
@@ -35,18 +36,20 @@ type PolicyAutomation interface {
 }
 
 type PolicyAutomationApp struct {
-	ctx    context.Context
-	config *Config
-	out    *Output
-	gke    *gke.GKEClient
+	ctx       context.Context
+	config    *Config
+	out       *outputs.Output
+	collector outputs.ValidationResultCollector
+	gke       *gke.GKEClient
 }
 
 func NewPolicyAutomationApp() PolicyAutomation {
+	out := outputs.NewSilentOutput()
 	return &PolicyAutomationApp{
-		ctx:    context.Background(),
-		config: &Config{},
-		out:    NewSilentOutput(),
-	}
+		ctx:       context.Background(),
+		config:    &Config{},
+		out:       out,
+		collector: outputs.NewConsoleResultCollector(out)}
 }
 
 func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, validateFn ValidateConfig) error {
@@ -70,7 +73,8 @@ func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, validateFn Val
 func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 	p.config = config
 	if !p.config.SilentMode {
-		p.out = NewStdOutOutput()
+		p.out = outputs.NewStdOutOutput()
+		p.collector = outputs.NewConsoleResultCollector(p.out)
 	}
 	if p.config.CredentialsFile != "" {
 		p.gke, err = gke.NewClientWithCredentialsFile(p.ctx, p.config.CredentialsFile)
@@ -130,7 +134,18 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 		evalResult.ClusterName = clusterName
 		evalResults = append(evalResults, evalResult)
 	}
-	p.printEvaluationResults(evalResults)
+	err = p.collector.RegisterResult(evalResults)
+	if err != nil {
+		p.out.ErrorPrint("failed to register evaluation results", err)
+		log.Errorf("could not register evaluation results: %s", err)
+		return err
+	}
+	err = p.collector.Close()
+	if err != nil {
+		p.out.ErrorPrint("failed to close results registration", err)
+		log.Errorf("could not finalize registering evaluation results: %s", err)
+		return err
+	}
 	return nil
 }
 
@@ -253,26 +268,6 @@ func getClusterName(c ConfigCluster) (string, error) {
 		return gke.GetClusterName(c.Project, c.Location, c.Name), nil
 	}
 	return "", fmt.Errorf("cluster mandatory parameters not set (project, name, location)")
-}
-
-func (p *PolicyAutomationApp) printEvaluationResults(results []*policy.PolicyEvaluationResult) {
-	for _, result := range results {
-		p.out.ColorPrintf("[yellow][bold]GKE Cluster [%s]:", result.ClusterName)
-		for _, group := range result.Groups() {
-			p.out.ColorPrintf("\n[light_gray][bold]Group %q:\n\n", group)
-			for _, policy := range result.Valid[group] {
-				p.out.ColorPrintf("[bold][green][\u2713] %s: [reset][green]%s\n", policy.Title, policy.Description)
-			}
-			for _, policy := range result.Violated[group] {
-				p.out.ColorPrintf("[bold][red][x] %s: [reset][red]%s. [bold]Violations:[reset][red] %s\n", policy.Title, policy.Description, policy.Violations[0])
-			}
-		}
-		p.out.ColorPrintf("\n[bold][green]GKE cluster [%s]: Policies: %d valid, %d violated, %d errored.\n",
-			result.ClusterName,
-			result.ValidCount(),
-			result.ViolatedCount(),
-			result.ErroredCount())
-	}
 }
 
 func prettyJson(data interface{}) (string, error) {
