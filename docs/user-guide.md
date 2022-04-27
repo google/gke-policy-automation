@@ -195,7 +195,7 @@ Example of a cluster review command with a custom policy repository:
 
 The local policy source directory can be specified with a command line flags or in a [configuration file](#configuration-file).
 
-* `local-policy-dir` is a local policy directory to search for policy files
+* `local-policy-dir` is a path to the local policy directory to search for policy files
 
 ### Validating policies
 
@@ -250,7 +250,7 @@ clusters:
 policies:
   - repository: https://github.com/google/gke-policy-automation
     branch: main
-    directory: gke-policiese
+    directory: gke-policies
   - local: ./my-policies
 ```
 
