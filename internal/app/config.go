@@ -68,23 +68,7 @@ func ValidateClusterJSONDataConfig(config Config) error {
 		return fmt.Errorf("there are no clusters defined")
 	}
 	var errors = make([]error, 0)
-	for i, cluster := range config.Clusters {
-		if cluster.ID == "" {
-			if cluster.Name == "" {
-				errors = append(errors, fmt.Errorf("cluster [%v]: name is not set", i))
-			}
-			if cluster.Location == "" {
-				errors = append(errors, fmt.Errorf("cluster [%v]: location is not set", i))
-			}
-			if cluster.Project == "" {
-				errors = append(errors, fmt.Errorf("cluster [%v]: project is not set", i))
-			}
-		} else {
-			if cluster.Name != "" || cluster.Location != "" || cluster.Project != "" {
-				errors = append(errors, fmt.Errorf("cluster [%v]: ID is set along with name or location or project", i))
-			}
-		}
-	}
+	errors = append(errors, validateClustersConfig(config.Clusters)...)
 	if len(errors) > 0 {
 		for _, err := range errors {
 			log.Warnf("configuration validation error: %s", err)
@@ -99,23 +83,7 @@ func ValidateClusterReviewConfig(config Config) error {
 		return fmt.Errorf("there are no clusters defined")
 	}
 	var errors = make([]error, 0)
-	for i, cluster := range config.Clusters {
-		if cluster.ID == "" {
-			if cluster.Name == "" {
-				errors = append(errors, fmt.Errorf("cluster [%v]: name is not set", i))
-			}
-			if cluster.Location == "" {
-				errors = append(errors, fmt.Errorf("cluster [%v]: location is not set", i))
-			}
-			if cluster.Project == "" {
-				errors = append(errors, fmt.Errorf("cluster [%v]: project is not set", i))
-			}
-		} else {
-			if cluster.Name != "" || cluster.Location != "" || cluster.Project != "" {
-				errors = append(errors, fmt.Errorf("cluster [%v]: ID is set along with name or location or project", i))
-			}
-		}
-	}
+	errors = append(errors, validateClustersConfig(config.Clusters)...)
 	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
 	if len(errors) > 0 {
 		for _, err := range errors {
@@ -135,6 +103,31 @@ func ValidatePolicyCheckConfig(config Config) error {
 		return errors[0]
 	}
 	return nil
+}
+
+func validateClustersConfig(clusters []ConfigCluster) []error {
+	if len(clusters) < 1 {
+		return []error{fmt.Errorf("there are no clusters defined")}
+	}
+	var errors = make([]error, 0)
+	for i, cluster := range clusters {
+		if cluster.ID == "" {
+			if cluster.Name == "" {
+				errors = append(errors, fmt.Errorf("cluster [%v]: name is not set", i))
+			}
+			if cluster.Location == "" {
+				errors = append(errors, fmt.Errorf("cluster [%v]: location is not set", i))
+			}
+			if cluster.Project == "" {
+				errors = append(errors, fmt.Errorf("cluster [%v]: project is not set", i))
+			}
+		} else {
+			if cluster.Name != "" || cluster.Location != "" || cluster.Project != "" {
+				errors = append(errors, fmt.Errorf("cluster [%v]: ID is set along with name or location or project", i))
+			}
+		}
+	}
+	return errors
 }
 
 func validatePolicySourceConfig(policies []ConfigPolicy) []error {
@@ -160,4 +153,16 @@ func validatePolicySourceConfig(policies []ConfigPolicy) []error {
 		}
 	}
 	return errors
+}
+
+//setConfigDefaults checks passed config and sets default values if needed
+func setConfigDefaults(config *Config) {
+	if len(config.Policies) < 1 {
+		log.Debugf("no policies defined, using default GIT policy source: repo %s, branch %s, directory %s",
+			DefaultGitRepository, DefaultGitBranch, DefaultGitPolicyDir)
+		config.Policies = append(config.Policies, ConfigPolicy{
+			GitRepository: DefaultGitRepository,
+			GitBranch:     DefaultGitBranch,
+			GitDirectory:  DefaultGitPolicyDir})
+	}
 }
