@@ -95,7 +95,7 @@ func TestLoadCliConfig_defaults(t *testing.T) {
 	pa := PolicyAutomationApp{ctx: context.Background()}
 	err := pa.LoadCliConfig(cliConfig, nil)
 	if err != nil {
-		t.Fatalf("got error; expected nil")
+		t.Fatalf("err is not nil; want nil; err = %s", err)
 	}
 	if len(pa.config.Policies) != 1 {
 		t.Fatalf("len of config policies is %d; want %d", len(pa.config.Policies), 1)
