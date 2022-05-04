@@ -14,4 +14,40 @@
 
 package gke
 
-// TO FINISH
+import (
+	"context"
+	"testing"
+
+	containerpb "google.golang.org/genproto/googleapis/container/v1"
+)
+
+// TestLocalGetClusterName() to test GetClusterName()
+func TestLocalGetClusterName(t *testing.T) {
+	var clusterName string
+	client, err := NewGKELocalClient(context.TODO(), "backup.json")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	if clusterName, err = client.GetClusterName(); err != nil {
+		t.Fatalf(err.Error())
+	}
+	if clusterName == "" {
+		t.Errorf("unable to get cluster name")
+	}
+}
+
+// TestLocalGetCluster() to test GetCluster()
+func TestLocalGetCluster(t *testing.T) {
+	var cluster *containerpb.Cluster
+	client, err := NewGKELocalClient(context.TODO(), "backup.json")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	if cluster, err = client.GetCluster(); err != nil {
+		t.Fatalf(err.Error())
+	}
+	if cluster == nil || cluster.Network != "default" {
+		t.Errorf("unable to read cluster data")
+	}
+
+}

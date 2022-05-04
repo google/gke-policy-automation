@@ -17,7 +17,6 @@ package gke
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -33,49 +32,50 @@ func NewGKELocalClient(ctx context.Context, dumpFile string) (*GKELocalClient, e
 	return &GKELocalClient{ctx: ctx, dumpFile: dumpFile}, nil
 }
 
+// GetClusterName() returns ClusterName from the file
 func (c *GKELocalClient) GetClusterName() (string, error) {
 	var err error
 	var cluster containerpb.Cluster
-	clusterDumpFile, err := os.Open(c.dumpFile)
-	if err != nil {
-		return "", err
-	}
-	defer clusterDumpFile.Close()
 
-	byteValue, err := ioutil.ReadAll(clusterDumpFile)
+	clusterData, err := openData(c.dumpFile)
 	if err != nil {
 		return "", err
 	}
 
-	err = json.Unmarshal(byteValue, &cluster)
+	err = json.Unmarshal(clusterData, &cluster)
 	if err != nil {
 		return "", err
 	}
-	fmt.Println("Successfully Opened cluster data file")
 	return cluster.Name, err
 }
 
+// GetCluster() returns cluster data gathered from file
 func (c *GKELocalClient) GetCluster() (*containerpb.Cluster, error) {
 	var err error
 	var cluster containerpb.Cluster
 
-	clusterDumpFile, err := os.Open(c.dumpFile)
+	clusterData, err := openData(c.dumpFile)
 	if err != nil {
 		return &cluster, err
+	}
+
+	err = json.Unmarshal(clusterData, &cluster)
+	if err != nil {
+		return &cluster, err
+	}
+	return &cluster, err
+}
+
+func openData(fileName string) ([]byte, error) {
+	clusterDumpFile, err := os.Open(fileName)
+	if err != nil {
+		return nil, err
 	}
 	defer clusterDumpFile.Close()
 
 	byteValue, err := ioutil.ReadAll(clusterDumpFile)
 	if err != nil {
-		return &cluster, err
+		return nil, err
 	}
-
-	err = json.Unmarshal(byteValue, &cluster)
-	if err != nil {
-		return &cluster, err
-	}
-	fmt.Println("Successfully Opened cluster data file")
-	// defer the closing of our jsonFile so that we can parse it later on
-
-	return &cluster, err
+	return byteValue, nil
 }
