@@ -200,7 +200,18 @@ func (p *PolicyAutomationApp) ClusterOfflineReview() error {
 	evalResult.ClusterName = clusterName
 	evalResults = append(evalResults, evalResult)
 
-	p.printEvaluationResults(evalResults)
+	err = p.collector.RegisterResult(evalResults)
+	if err != nil {
+		p.out.ErrorPrint("failed to register evaluation results", err)
+		log.Errorf("could not register evaluation results: %s", err)
+		return err
+	}
+	err = p.collector.Close()
+	if err != nil {
+		p.out.ErrorPrint("failed to close results registration", err)
+		log.Errorf("could not finalize registering evaluation results: %s", err)
+		return err
+	}
 	return nil
 }
 
