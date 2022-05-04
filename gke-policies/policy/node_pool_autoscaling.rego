@@ -13,11 +13,11 @@
 # limitations under the License.
 
 # METADATA
-# title: Control Plane endpoint access
-# description: Control Plane endpoint access should be limited to authorized networks only
+# title: Use node pool autoscaling
+# description: GKE node pools should have autoscaling configured to proper resize nodes according to traffic
 # custom:
-#   group: Security
-package gke.policy.control_plane_access
+#   group: Availability
+package gke.policy.node_pool_autoscaling
 
 default valid = false
 
@@ -26,16 +26,6 @@ valid {
 }
 
 violation[msg] {
-  not input.master_authorized_networks_config.enabled
-  msg := "GKE cluster has not enabled master authorized networks configuration" 
-}
-
-violation[msg] {
-  not input.master_authorized_networks_config.cidr_blocks
-  msg := "GKE cluster's master authorized networks has no CIDR blocks element" 
-}
-
-violation[msg] {
-  count(input.master_authorized_networks_config.cidr_blocks) < 1
-  msg := "GKE cluster's master authorized networks has no CIDR blocks defined" 
+  not input.node_pools[pool].autoscaling.enabled
+  msg := sprintf("Node pool %q does not have autoscaling configured.", [input.node_pools[pool].name])
 }

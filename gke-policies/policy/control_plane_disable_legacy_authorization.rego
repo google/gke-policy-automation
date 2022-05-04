@@ -13,29 +13,19 @@
 # limitations under the License.
 
 # METADATA
-# title: Control Plane endpoint access
-# description: Control Plane endpoint access should be limited to authorized networks only
+# title: GKE RBAC authorization
+# description: GKE cluster should use RBAC instead of legacy ABAC authorization
 # custom:
 #   group: Security
-package gke.policy.control_plane_access
+package gke.policy.disable_legacy_authorization
 
 default valid = false
 
 valid {
-  count(violation) == 0
+	count(violation) == 0
 }
 
 violation[msg] {
-  not input.master_authorized_networks_config.enabled
-  msg := "GKE cluster has not enabled master authorized networks configuration" 
-}
-
-violation[msg] {
-  not input.master_authorized_networks_config.cidr_blocks
-  msg := "GKE cluster's master authorized networks has no CIDR blocks element" 
-}
-
-violation[msg] {
-  count(input.master_authorized_networks_config.cidr_blocks) < 1
-  msg := "GKE cluster's master authorized networks has no CIDR blocks defined" 
+	input.legacy_abac.enabled
+	msg := "The GKE cluster is configured to use legacy ABAC authorization mechanism"
 }

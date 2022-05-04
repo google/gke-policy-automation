@@ -17,12 +17,13 @@ package app
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"reflect"
 	"testing"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/google/gke-policy-automation/internal/outputs"
 )
 
 func TestNewPolicyAutomationApp(t *testing.T) {
@@ -37,8 +38,11 @@ func TestNewPolicyAutomationApp(t *testing.T) {
 	if paApp.out == nil {
 		t.Fatalf("policyAutomationApp output is nil")
 	}
-	if !reflect.DeepEqual(paApp.out.w, io.Discard) {
-		t.Errorf("policyAutomationApp output is not io.Discard")
+	if paApp.collector == nil {
+		t.Fatalf("policyAutomationApp collector is nil")
+	}
+	if _, ok := paApp.collector.(*outputs.ConsoleResultCollector); !ok {
+		t.Fatalf("policyAutomationApp collector is not ConsoleResultCollector (default)")
 	}
 }
 
@@ -78,6 +82,32 @@ func TestLoadCliConfig_with_validation(t *testing.T) {
 	}
 	if err.Error() != validationErrMsg {
 		t.Fatalf("error msg = %v; want %v", err.Error(), validationErrMsg)
+	}
+}
+
+func TestLoadCliConfig_defaults(t *testing.T) {
+	cliConfig := &CliConfig{
+		CredentialsFile: "./test-fixtures/test_credentials.json",
+		ClusterName:     "test",
+		ClusterLocation: "europe-central2",
+		ProjectName:     "my-project",
+	}
+	pa := PolicyAutomationApp{ctx: context.Background()}
+	err := pa.LoadCliConfig(cliConfig, nil)
+	if err != nil {
+		t.Fatalf("err is not nil; want nil; err = %s", err)
+	}
+	if len(pa.config.Policies) != 1 {
+		t.Fatalf("len of config policies is %d; want %d", len(pa.config.Policies), 1)
+	}
+	policy := pa.config.Policies[0]
+	defaultPolicy := ConfigPolicy{
+		GitRepository: DefaultGitRepository,
+		GitBranch:     DefaultGitBranch,
+		GitDirectory:  DefaultGitPolicyDir,
+	}
+	if !reflect.DeepEqual(policy, defaultPolicy) {
+		t.Error("config policy is not same as default policy")
 	}
 }
 
@@ -147,42 +177,6 @@ func TestNewConfigFromCli(t *testing.T) {
 	}
 	if policySrc.GitDirectory != input.GitDirectory {
 		t.Errorf("policy gitDirectory = %v; want %v", policySrc.GitDirectory, input.GitDirectory)
-	}
-}
-
-func TestNewConfigFromCli_defaults(t *testing.T) {
-	input := &CliConfig{}
-	config := newConfigFromCli(input)
-	if len(config.Policies) != 1 {
-		t.Fatalf("len(policies) = %v; want %v", len(config.Policies), 1)
-	}
-	policySrc := config.Policies[0]
-	if policySrc.GitRepository != DefaultGitRepository {
-		t.Errorf("policy gitRepository = %v; want %v (default)", policySrc.LocalDirectory, DefaultGitRepository)
-	}
-	if policySrc.GitBranch != DefaultGitBranch {
-		t.Errorf("policy gitBranch = %v; want %v (default)", policySrc.GitBranch, DefaultGitBranch)
-	}
-	if policySrc.GitDirectory != DefaultGitPolicyDir {
-		t.Errorf("policy gitDirectory = %v; want %v (default)", policySrc.GitDirectory, DefaultGitPolicyDir)
-	}
-}
-
-func TestNewConfigFromCli_defaultPolicySrc(t *testing.T) {
-	input := &CliConfig{}
-	config := newConfigFromCli(input)
-	if len(config.Policies) != 1 {
-		t.Fatalf("len(policies) = %v; want %v", len(config.Policies), 1)
-	}
-	policySrc := config.Policies[0]
-	if policySrc.GitRepository != DefaultGitRepository {
-		t.Errorf("policy gitRepository = %v; want %v", policySrc.GitRepository, DefaultGitRepository)
-	}
-	if policySrc.GitBranch != DefaultGitBranch {
-		t.Errorf("policy gitBranch = %v; want %v", policySrc.GitBranch, DefaultGitBranch)
-	}
-	if policySrc.GitDirectory != DefaultGitPolicyDir {
-		t.Errorf("policy gitDirectory = %v; want %v", policySrc.GitDirectory, DefaultGitPolicyDir)
 	}
 }
 

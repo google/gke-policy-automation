@@ -174,3 +174,21 @@ func TestValidatePolicyCheckConfig_negative(t *testing.T) {
 		}
 	}
 }
+
+func TestSetConfigDefaults_policySrc(t *testing.T) {
+	config := Config{}
+	setConfigDefaults(&config)
+	if len(config.Policies) < 1 {
+		t.Fatalf("len of policy sources is %d; want %d", len(config.Policies), 1)
+	}
+	policySrc := config.Policies[0]
+	if policySrc.GitRepository != DefaultGitRepository {
+		t.Errorf("policy gitRepository = %v; want %v", policySrc.GitRepository, DefaultGitRepository)
+	}
+	if policySrc.GitBranch != DefaultGitBranch {
+		t.Errorf("policy gitBranch = %v; want %v", policySrc.GitBranch, DefaultGitBranch)
+	}
+	if policySrc.GitDirectory != DefaultGitPolicyDir {
+		t.Errorf("policy gitDirectory = %v; want %v", policySrc.GitDirectory, DefaultGitPolicyDir)
+	}
+}

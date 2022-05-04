@@ -47,7 +47,7 @@ func CreateClusterCommand(p PolicyAutomation) *cli.Command {
 	config := &CliConfig{}
 	return &cli.Command{
 		Name:  "cluster",
-		Usage: "Manage policies against GKE clusters",
+		Usage: "Perform GKE cluster related operations",
 		Subcommands: []*cli.Command{
 			{
 				Name:  "print",
@@ -115,7 +115,7 @@ func CreatePolicyCheckCommand(p PolicyAutomation) *cli.Command {
 	config := &CliConfig{}
 	return &cli.Command{
 		Name:  "policy",
-		Usage: "Manages policy files",
+		Usage: "Perform REGO policy related operations",
 		Subcommands: []*cli.Command{
 			{
 				Name:  "check",
