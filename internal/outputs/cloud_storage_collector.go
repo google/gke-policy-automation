@@ -17,35 +17,30 @@ package outputs
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
-	"cloud.google.com/go/storage"
 	"github.com/google/gke-policy-automation/internal/policy"
-	"google.golang.org/api/option"
 )
 
 type CloudStorageResultCollector struct {
 	ctx               context.Context
-	bucket            *storage.BucketHandle
+	client            StorageClient
+	bucketName        string
 	objectName        string
 	validationResults ValidationResults
 }
 
-func BuildCloudStorageResultCollector(ctx context.Context, credentialsFile string, bucketName string, objectName string) (ValidationResultCollector, error) {
+func NewCloudStorageResultCollector(ctx context.Context, client StorageClient, bucketName string, objectName string) (ValidationResultCollector, error) {
 
-	client, err := storage.NewClient(ctx, option.WithCredentialsFile(credentialsFile))
-	if err != nil {
-		return nil, err
-	}
-
-	bucket := client.Bucket(bucketName)
-	if _, err := bucket.Attrs(ctx); err != nil {
-		return nil, err
+	if !client.BucketExists(bucketName) {
+		return nil, fmt.Errorf("bucket does not exist %s", bucketName)
 	}
 
 	return &CloudStorageResultCollector{
 		ctx:        ctx,
-		bucket:     bucket,
+		client:     client,
+		bucketName: bucketName,
 		objectName: objectName,
 	}, nil
 }
@@ -66,14 +61,9 @@ func (p *CloudStorageResultCollector) Close() error {
 		return err
 	}
 
-	w := p.bucket.Object(p.objectName).NewWriter(p.ctx)
-	if _, err := w.Write(res); err != nil {
+	if err := p.client.Write(p.bucketName, p.objectName, res); err != nil {
 		return err
 	}
 
-	if err := w.Close(); err != nil {
-		return err
-	}
-
-	return nil
+	return p.client.Close()
 }
