@@ -17,9 +17,43 @@ package outputs
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/gke-policy-automation/internal/policy"
 )
+
+func TestMapEvaluationResultsToJsonWithTimestamp(t *testing.T) {
+
+	r1 := policy.NewPolicyEvaluationResult()
+	r2 := policy.NewPolicyEvaluationResult()
+
+	r1.AddPolicy(&policy.Policy{
+		Title:            "title1",
+		Description:      "description1",
+		Group:            "group1",
+		Valid:            false,
+		Violations:       []string{"error"},
+		ProcessingErrors: []error{},
+	})
+
+	r2.AddPolicy(&policy.Policy{
+		Title:            "title2",
+		Description:      "description2",
+		Group:            "group2",
+		Valid:            true,
+		Violations:       []string{},
+		ProcessingErrors: []error{},
+	})
+
+	res, _ := MapEvaluationResultsToJsonWithTime(
+		[]*policy.PolicyEvaluationResult{r1, r2},
+		time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+	)
+
+	if string(res) != `{"validationDate":"1970-01-01T00:00:00Z","clusters":[{"cluster":"","result":[{"policyGroup":"group1","policyName":"title1","policyDescription":"description1","isValid":false,"violations":[{"errorMessage":"error"}]}],"processingErrors":[]},{"cluster":"","result":[{"policyGroup":"group2","policyName":"title2","policyDescription":"description2","isValid":true,"violations":[]}],"processingErrors":[]}]}` {
+		t.Errorf("invalid parsing")
+	}
+}
 
 func TestMapValidPolicyToJson(t *testing.T) {
 	r := policy.NewPolicyEvaluationResult()

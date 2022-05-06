@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package outputs
+package storage
 
 import (
 	"context"
@@ -21,18 +21,12 @@ import (
 	"google.golang.org/api/option"
 )
 
-type StorageClient interface {
-	BucketExists(bucketName string) bool
-	Write(bucketName, objectName string, content []byte) error
-	Close() error
-}
-
 type CloudStorageClient struct {
 	ctx    context.Context
 	client *storage.Client
 }
 
-func NewCloudStorageClient(ctx context.Context) (StorageClient, error) {
+func NewCloudStorageClient(ctx context.Context) (*CloudStorageClient, error) {
 
 	client, err := storage.NewClient(ctx)
 
@@ -46,7 +40,7 @@ func NewCloudStorageClient(ctx context.Context) (StorageClient, error) {
 	}, nil
 }
 
-func NewCloudStorageClientWithCredentialsFile(ctx context.Context, credentialsFile string) (StorageClient, error) {
+func NewCloudStorageClientWithCredentialsFile(ctx context.Context, credentialsFile string) (*CloudStorageClient, error) {
 
 	client, err := storage.NewClient(ctx, option.WithCredentialsFile(credentialsFile))
 

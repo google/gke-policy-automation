@@ -15,48 +15,50 @@
 package outputs
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/google/gke-policy-automation/internal/policy"
 )
 
-type CloudStorageResultCollector struct {
-	ctx               context.Context
-	client            StorageClient
-	bucketName        string
-	objectName        string
-	validationResults ValidationResults
+type StorageClient interface {
+	BucketExists(bucketName string) bool
+	Write(bucketName, objectName string, content []byte) error
+	Close() error
 }
 
-func NewCloudStorageResultCollector(ctx context.Context, client StorageClient, bucketName string, objectName string) (ValidationResultCollector, error) {
+type Mapper func(evaluationResult []*policy.PolicyEvaluationResult, time time.Time) ([]byte, error)
+
+type CloudStorageResultCollector struct {
+	client            StorageClient
+	mapper            Mapper
+	bucketName        string
+	objectName        string
+	evaluationResults []*policy.PolicyEvaluationResult
+}
+
+func NewCloudStorageResultCollector(client StorageClient, mapper Mapper, bucketName string, objectName string) (*CloudStorageResultCollector, error) {
 
 	if !client.BucketExists(bucketName) {
-		return nil, fmt.Errorf("bucket does not exist %s", bucketName)
+		return nil, fmt.Errorf("bucket does not exist: %s", bucketName)
 	}
 
 	return &CloudStorageResultCollector{
-		ctx:        ctx,
 		client:     client,
+		mapper:     mapper,
 		bucketName: bucketName,
 		objectName: objectName,
 	}, nil
 }
 
 func (p *CloudStorageResultCollector) RegisterResult(results []*policy.PolicyEvaluationResult) error {
-	for _, r := range results {
-		p.validationResults.ClusterValidationResults = append(p.validationResults.ClusterValidationResults, MapClusterToJson(r))
-	}
-
+	p.evaluationResults = results
 	return nil
 }
 
 func (p *CloudStorageResultCollector) Close() error {
-	p.validationResults.ValidationDate = time.Now()
 
-	res, err := json.Marshal(p.validationResults)
+	res, err := p.mapper(p.evaluationResults, time.Now())
 	if err != nil {
 		return err
 	}
