@@ -3,6 +3,7 @@ module github.com/google/gke-policy-automation
 go 1.17
 
 require (
+	cloud.google.com/go/asset v1.2.0
 	cloud.google.com/go/container v1.2.0
 	github.com/go-git/go-billy/v5 v5.3.1
 	github.com/go-git/go-git/v5 v5.4.2
@@ -18,6 +19,7 @@ require (
 )
 
 require (
+	cloud.google.com/go v0.100.2 // indirect
 	cloud.google.com/go/compute v1.5.0 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
