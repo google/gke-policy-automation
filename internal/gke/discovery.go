@@ -23,6 +23,7 @@ import (
 	"github.com/google/gke-policy-automation/internal/log"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
 	assetpb "google.golang.org/genproto/googleapis/cloud/asset/v1"
 )
 
@@ -54,7 +55,15 @@ type AssetInventoryDiscoveryClient struct {
 }
 
 func NewDiscoveryClient(ctx context.Context) (DiscoveryClient, error) {
-	client, err := asset.NewClient(ctx)
+	return newAssetInventoryDiscoveryClient(ctx)
+}
+
+func NewDiscoveryClientWithCredentialsFile(ctx context.Context, credentialsFile string) (DiscoveryClient, error) {
+	return newAssetInventoryDiscoveryClient(ctx, option.WithCredentialsFile(credentialsFile))
+}
+
+func newAssetInventoryDiscoveryClient(ctx context.Context, opts ...option.ClientOption) (*AssetInventoryDiscoveryClient, error) {
+	client, err := asset.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}

@@ -228,8 +228,15 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 //from the sources that are defined in a configuration.
 func (p *PolicyAutomationApp) getClusters() ([]string, error) {
 	if p.config.ClusterDiscovery.Enabled {
-		log.Debugf("instantiating cluster discovery client")
-		dc, err := gke.NewDiscoveryClient(p.ctx)
+		var dc gke.DiscoveryClient
+		var err error
+		if p.config.CredentialsFile != "" {
+			log.Debugf("instantiating cluster discovery client with a credentials file")
+			dc, err = gke.NewDiscoveryClientWithCredentialsFile(p.ctx, p.config.CredentialsFile)
+		} else {
+			log.Debugf("instantiating cluster discovery client")
+			dc, err = gke.NewDiscoveryClient(p.ctx)
+		}
 		if err != nil {
 			return nil, err
 		}

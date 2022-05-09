@@ -93,6 +93,7 @@ func TestGetClusters_discovery(t *testing.T) {
 		out: outputs.NewSilentOutput(),
 		ctx: context.Background(),
 		config: &Config{
+			CredentialsFile: "test-fixtures/test_credentials.json",
 			ClusterDiscovery: ClusterDiscovery{
 				Enabled: true,
 			},

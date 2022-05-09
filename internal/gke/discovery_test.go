@@ -46,8 +46,9 @@ func (m assetInventorySearchResultIteratorMock) Next() (*assetpb.ResourceSearchR
 	return m.nextFn()
 }
 
-func TestNewDiscoveryClient(t *testing.T) {
-	client, err := NewDiscoveryClient(context.Background())
+func TestNewAssetInventoryDiscoveryClient(t *testing.T) {
+	testCredsFile := "test-fixtures/test_credentials.json"
+	client, err := NewDiscoveryClientWithCredentialsFile(context.Background(), testCredsFile)
 	if err != nil {
 		t.Fatalf("err is not nil; want nil; err = %s", err)
 	}
