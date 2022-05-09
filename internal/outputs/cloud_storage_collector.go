@@ -52,7 +52,7 @@ func NewCloudStorageResultCollector(client StorageClient, mapper Mapper, bucketN
 }
 
 func (p *CloudStorageResultCollector) RegisterResult(results []*policy.PolicyEvaluationResult) error {
-	p.evaluationResults = results
+	p.evaluationResults = append(p.evaluationResults, results...)
 	return nil
 }
 

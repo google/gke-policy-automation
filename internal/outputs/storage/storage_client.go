@@ -61,7 +61,11 @@ func (c *CloudStorageClient) BucketExists(bucketName string) bool {
 
 func (c *CloudStorageClient) Write(bucketName, objectName string, content []byte) error {
 	w := c.client.Bucket(bucketName).Object(objectName).NewWriter(c.ctx)
-	w.Write(content)
+
+	if _, err := w.Write(content); err != nil {
+		w.Close()
+		return err
+	}
 
 	return w.Close()
 }

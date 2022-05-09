@@ -52,21 +52,20 @@ func TestCloudStorageCollector(t *testing.T) {
 	object := "myobject"
 	mappedResult := []byte("result")
 
+	policyResult := policy.NewPolicyEvaluationResult()
+	policyResult.AddPolicy(&policy.Policy{
+		Title:            "title",
+		Description:      "description",
+		Group:            "group",
+		Valid:            true,
+		Violations:       []string{},
+		ProcessingErrors: []error{},
+	})
+
 	t.Run("happy path", func(t *testing.T) {
 
 		evalResults := make([]*policy.PolicyEvaluationResult, 0)
-
-		r := policy.NewPolicyEvaluationResult()
-		r.AddPolicy(&policy.Policy{
-			Title:            "title",
-			Description:      "description",
-			Group:            "group",
-			Valid:            true,
-			Violations:       []string{},
-			ProcessingErrors: []error{},
-		})
-
-		evalResults = append(evalResults, r)
+		evalResults = append(evalResults, policyResult)
 
 		mockStorage := &Mock{}
 		mockStorage.On("BucketExists", bucket).Return(true)
@@ -104,4 +103,30 @@ func TestCloudStorageCollector(t *testing.T) {
 		}
 	})
 
+	t.Run("collect multiple results", func(t *testing.T) {
+
+		evalResults := make([]*policy.PolicyEvaluationResult, 0)
+		evalResults = append(evalResults, policyResult)
+
+		expectedResultsCollected := []*policy.PolicyEvaluationResult{policyResult, policyResult}
+
+		mockStorage := &Mock{}
+		mockStorage.On("BucketExists", bucket).Return(true)
+		mockStorage.On("MockMapper", expectedResultsCollected, mock.Anything).Return(mappedResult, nil)
+		mockStorage.On("Write", bucket, object, mappedResult).Return(nil)
+		mockStorage.On("Close").Return(nil)
+
+		var collector, _ = NewCloudStorageResultCollector(
+			mockStorage,
+			mockStorage.MockMapper,
+			bucket,
+			object,
+		)
+
+		collector.RegisterResult(evalResults)
+		collector.RegisterResult(evalResults)
+		collector.Close()
+
+		mockStorage.AssertExpectations(t)
+	})
 }
