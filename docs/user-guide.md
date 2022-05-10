@@ -125,7 +125,7 @@ The cluster discovery mechanism is leveraging [Cloud Asset Inventory](https://cl
 API to find GKE clusters in a given GCP projects, folders or in an entire organization. The cluster
 discovery can be used in place of a fixed list of cluster identifiers.
 
-Setting cluster discover is possible using [configuration file](#configuration-file) only.
+Setting cluster discovery is possible using [configuration file](#configuration-file) only.
 
 * cluster discovery can't be configured along with a list of clusters
 * cluster discovery projects are referenced by the project identifiers
