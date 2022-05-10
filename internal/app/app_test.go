@@ -31,6 +31,7 @@ type DiscoveryClientMock struct {
 	GetClustersInProjectFn func(name string) ([]string, error)
 	GetClustersInFolderFn  func(number string) ([]string, error)
 	GetClustersInOrgFn     func(number string) ([]string, error)
+	CloseFn                func() error
 }
 
 func (m DiscoveryClientMock) GetClustersInProject(name string) ([]string, error) {
@@ -46,7 +47,7 @@ func (m DiscoveryClientMock) GetClustersInOrg(number string) ([]string, error) {
 }
 
 func (m DiscoveryClientMock) Close() error {
-	return nil
+	return m.CloseFn()
 }
 
 func TestNewPolicyAutomationApp(t *testing.T) {
@@ -347,5 +348,23 @@ func TestGetClusterName_negative(t *testing.T) {
 	_, err := getClusterName(input)
 	if err == nil {
 		t.Errorf("error is nil; want error")
+	}
+}
+
+func TestPolicyAutomationAppClose_negative(t *testing.T) {
+	closeErr := fmt.Errorf("close error")
+	pa := PolicyAutomationApp{
+		discovery: DiscoveryClientMock{
+			CloseFn: func() error {
+				return closeErr
+			},
+		},
+	}
+	err := pa.Close()
+	if err == nil {
+		t.Fatalf("error is nil; want error")
+	}
+	if err != closeErr {
+		t.Errorf("error is %v; want %v", err, closeErr)
 	}
 }

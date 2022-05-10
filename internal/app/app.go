@@ -87,11 +87,21 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 }
 
 func (p *PolicyAutomationApp) Close() error {
+	errors := make([]error, 0)
 	if p.gke != nil {
-		return p.gke.Close()
+		if err := p.gke.Close(); err != nil {
+			log.Warnf("error when closing GKE client: %s", err)
+			errors = append(errors, err)
+		}
 	}
 	if p.discovery != nil {
-		return p.discovery.Close()
+		if err := p.discovery.Close(); err != nil {
+			log.Warnf("error when closing discovery client: %s", err)
+			errors = append(errors, err)
+		}
+	}
+	if len(errors) > 0 {
+		return errors[0]
 	}
 	return nil
 }
@@ -114,6 +124,7 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 	if err != nil {
 		p.out.ErrorPrint("could not get clusters", err)
 		log.Errorf("could not get clusters: %s", err)
+		return nil
 	}
 	evalResults := make([]*policy.PolicyEvaluationResult, 0)
 	for _, clusterId := range clusterIds {
