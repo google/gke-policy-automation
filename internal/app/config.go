@@ -16,6 +16,7 @@ package app
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/google/gke-policy-automation/internal/log"
 	"gopkg.in/yaml.v2"
@@ -35,6 +36,7 @@ type Config struct {
 	CredentialsFile string          `yaml:"credentialsFile"`
 	Clusters        []ConfigCluster `yaml:"clusters"`
 	Policies        []ConfigPolicy  `yaml:"policies"`
+	Outputs         []ConfigOutput  `yaml:"outputs"`
 }
 
 type ConfigPolicy struct {
@@ -49,6 +51,19 @@ type ConfigCluster struct {
 	Name     string `yaml:"name"`
 	Project  string `yaml:"project"`
 	Location string `yaml:"location"`
+}
+
+type ConfigOutput struct {
+	FileName     string             `yaml:"file"`
+	PubSub       PubSubOutput       `yaml:"pubsub"`
+	CloudStorage CloudStorageOutput `yaml:"cloudStorage"`
+}
+type PubSubOutput struct {
+	Topic string `yaml:"topic"`
+}
+type CloudStorageOutput struct {
+	Bucket string `yaml:"bucket"`
+	Path   string `yaml:"path"`
 }
 
 func ReadConfig(path string, readFn ReadFileFn) (*Config, error) {
@@ -85,6 +100,7 @@ func ValidateClusterReviewConfig(config Config) error {
 	var errors = make([]error, 0)
 	errors = append(errors, validateClustersConfig(config.Clusters)...)
 	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
+	errors = append(errors, validateOutputConfig(config.Outputs)...)
 	if len(errors) > 0 {
 		for _, err := range errors {
 			log.Warnf("configuration validation error: %s", err)
@@ -150,6 +166,20 @@ func validatePolicySourceConfig(policies []ConfigPolicy) []error {
 			if policy.GitRepository != "" || policy.GitBranch != "" || policy.GitDirectory != "" {
 				errors = append(errors, fmt.Errorf("policy source [%v]: local directory is set along with GIT parameters", i))
 			}
+		}
+	}
+	return errors
+}
+
+func validateOutputConfig(outputs []ConfigOutput) []error {
+	var errors = make([]error, 0)
+	for _, output := range outputs {
+		if output.FileName != "" && !strings.HasSuffix(output.FileName, ".json") {
+			errors = append(errors, fmt.Errorf("invalid output - filename should end with .json"))
+		} else if output.CloudStorage.Bucket == "" && output.CloudStorage.Path != "" {
+			errors = append(errors, fmt.Errorf("invalid output - bucket empty for path: %s", output.CloudStorage.Path))
+		} else if output.CloudStorage.Bucket != "" && output.CloudStorage.Path == "" {
+			errors = append(errors, fmt.Errorf("invalid output - path empty for bucket: %s", output.CloudStorage.Bucket))
 		}
 	}
 	return errors

@@ -192,3 +192,25 @@ func TestSetConfigDefaults_policySrc(t *testing.T) {
 		t.Errorf("policy gitDirectory = %v; want %v", policySrc.GitDirectory, DefaultGitPolicyDir)
 	}
 }
+
+func TestValidateOutputConfig(t *testing.T) {
+	config := []ConfigOutput{
+		{FileName: "out.json"},
+		{PubSub: PubSubOutput{Topic: "test"}},
+		{CloudStorage: CloudStorageOutput{Bucket: "bucket", Path: "path"}},
+	}
+
+	if err := validateOutputConfig(config); len(err) > 0 {
+		t.Errorf("expected no error, got: %v", err)
+	}
+}
+
+func TestValidateOutputConfig_negative(t *testing.T) {
+	badConfig := []ConfigOutput{
+		{CloudStorage: CloudStorageOutput{Bucket: "bucket"}},
+	}
+
+	if err := validateOutputConfig(badConfig); len(err) == 0 {
+		t.Errorf("expected error on invalid output config")
+	}
+}
