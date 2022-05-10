@@ -211,7 +211,7 @@ Example:
 ## Outputs
 
 The GKE Policy Automation tool produces output to the stderr, json file, GCS bucket or PubSub topic.
-Additional output to json file can be specified with a command line flag, and all output types 
+Additional output to json file can be specified with a command line flag, and all output types
 can be specified in a [configuration file](#configuration-file).
 
 For command line flags:
