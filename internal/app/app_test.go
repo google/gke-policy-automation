@@ -204,3 +204,19 @@ func TestGetClusterName_negative(t *testing.T) {
 		t.Errorf("error is nil; want error")
 	}
 }
+
+func TestClusterReviewWithNoPolicies(t *testing.T) {
+
+	pa := PolicyAutomationApp{
+		out: outputs.NewSilentOutput(),
+		config: &Config{
+			Policies: []ConfigPolicy{},
+		},
+	}
+
+	err := pa.ClusterReview()
+
+	if err != errNoPolicies {
+		t.Fatalf("need noPoliciesError but err = %s", err)
+	}
+}
