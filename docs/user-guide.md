@@ -11,9 +11,11 @@ The GKE Policy Automation is a command line tool that validates GKE clusters aga
   * [Binary](#binary)
   * [Source code](#source-code)
 * [Authentication](#authentication)
+  * [Required IAM roles](#required-iam-roles)
 * [Cluster commands](#cluster-commands)
   * [Specifying single cluster](#specifying-single-cluster)
   * [Specifying multiple clusters](#specifying-multiple-clusters)
+  * [Cluster discovery](#cluster-discovery)
   * [Reviewing clusters](#reviewing-clusters)
   * [Printing cluster data](#printing-cluster-data)
 * [Policy Commands](#policy-commands)
@@ -67,8 +69,12 @@ by default
 default credentials
 * To use credentials from service account key file pass `--creds` parameter with a path to the file.
 
-The minimum required IAM role is `roles/container.clusterViewer`
-on a cluster projects.
+### Required IAM roles
+
+* The minimum required IAM role is `roles/container.clusterViewer` on a cluster projects
+* For cluster discovery the `cloudasset.assets.searchAllResources` permission is needed on a target
+projects, folders or organization. This permission is included, among others, in a `roles/cloudasset.viewer`
+role
 
 ## Cluster commands
 
@@ -112,6 +118,43 @@ clusters:
     project: my-project-three
     location: europe-north1
 ```
+
+### Cluster discovery
+
+The cluster discovery mechanism is leveraging [Cloud Asset Inventory](https://cloud.google.com/asset-inventory)
+API to find GKE clusters in a given GCP projects, folders or in an entire organization. The cluster
+discovery can be used in place of a fixed list of cluster identifiers.
+
+Setting cluster discover is possible using [configuration file](#configuration-file) only.
+
+* cluster discovery can't be configured along with a list of clusters
+* cluster discovery projects are referenced by the project identifiers
+* cluster discovery folders are referenced by the folder numbers
+* cluster discovery organization is referenced by the organization number
+
+The example `config.yaml` file with a cluster discovery enabled on the selected projects and folders:
+
+```yaml
+clusterDiscovery:
+  enabled: true
+  projects:
+    - project-one
+    - project-two
+    - project-three
+  folders:
+    - "123456789123"
+    - "987654321098"
+```
+
+The example `config.yaml` file with a cluster discovery enabled on the entire organization:
+
+```yaml
+clusterDiscovery:
+  enabled: true
+  organization: "123456789012"
+```
+
+**NOTE**: it might take some time for a GKE clusters to appear in a Cloud Asset Inventory search results.
 
 ### Reviewing clusters
 
@@ -247,6 +290,16 @@ clusters:
     project: my-project-one
     location: europe-central2
   - id: projects/my-project-two/locations/europe-west2/clusters/prod-west
+clusterDiscovery:
+  enabled: true
+  projects:
+    - project-one
+    - project-two
+    - project-three
+  folders:
+    - "123456789123" #folder number
+    - "987654321098"
+  organization: "123456789012" #organization number
 policies:
   - repository: https://github.com/google/gke-policy-automation
     branch: main
