@@ -80,9 +80,6 @@ func ValidateClusterJSONDataConfig(config Config) error {
 }
 
 func ValidateClusterOfflineReviewConfig(config Config) error {
-	if len(config.Clusters) < 1 {
-		return fmt.Errorf("there are no clusters defined")
-	}
 	var errors = make([]error, 0)
 	if config.DumpFile == "" {
 		errors = append(errors, fmt.Errorf("cluster dump file is not set"))
