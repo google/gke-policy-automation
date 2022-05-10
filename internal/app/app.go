@@ -33,6 +33,7 @@ type PolicyAutomation interface {
 	LoadCliConfig(cliConfig *CliConfig, validateFn ValidateConfig) error
 	Close() error
 	ClusterReview() error
+	ClusterOfflineReview() error
 	ClusterJSONData() error
 	Version() error
 	PolicyCheck() error
@@ -44,6 +45,7 @@ type PolicyAutomationApp struct {
 	out       *outputs.Output
 	collector outputs.ValidationResultCollector
 	gke       *gke.GKEClient
+	gkeLocal  *gke.GKELocalClient
 	discovery gke.DiscoveryClient
 }
 
@@ -80,6 +82,11 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 	if !p.config.SilentMode {
 		p.out = outputs.NewStdOutOutput()
 		p.collector = outputs.NewConsoleResultCollector(p.out)
+	}
+	if p.config.DumpFile != "" {
+		// read file and instantate the configuration
+		p.gkeLocal, err = gke.NewGKELocalClient(p.ctx, p.config.DumpFile)
+		return
 	}
 	if p.config.CredentialsFile != "" {
 		p.gke, err = gke.NewClientWithCredentialsFile(p.ctx, p.config.CredentialsFile)
@@ -168,6 +175,63 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 	return nil
 }
 
+func (p *PolicyAutomationApp) ClusterOfflineReview() error {
+	// Loading the policies
+	files, err := p.loadPolicyFiles()
+	if err != nil {
+		return err
+	}
+	// Creating the Policy Agent instance and check the policies
+	pa := policy.NewPolicyAgent(p.ctx)
+	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
+	log.Info("Parsing rego policies")
+	if err := pa.WithFiles(files); err != nil {
+		p.out.ErrorPrint("could not parse policy files", err)
+		log.Errorf("could not parse policy files: %s", err)
+		return err
+	}
+
+	clusterName, err := p.gkeLocal.GetClusterName()
+	if err != nil {
+		p.out.ErrorPrint("could not create cluster path", err)
+		log.Errorf("could not create cluster path: %s", err)
+		return err
+	}
+	p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [Name: %s]\n",
+		clusterName)
+
+	evalResults := make([]*policy.PolicyEvaluationResult, 0)
+	cluster, err := p.gkeLocal.GetCluster()
+	if err != nil {
+		p.out.ErrorPrint("could not fetch the cluster details", err)
+		log.Errorf("could not fetch cluster details: %s", err)
+		return err
+	}
+	p.out.ColorPrintf("[light_gray][bold]Evaluating policies against GKE cluster... [ID: %s]\n",
+		cluster.Id)
+	evalResult, err := pa.Evaluate(cluster)
+	if err != nil {
+		p.out.ErrorPrint("failed to evalute policies", err)
+		return err
+	}
+	evalResult.ClusterName = clusterName
+	evalResults = append(evalResults, evalResult)
+
+	err = p.collector.RegisterResult(evalResults)
+	if err != nil {
+		p.out.ErrorPrint("failed to register evaluation results", err)
+		log.Errorf("could not register evaluation results: %s", err)
+		return err
+	}
+	err = p.collector.Close()
+	if err != nil {
+		p.out.ErrorPrint("failed to close results registration", err)
+		log.Errorf("could not finalize registering evaluation results: %s", err)
+		return err
+	}
+	return nil
+}
+
 func (p *PolicyAutomationApp) ClusterJSONData() error {
 	clusterIds, err := p.getClusters()
 	if err != nil {
@@ -175,15 +239,12 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 		log.Errorf("could not get clusters: %s", err)
 	}
 	for _, clusterId := range clusterIds {
-		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [%s]\n", clusterId)
 		cluster, err := p.gke.GetCluster(clusterId)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
 			return err
 		}
-		p.out.ColorPrintf("[light_gray][bold]Printing GKE cluster JSON data... [%s]\n",
-			cluster.Id)
 		data, error := prettyJson(cluster)
 		if error != nil {
 			log.Errorf("could not print cluster data: %s", err)
@@ -310,6 +371,7 @@ func newConfigFromCli(cliConfig *CliConfig) *Config {
 	config := &Config{}
 	config.SilentMode = cliConfig.SilentMode
 	config.CredentialsFile = cliConfig.CredentialsFile
+	config.DumpFile = cliConfig.DumpFile
 	if cliConfig.ClusterName != "" || cliConfig.ClusterLocation != "" || cliConfig.ProjectName != "" {
 		config.Clusters = []ConfigCluster{
 			{

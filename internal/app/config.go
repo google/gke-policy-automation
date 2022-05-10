@@ -32,6 +32,7 @@ type ValidateConfig func(config Config) error
 
 type Config struct {
 	SilentMode       bool             `yaml:"silent"`
+	DumpFile         string           `yaml:"dumpFile"`
 	CredentialsFile  string           `yaml:"credentialsFile"`
 	Clusters         []ConfigCluster  `yaml:"clusters"`
 	Policies         []ConfigPolicy   `yaml:"policies"`
@@ -74,6 +75,28 @@ func ReadConfig(path string, readFn ReadFileFn) (*Config, error) {
 func ValidateClusterJSONDataConfig(config Config) error {
 	var errors = make([]error, 0)
 	errors = append(errors, validateClustersConfig(config)...)
+	if len(errors) > 0 {
+		for _, err := range errors {
+			log.Warnf("configuration validation error: %s", err)
+		}
+		return errors[0]
+	}
+	return nil
+}
+
+func ValidateClusterOfflineReviewConfig(config Config) error {
+	var errors = make([]error, 0)
+	if config.DumpFile == "" {
+		errors = append(errors, fmt.Errorf("cluster dump file is not set"))
+	}
+	for i, cluster := range config.Clusters {
+		if cluster.ID == "" {
+			if cluster.Name == "" {
+				errors = append(errors, fmt.Errorf("cluster [%v]: name is not set", i))
+			}
+		}
+	}
+	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
 	if len(errors) > 0 {
 		for _, err := range errors {
 			log.Warnf("configuration validation error: %s", err)
