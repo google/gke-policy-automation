@@ -17,6 +17,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
@@ -25,6 +26,8 @@ import (
 	"github.com/google/gke-policy-automation/internal/outputs"
 	"github.com/google/gke-policy-automation/internal/policy"
 )
+
+var errNoPolicies = errors.New("no policies to check against")
 
 type PolicyAutomation interface {
 	LoadCliConfig(cliConfig *CliConfig, validateFn ValidateConfig) error
@@ -96,6 +99,10 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 	files, err := p.loadPolicyFiles()
 	if err != nil {
 		return err
+	}
+	if len(files) == 0 {
+		p.out.ColorPrintf("[yellow][bold]No policies to check against\n")
+		return errNoPolicies
 	}
 	pa := policy.NewPolicyAgent(p.ctx)
 	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
