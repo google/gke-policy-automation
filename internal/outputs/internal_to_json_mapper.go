@@ -15,8 +15,30 @@
 package outputs
 
 import (
+	"encoding/json"
+	"time"
+
 	"github.com/google/gke-policy-automation/internal/policy"
 )
+
+func MapEvaluationResultsToJsonWithTime(evaluationResult []*policy.PolicyEvaluationResult, time time.Time) ([]byte, error) {
+
+	validationResults := ValidationResults{
+		ValidationDate: time,
+	}
+
+	for _, r := range evaluationResult {
+		validationResults.ClusterValidationResults = append(validationResults.ClusterValidationResults, MapClusterToJson(r))
+	}
+
+	res, err := json.Marshal(validationResults)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
 
 func MapClusterToJson(evaluationResult *policy.PolicyEvaluationResult) ClusterValidationResult {
 
