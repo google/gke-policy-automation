@@ -351,6 +351,22 @@ func TestGetClusterName_negative(t *testing.T) {
 	}
 }
 
+func TestClusterReviewWithNoPolicies(t *testing.T) {
+
+	pa := PolicyAutomationApp{
+		out: outputs.NewSilentOutput(),
+		config: &Config{
+			Policies: []ConfigPolicy{},
+		},
+	}
+
+	err := pa.ClusterReview()
+
+	if err != errNoPolicies {
+		t.Fatalf("need noPoliciesError but err = %s", err)
+	}
+}
+
 func TestPolicyAutomationAppClose_negative(t *testing.T) {
 	closeErr := fmt.Errorf("close error")
 	pa := PolicyAutomationApp{
