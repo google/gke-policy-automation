@@ -24,7 +24,7 @@ import (
 // TestLocalGetClusterName() to test GetClusterName()
 func TestLocalGetClusterName(t *testing.T) {
 	var clusterName string
-	client, err := NewGKELocalClient(context.TODO(), "backup.json")
+	client, err := NewGKELocalClient(context.TODO(), "./test-fixtures/backup.json")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -39,7 +39,7 @@ func TestLocalGetClusterName(t *testing.T) {
 // TestLocalGetCluster() to test GetCluster()
 func TestLocalGetCluster(t *testing.T) {
 	var cluster *containerpb.Cluster
-	client, err := NewGKELocalClient(context.TODO(), "backup.json")
+	client, err := NewGKELocalClient(context.TODO(), "./test-fixtures/backup.json")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
