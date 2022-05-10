@@ -121,7 +121,6 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 	}
 
 	evalResults := make([]*policy.PolicyEvaluationResult, 0)
-	// FIX
 	for _, cluster := range p.config.Clusters {
 		clusterName, err := getClusterName(cluster)
 		if err != nil {
