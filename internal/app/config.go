@@ -31,11 +31,12 @@ type ReadFileFn func(string) ([]byte, error)
 type ValidateConfig func(config Config) error
 
 type Config struct {
-	SilentMode      bool            `yaml:"silent"`
-	DumpFile        string          `yaml:"dumpFile"`
-	CredentialsFile string          `yaml:"credentialsFile"`
-	Clusters        []ConfigCluster `yaml:"clusters"`
-	Policies        []ConfigPolicy  `yaml:"policies"`
+	SilentMode       bool             `yaml:"silent"`
+	DumpFile         string           `yaml:"dumpFile"`
+	CredentialsFile  string           `yaml:"credentialsFile"`
+	Clusters         []ConfigCluster  `yaml:"clusters"`
+	Policies         []ConfigPolicy   `yaml:"policies"`
+	ClusterDiscovery ClusterDiscovery `yaml:"clusterDiscovery"`
 }
 
 type ConfigPolicy struct {
@@ -52,6 +53,13 @@ type ConfigCluster struct {
 	Location string `yaml:"location"`
 }
 
+type ClusterDiscovery struct {
+	Enabled      bool     `yaml:"enabled"`
+	Organization string   `yaml:"organization"`
+	Folders      []string `yaml:"folders"`
+	Projects     []string `yaml:"projects"`
+}
+
 func ReadConfig(path string, readFn ReadFileFn) (*Config, error) {
 	data, err := readFn(path)
 	if err != nil {
@@ -65,11 +73,8 @@ func ReadConfig(path string, readFn ReadFileFn) (*Config, error) {
 }
 
 func ValidateClusterJSONDataConfig(config Config) error {
-	if len(config.Clusters) < 1 {
-		return fmt.Errorf("there are no clusters defined")
-	}
 	var errors = make([]error, 0)
-	errors = append(errors, validateClustersConfig(config.Clusters)...)
+	errors = append(errors, validateClustersConfig(config)...)
 	if len(errors) > 0 {
 		for _, err := range errors {
 			log.Warnf("configuration validation error: %s", err)
@@ -102,11 +107,8 @@ func ValidateClusterOfflineReviewConfig(config Config) error {
 }
 
 func ValidateClusterReviewConfig(config Config) error {
-	if len(config.Clusters) < 1 {
-		return fmt.Errorf("there are no clusters defined")
-	}
 	var errors = make([]error, 0)
-	errors = append(errors, validateClustersConfig(config.Clusters)...)
+	errors = append(errors, validateClustersConfig(config)...)
 	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
 	if len(errors) > 0 {
 		for _, err := range errors {
@@ -128,29 +130,40 @@ func ValidatePolicyCheckConfig(config Config) error {
 	return nil
 }
 
-func validateClustersConfig(clusters []ConfigCluster) []error {
-	if len(clusters) < 1 {
-		return []error{fmt.Errorf("there are no clusters defined")}
-	}
-	var errors = make([]error, 0)
-	for i, cluster := range clusters {
-		if cluster.ID == "" {
-			if cluster.Name == "" {
-				errors = append(errors, fmt.Errorf("cluster [%v]: name is not set", i))
-			}
-			if cluster.Location == "" {
-				errors = append(errors, fmt.Errorf("cluster [%v]: location is not set", i))
-			}
-			if cluster.Project == "" {
-				errors = append(errors, fmt.Errorf("cluster [%v]: project is not set", i))
-			}
-		} else {
-			if cluster.Name != "" || cluster.Location != "" || cluster.Project != "" {
-				errors = append(errors, fmt.Errorf("cluster [%v]: ID is set along with name or location or project", i))
+func validateClustersConfig(config Config) []error {
+	if config.ClusterDiscovery.Enabled {
+		discovery := config.ClusterDiscovery
+		if len(config.Clusters) > 0 {
+			return []error{fmt.Errorf("cluster discovery is enabled along with a defined cluster list")}
+		}
+		if len(discovery.Folders) < 1 && len(discovery.Projects) < 1 && discovery.Organization == "" {
+			return []error{fmt.Errorf("cluster discovery is enabled but none of organization, folder list or project list are defined")}
+		}
+	} else {
+		if len(config.Clusters) < 1 {
+			return []error{fmt.Errorf("cluster discovery is disabled and there are no clusters defined")}
+		}
+		var errors = make([]error, 0)
+		for i, cluster := range config.Clusters {
+			if cluster.ID == "" {
+				if cluster.Name == "" {
+					errors = append(errors, fmt.Errorf("cluster [%v]: name is not set", i))
+				}
+				if cluster.Location == "" {
+					errors = append(errors, fmt.Errorf("cluster [%v]: location is not set", i))
+				}
+				if cluster.Project == "" {
+					errors = append(errors, fmt.Errorf("cluster [%v]: project is not set", i))
+				}
+			} else {
+				if cluster.Name != "" || cluster.Location != "" || cluster.Project != "" {
+					errors = append(errors, fmt.Errorf("cluster [%v]: ID is set along with name or location or project", i))
+				}
 			}
 		}
+		return errors
 	}
-	return errors
+	return nil
 }
 
 func validatePolicySourceConfig(policies []ConfigPolicy) []error {

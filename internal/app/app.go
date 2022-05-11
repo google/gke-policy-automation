@@ -46,6 +46,7 @@ type PolicyAutomationApp struct {
 	collector outputs.ValidationResultCollector
 	gke       *gke.GKEClient
 	gkeLocal  *gke.GKELocalClient
+	discovery gke.DiscoveryClient
 }
 
 func NewPolicyAutomationApp() PolicyAutomation {
@@ -96,8 +97,21 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 }
 
 func (p *PolicyAutomationApp) Close() error {
+	errors := make([]error, 0)
 	if p.gke != nil {
-		return p.gke.Close()
+		if err := p.gke.Close(); err != nil {
+			log.Warnf("error when closing GKE client: %s", err)
+			errors = append(errors, err)
+		}
+	}
+	if p.discovery != nil {
+		if err := p.discovery.Close(); err != nil {
+			log.Warnf("error when closing discovery client: %s", err)
+			errors = append(errors, err)
+		}
+	}
+	if len(errors) > 0 {
+		return errors[0]
 	}
 	return nil
 }
@@ -120,19 +134,16 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 		return err
 	}
 
+	clusterIds, err := p.getClusters()
+	if err != nil {
+		p.out.ErrorPrint("could not get clusters", err)
+		log.Errorf("could not get clusters: %s", err)
+		return nil
+	}
 	evalResults := make([]*policy.PolicyEvaluationResult, 0)
-	for _, cluster := range p.config.Clusters {
-		clusterName, err := getClusterName(cluster)
-		if err != nil {
-			p.out.ErrorPrint("could not create cluster path", err)
-			log.Errorf("could not create cluster path: %s", err)
-			return err
-		}
-		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [projects/%s/locations/%s/clusters/%s]\n",
-			cluster.Project,
-			cluster.Location,
-			cluster.Name)
-		cluster, err := p.gke.GetCluster(clusterName)
+	for _, clusterId := range clusterIds {
+		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [%s]\n", clusterId)
+		cluster, err := p.gke.GetCluster(clusterId)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
@@ -146,7 +157,7 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 			log.Errorf("could not evaluate rego policies on cluster %s: %s", cluster.Id, err)
 			return err
 		}
-		evalResult.ClusterName = clusterName
+		evalResult.ClusterName = clusterId
 		evalResults = append(evalResults, evalResult)
 	}
 	err = p.collector.RegisterResult(evalResults)
@@ -222,14 +233,13 @@ func (p *PolicyAutomationApp) ClusterOfflineReview() error {
 }
 
 func (p *PolicyAutomationApp) ClusterJSONData() error {
-	for _, cluster := range p.config.Clusters {
-		clusterName, err := getClusterName(cluster)
-		if err != nil {
-			p.out.ErrorPrint("could not create cluster path", err)
-			log.Errorf("could not create cluster path: %s", err)
-			return err
-		}
-		cluster, err := p.gke.GetCluster(clusterName)
+	clusterIds, err := p.getClusters()
+	if err != nil {
+		p.out.ErrorPrint("could not get clusters", err)
+		log.Errorf("could not get clusters: %s", err)
+	}
+	for _, clusterId := range clusterIds {
+		cluster, err := p.gke.GetCluster(clusterId)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
@@ -293,6 +303,66 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 	return policyFiles, nil
 }
 
+//getClusters retrieves lists of a clusters for further processing
+//from the sources that are defined in a configuration.
+func (p *PolicyAutomationApp) getClusters() ([]string, error) {
+	if p.config.ClusterDiscovery.Enabled {
+		var dc gke.DiscoveryClient
+		var err error
+		if p.config.CredentialsFile != "" {
+			log.Debugf("instantiating cluster discovery client with a credentials file")
+			dc, err = gke.NewDiscoveryClientWithCredentialsFile(p.ctx, p.config.CredentialsFile)
+		} else {
+			log.Debugf("instantiating cluster discovery client")
+			dc, err = gke.NewDiscoveryClient(p.ctx)
+		}
+		if err != nil {
+			return nil, err
+		}
+		p.discovery = dc
+		return p.discoverClusters()
+	}
+	clusters := make([]string, 0, len(p.config.Clusters))
+	for _, configCluster := range p.config.Clusters {
+		clusterName, err := getClusterName(configCluster)
+		if err != nil {
+			return nil, err
+		}
+		clusters = append(clusters, clusterName)
+	}
+	return clusters, nil
+}
+
+//discoverClusters discovers clusters according to the cluster discovery configuration.
+func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
+	if p.config.ClusterDiscovery.Organization != "" {
+		log.Infof("discovering clusters for organization %s", p.config.ClusterDiscovery.Organization)
+		p.out.ColorPrintf("[light_gray][bold]Discovering clusters in for an organization... [%s]\n", p.config.ClusterDiscovery.Organization)
+		return p.discovery.GetClustersInOrg(p.config.ClusterDiscovery.Organization)
+	}
+	clusters := make([]string, 0)
+	for _, folder := range p.config.ClusterDiscovery.Folders {
+		log.Infof("discovering clusters in a folder %s", folder)
+		p.out.ColorPrintf("[light_gray][bold]Discovering clusters in a folder... [%s]\n", folder)
+		results, err := p.discovery.GetClustersInFolder(folder)
+		if err != nil {
+			return nil, err
+		}
+		clusters = append(clusters, results...)
+	}
+	for _, project := range p.config.ClusterDiscovery.Projects {
+		log.Infof("discovering clusters in a project %s", project)
+		p.out.ColorPrintf("[light_gray][bold]Discovering clusters in a project... [%s]\n", project)
+		results, err := p.discovery.GetClustersInProject(project)
+		if err != nil {
+			return nil, err
+		}
+		clusters = append(clusters, results...)
+	}
+	log.Debugf("discovered %v clusters in projects and folders", len(clusters))
+	return clusters, nil
+}
+
 func newConfigFromFile(path string) (*Config, error) {
 	return ReadConfig(path, os.ReadFile)
 }
@@ -302,12 +372,14 @@ func newConfigFromCli(cliConfig *CliConfig) *Config {
 	config.SilentMode = cliConfig.SilentMode
 	config.CredentialsFile = cliConfig.CredentialsFile
 	config.DumpFile = cliConfig.DumpFile
-	config.Clusters = []ConfigCluster{
-		{
-			Name:     cliConfig.ClusterName,
-			Location: cliConfig.ClusterLocation,
-			Project:  cliConfig.ProjectName,
-		},
+	if cliConfig.ClusterName != "" || cliConfig.ClusterLocation != "" || cliConfig.ProjectName != "" {
+		config.Clusters = []ConfigCluster{
+			{
+				Name:     cliConfig.ClusterName,
+				Location: cliConfig.ClusterLocation,
+				Project:  cliConfig.ProjectName,
+			},
+		}
 	}
 	if cliConfig.LocalDirectory != "" || cliConfig.GitRepository != "" {
 		config.Policies = append(config.Policies, ConfigPolicy{
