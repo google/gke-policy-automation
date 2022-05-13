@@ -28,6 +28,7 @@ type CliConfig struct {
 	GitBranch       string
 	GitDirectory    string
 	LocalDirectory  string
+	OutputFile      string
 }
 
 func NewPolicyAutomationCli(p PolicyAutomation) *cli.App {
@@ -80,7 +81,7 @@ func CreateClusterCommand(p PolicyAutomation) *cli.Command {
 			{
 				Name:  "review",
 				Usage: "Evaluate policies against given GKE cluster",
-				Flags: append(getClusterSourceFlags(config), getPolicySourceFlags(config)...),
+				Flags: append(getClusterSourceFlags(config), append(getPolicySourceFlags(config), getOutputSourceFlags(config)...)...),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
 					if err := p.LoadCliConfig(config, ValidateClusterReviewConfig); err != nil {
@@ -137,12 +138,6 @@ func CreatePolicyCheckCommand(p PolicyAutomation) *cli.Command {
 
 func getClusterSourceFlags(config *CliConfig) []cli.Flag {
 	return []cli.Flag{
-		&cli.BoolFlag{
-			Name:        "silent",
-			Aliases:     []string{"s"},
-			Usage:       "",
-			Destination: &config.SilentMode,
-		},
 		&cli.StringFlag{
 			Name:        "config",
 			Aliases:     []string{"c"},
@@ -171,6 +166,23 @@ func getClusterSourceFlags(config *CliConfig) []cli.Flag {
 			Aliases:     []string{"l"},
 			Usage:       "GKE cluster location (region or zone)",
 			Destination: &config.ClusterLocation,
+		},
+	}
+}
+
+func getOutputSourceFlags(config *CliConfig) []cli.Flag {
+	return []cli.Flag{
+		&cli.BoolFlag{
+			Name:        "silent",
+			Aliases:     []string{"s"},
+			Usage:       "Disables standard console output",
+			Destination: &config.SilentMode,
+		},
+		&cli.StringFlag{
+			Name:        "out-file",
+			Aliases:     []string{"f"},
+			Usage:       "Output file for validation results",
+			Destination: &config.OutputFile,
 		},
 	}
 }

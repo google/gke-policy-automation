@@ -253,9 +253,27 @@ Example:
 
 ## Outputs
 
-The GKE Policy Automation tool produces output to the stderr.
+The GKE Policy Automation tool produces output to the stderr, json file, GCS bucket or PubSub topic.
+Additional output to json file can be specified with a command line flag, and all output types
+can be specified in a [configuration file](#configuration-file).
 
-There is a plan to add more output options in the next releases.
+For command line flags:
+
+* `out-file` is a path to output file
+
+For config file options:
+
+* `file` is a path to output file
+* `pubsub:` is configuration of PubSub
+* `cloudStorage:` is configuration of GCS
+
+Example of a cluster review command with a file output:
+
+  ```sh
+  ./gke-policy cluster review \
+  --project my-project --location europe-west2 --name my-cluster \
+  --out-file output.json
+  ```
 
 ## Silent mode
 
@@ -305,6 +323,13 @@ policies:
     branch: main
     directory: gke-policies
   - local: ./my-policies
+outputs:
+  - file: output-file.json
+  - pubsub:
+      topic: testTopic
+  - cloudStorage:
+      bucket: bucket
+      path: path/to/write
 ```
 
 ## Debugging
