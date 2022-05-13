@@ -111,6 +111,24 @@ outputs:
       path: path/to/write
 ```
 
+### Discovering and checking multiple clusters
+
+Discover clusters in a selected GCP projects, folders or in the entire organization using
+[Cloud Asset Inventory](https://cloud.google.com/asset-inventory) and check them against the default
+set of best practices.
+
+```sh
+./gke-policy cluster review -c config.yaml
+```
+
+The `config.yaml` file:
+
+```yaml
+clusterDiscovery:
+  enabled: true
+  organization: "123456789012"
+```
+
 ### Custom Policy repository
 
 Specify custom repository with the GKE cluster best practices and check the cluster against them.

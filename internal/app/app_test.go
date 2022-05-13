@@ -23,8 +23,32 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/outputs"
 )
+
+type DiscoveryClientMock struct {
+	GetClustersInProjectFn func(name string) ([]string, error)
+	GetClustersInFolderFn  func(number string) ([]string, error)
+	GetClustersInOrgFn     func(number string) ([]string, error)
+	CloseFn                func() error
+}
+
+func (m DiscoveryClientMock) GetClustersInProject(name string) ([]string, error) {
+	return m.GetClustersInProjectFn(name)
+}
+
+func (m DiscoveryClientMock) GetClustersInFolder(number string) ([]string, error) {
+	return m.GetClustersInFolderFn(number)
+}
+
+func (m DiscoveryClientMock) GetClustersInOrg(number string) ([]string, error) {
+	return m.GetClustersInOrgFn(number)
+}
+
+func (m DiscoveryClientMock) Close() error {
+	return m.CloseFn()
+}
 
 func TestNewPolicyAutomationApp(t *testing.T) {
 	pa := NewPolicyAutomationApp()
@@ -43,6 +67,128 @@ func TestNewPolicyAutomationApp(t *testing.T) {
 	}
 	if _, ok := paApp.collectors[0].(*outputs.ConsoleResultCollector); !ok {
 		t.Fatalf("policyAutomationApp collector is not ConsoleResultCollector (default)")
+	}
+}
+
+func TestGetClusters_config(t *testing.T) {
+	clusters := []string{"cluster1", "cluster2"}
+	pa := PolicyAutomationApp{
+		config: &Config{
+			Clusters: []ConfigCluster{
+				{ID: clusters[0]},
+				{ID: clusters[1]},
+			},
+		},
+	}
+	results, err := pa.getClusters()
+	if err != nil {
+		t.Fatalf("err is not nil; want nil; err = %s", err)
+	}
+	if !reflect.DeepEqual(results, clusters) {
+		t.Errorf("results = %v; want %v", results, clusters)
+	}
+}
+
+func TestGetClusters_discovery(t *testing.T) {
+	pa := PolicyAutomationApp{
+		out: outputs.NewSilentOutput(),
+		ctx: context.Background(),
+		config: &Config{
+			CredentialsFile: "test-fixtures/test_credentials.json",
+			ClusterDiscovery: ClusterDiscovery{
+				Enabled: true,
+			},
+		},
+	}
+	_, err := pa.getClusters()
+	if err != nil {
+		t.Fatalf("err is not nil; want nil; err = %s", err)
+	}
+	if _, ok := pa.discovery.(*gke.AssetInventoryDiscoveryClient); !ok {
+		t.Errorf("policy automation discovery client is not *gke.AssetInventoryDiscoveryClient")
+	}
+}
+
+func TestDiscoverClusters_org(t *testing.T) {
+	clusters := []string{"clusterOne", "clusterTwo"}
+	orgNumber := "123456789"
+	clusterInOrgFn := func(number string) ([]string, error) {
+		if number != orgNumber {
+			t.Errorf("received org number is %v; want %v", number, orgNumber)
+		}
+		return clusters, nil
+	}
+	pa := PolicyAutomationApp{
+		out:       outputs.NewSilentOutput(),
+		discovery: DiscoveryClientMock{GetClustersInOrgFn: clusterInOrgFn},
+		config:    &Config{ClusterDiscovery: ClusterDiscovery{Enabled: true, Organization: orgNumber}},
+	}
+	results, err := pa.discoverClusters()
+	if err != nil {
+		t.Fatalf("err is not nil; want nil; err = %s", err)
+	}
+	if !reflect.DeepEqual(results, clusters) {
+		t.Fatalf("results are %v; want %v", results, clusters)
+	}
+}
+
+func TestDiscoverClusters_folders(t *testing.T) {
+	folders := []string{"12345", "6789"}
+	foldersContent := map[string][]string{
+		folders[0]: {"clusterOne", "clusterTwo"},
+		folders[1]: {"clusterThree", "clusterFour"},
+	}
+	clusterInFoldersFn := func(number string) ([]string, error) {
+		clusters, ok := foldersContent[number]
+		if !ok {
+			t.Errorf("received folder number = %v; not defined in a test", number)
+		}
+		return clusters, nil
+	}
+	pa := PolicyAutomationApp{
+		out:       outputs.NewSilentOutput(),
+		discovery: DiscoveryClientMock{GetClustersInFolderFn: clusterInFoldersFn},
+		config:    &Config{ClusterDiscovery: ClusterDiscovery{Enabled: true, Folders: folders}},
+	}
+	results, err := pa.discoverClusters()
+	if err != nil {
+		t.Fatalf("err is not nil; want nil; err = %s", err)
+	}
+	allFoldersContent := make([]string, 0)
+	allFoldersContent = append(allFoldersContent, foldersContent[folders[0]]...)
+	allFoldersContent = append(allFoldersContent, foldersContent[folders[1]]...)
+	if !reflect.DeepEqual(results, allFoldersContent) {
+		t.Fatalf("results are %v; want %v", results, allFoldersContent)
+	}
+}
+
+func TestDiscoverClusters_projects(t *testing.T) {
+	projects := []string{"projectOne", "projectTwo"}
+	projectsContent := map[string][]string{
+		projects[0]: {"clusterOne", "clusterTwo"},
+		projects[1]: {"clusterThree", "clusterFour"},
+	}
+	clusterInProjectsFn := func(name string) ([]string, error) {
+		clusters, ok := projectsContent[name]
+		if !ok {
+			t.Errorf("received project name = %v; not defined in a test", name)
+		}
+		return clusters, nil
+	}
+	pa := PolicyAutomationApp{
+		out:       outputs.NewSilentOutput(),
+		discovery: DiscoveryClientMock{GetClustersInProjectFn: clusterInProjectsFn},
+		config:    &Config{ClusterDiscovery: ClusterDiscovery{Enabled: true, Projects: projects}},
+	}
+	results, err := pa.discoverClusters()
+	if err != nil {
+		t.Fatalf("err is not nil; want nil; err = %s", err)
+	}
+	allProjectsContent := make([]string, 0)
+	allProjectsContent = append(allProjectsContent, projectsContent[projects[0]]...)
+	allProjectsContent = append(allProjectsContent, projectsContent[projects[1]]...)
+	if !reflect.DeepEqual(results, allProjectsContent) {
+		t.Fatalf("results are %v; want %v", results, allProjectsContent)
 	}
 }
 
@@ -202,5 +348,39 @@ func TestGetClusterName_negative(t *testing.T) {
 	_, err := getClusterName(input)
 	if err == nil {
 		t.Errorf("error is nil; want error")
+	}
+}
+
+func TestClusterReviewWithNoPolicies(t *testing.T) {
+
+	pa := PolicyAutomationApp{
+		out: outputs.NewSilentOutput(),
+		config: &Config{
+			Policies: []ConfigPolicy{},
+		},
+	}
+
+	err := pa.ClusterReview()
+
+	if err != errNoPolicies {
+		t.Fatalf("need noPoliciesError but err = %s", err)
+	}
+}
+
+func TestPolicyAutomationAppClose_negative(t *testing.T) {
+	closeErr := fmt.Errorf("close error")
+	pa := PolicyAutomationApp{
+		discovery: DiscoveryClientMock{
+			CloseFn: func() error {
+				return closeErr
+			},
+		},
+	}
+	err := pa.Close()
+	if err == nil {
+		t.Fatalf("error is nil; want error")
+	}
+	if err != closeErr {
+		t.Errorf("error is %v; want %v", err, closeErr)
 	}
 }

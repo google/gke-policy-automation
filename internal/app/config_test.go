@@ -31,6 +31,10 @@ func TestReadConfig(t *testing.T) {
 	policy2Repository := "https://github.com/test/test"
 	policy2Branch := "test"
 	policy2Directory := "policies"
+	clusterDiscoveryEnabled := true
+	clusterDiscoveryOrg := "123456789"
+	clusterDiscoveryProject := "myProject"
+	clusterDiscoveryFolder := "112345"
 	fileData := fmt.Sprintf("silent: %t\n"+
 		"credentialsFile: %s\n"+
 		"clusters:\n"+
@@ -42,10 +46,18 @@ func TestReadConfig(t *testing.T) {
 		"- local: %s\n"+
 		"- repository: %s\n"+
 		"  branch: %s\n"+
-		"  directory: %s\n",
+		"  directory: %s\n"+
+		"clusterDiscovery:\n"+
+		"  enabled: %v\n"+
+		"  organization: %s\n"+
+		"  projects:\n"+
+		"  - %s\n"+
+		"  folders:\n"+
+		"  - %s\n",
 		silent, credsFile,
 		cluster1Name, cluster1Location, cluster1Project, cluster2Id,
 		policy1Directory, policy2Repository, policy2Branch, policy2Directory,
+		clusterDiscoveryEnabled, clusterDiscoveryOrg, clusterDiscoveryProject, clusterDiscoveryFolder,
 	)
 	readFn := func(path string) ([]byte, error) {
 		if path != filePath {
@@ -56,7 +68,7 @@ func TestReadConfig(t *testing.T) {
 
 	config, err := ReadConfig(filePath, readFn)
 	if err != nil {
-		t.Fatalf("got error want nil")
+		t.Fatalf("got error want nil; err = %s", err)
 	}
 	if config.SilentMode != silent {
 		t.Errorf("config silent = %v; want %v", config.SilentMode, silent)
@@ -93,6 +105,18 @@ func TestReadConfig(t *testing.T) {
 	}
 	if config.Policies[1].GitDirectory != policy2Directory {
 		t.Errorf("config policies[1] gitDirectory = %v; want %v", config.Policies[1].GitDirectory, policy2Directory)
+	}
+	if config.ClusterDiscovery.Enabled != clusterDiscoveryEnabled {
+		t.Errorf("config clusterDiscovery = %v; want %v", config.ClusterDiscovery.Enabled, clusterDiscoveryEnabled)
+	}
+	if config.ClusterDiscovery.Organization != clusterDiscoveryOrg {
+		t.Errorf("config clusterDiscovery Organization = %v; want %v", config.ClusterDiscovery.Organization, clusterDiscoveryOrg)
+	}
+	if config.ClusterDiscovery.Projects[0] != clusterDiscoveryProject {
+		t.Errorf("config clusterDiscovery Projects[0] = %v; want %v", config.ClusterDiscovery.Projects[0], clusterDiscoveryProject)
+	}
+	if config.ClusterDiscovery.Folders[0] != clusterDiscoveryFolder {
+		t.Errorf("config clusterDiscovery Folders[0] = %v; want %v", config.ClusterDiscovery.Folders[0], clusterDiscoveryFolder)
 	}
 }
 
@@ -139,6 +163,44 @@ func TestValidateClusterReviewConfig_negative(t *testing.T) {
 		if err := ValidateClusterReviewConfig(config); err == nil {
 			t.Errorf("expected error on invalid cluster config [%d]", i)
 		}
+	}
+}
+
+func TestValidateClustersConfig_discovery(t *testing.T) {
+	config := Config{
+		ClusterDiscovery: ClusterDiscovery{
+			Enabled:      true,
+			Organization: "12345",
+		},
+	}
+	if err := validateClustersConfig(config); err != nil {
+		t.Errorf("expected no error, got: %v", err)
+	}
+}
+
+func TestValidateClustersConfig_discovery_negative(t *testing.T) {
+	config := Config{
+		ClusterDiscovery: ClusterDiscovery{
+			Enabled: true,
+		},
+	}
+	if err := validateClustersConfig(config); err == nil {
+		t.Errorf("expected error, got no error")
+	}
+}
+
+func TestValidateClustersConfig_both(t *testing.T) {
+	config := Config{
+		ClusterDiscovery: ClusterDiscovery{
+			Enabled:      true,
+			Organization: "12345",
+		},
+		Clusters: []ConfigCluster{
+			{ID: "someClusterId"},
+		},
+	}
+	if err := validateClustersConfig(config); err == nil {
+		t.Errorf("expected error, got no error")
 	}
 }
 
