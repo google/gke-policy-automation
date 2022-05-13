@@ -176,9 +176,11 @@ func validateOutputConfig(outputs []ConfigOutput) []error {
 	for _, output := range outputs {
 		if output.FileName != "" && !strings.HasSuffix(output.FileName, ".json") {
 			errors = append(errors, fmt.Errorf("invalid output - filename should end with .json"))
-		} else if output.CloudStorage.Bucket == "" && output.CloudStorage.Path != "" {
+		}
+		if output.CloudStorage.Bucket == "" && output.CloudStorage.Path != "" {
 			errors = append(errors, fmt.Errorf("invalid output - bucket empty for path: %s", output.CloudStorage.Path))
-		} else if output.CloudStorage.Bucket != "" && output.CloudStorage.Path == "" {
+		}
+		if output.CloudStorage.Bucket != "" && output.CloudStorage.Path == "" {
 			errors = append(errors, fmt.Errorf("invalid output - path empty for bucket: %s", output.CloudStorage.Bucket))
 		}
 	}

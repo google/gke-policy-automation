@@ -160,7 +160,7 @@ func getOutputSourceFlags(config *CliConfig) []cli.Flag {
 		&cli.BoolFlag{
 			Name:        "silent",
 			Aliases:     []string{"s"},
-			Usage:       "",
+			Usage:       "Disables standard console output",
 			Destination: &config.SilentMode,
 		},
 		&cli.StringFlag{

@@ -19,10 +19,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/outputs"
+	"github.com/google/gke-policy-automation/internal/outputs/storage"
 	"github.com/google/gke-policy-automation/internal/policy"
 )
 
@@ -83,11 +85,23 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 	} else {
 		p.gke, err = gke.NewClient(p.ctx)
 	}
-	if len(p.config.Outputs) != 0 {
-		for _, o := range p.config.Outputs {
-			if o.FileName != "" {
-				p.collectors = append(p.collectors, outputs.NewJSONResultToFileCollector(o.FileName))
+	for _, o := range p.config.Outputs {
+		if o.FileName != "" {
+			p.collectors = append(p.collectors, outputs.NewJSONResultToFileCollector(o.FileName))
+		}
+		if o.CloudStorage.Bucket != "" && o.CloudStorage.Path != "" {
+
+			var storageClient *storage.CloudStorageClient
+			if p.config.CredentialsFile != "" {
+				storageClient, err = storage.NewCloudStorageClientWithCredentialsFile(p.ctx, p.config.CredentialsFile)
+			} else {
+				storageClient, err = storage.NewCloudStorageClient(p.ctx)
 			}
+			storageCollector, err := outputs.NewCloudStorageResultCollector(storageClient, outputs.MapEvaluationResultsToJsonWithTime, o.CloudStorage.Bucket, o.CloudStorage.Path)
+			if err != nil {
+				return err
+			}
+			p.collectors = append(p.collectors, storageCollector)
 		}
 	}
 	return
@@ -161,6 +175,8 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 			log.Errorf("could not finalize registering evaluation results: %s", err)
 			return err
 		}
+		log.Infof("Collector %s processing closed", reflect.TypeOf(c).Name())
+
 	}
 	return nil
 }
