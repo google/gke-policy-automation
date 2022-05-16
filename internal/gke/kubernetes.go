@@ -16,7 +16,9 @@ package gke
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/google/gke-policy-automation/internal/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
@@ -27,12 +29,37 @@ import (
 
 type KubernetesClient interface {
 	GetNamespaces() ([]string, error)
+	GetFetchableResourceTypes() ([]*ResourceType, error)
+}
+
+type KubernetesDiscoveryClient interface {
+	ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error)
 }
 
 type kubernetesClient struct {
 	ctx       context.Context
 	client    dynamic.Interface
-	discovery *discovery.DiscoveryClient
+	discovery KubernetesDiscoveryClient
+}
+
+type ResourceType struct {
+	GroupVersion string //migrate to Group + Version and do the parsing while fetching
+	Name         string
+	Kind         string
+	Namespaced   bool
+}
+
+func (t ResourceType) mustParseGroupVersion() schema.GroupVersion {
+	gv, err := schema.ParseGroupVersion(t.GroupVersion)
+	if err != nil {
+		panic(err)
+	}
+	return gv
+}
+
+type Resource struct {
+	Type ResourceType
+	Data map[string]interface{}
 }
 
 func NewKubernetesClient(ctx context.Context, kubeConfig *clientcmdapi.Config) (KubernetesClient, error) {
@@ -62,6 +89,7 @@ func (c *kubernetesClient) GetNamespaces() ([]string, error) {
 		Version:  "v1",
 		Resource: "namespaces",
 	}
+	log.Infof("fetching namespaces")
 	list, err := c.client.Resource(namespaceRes).List(c.ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -70,6 +98,64 @@ func (c *kubernetesClient) GetNamespaces() ([]string, error) {
 	for i := range list.Items {
 		namespaces[i] = list.Items[i].GetName()
 	}
-
+	log.Infof("fetched %d namespaces", len(namespaces))
 	return namespaces, nil
+}
+
+func (c *kubernetesClient) GetFetchableResourceTypes() ([]*ResourceType, error) {
+	log.Infof("discovering server resource types")
+	_, resourceGroupList, err := c.discovery.ServerGroupsAndResources()
+	if err != nil {
+		return nil, err
+	}
+	resourceTypes := make([]*ResourceType, 0)
+	for _, resourceGroup := range resourceGroupList {
+		if resourceGroup == nil {
+			log.Warn("got nil ptr to the resource type")
+			continue
+		}
+		for i := range resourceGroup.APIResources {
+			if !stringSliceContains(resourceGroup.APIResources[i].Verbs, "get") {
+				log.Debugf("skipping resource type %q with groupVersion %q as it has no \"get\" verb",
+					resourceGroup.APIResources[i].Name, resourceGroup.GroupVersion)
+				continue
+			}
+			resourceTypes = append(resourceTypes, &ResourceType{
+				GroupVersion: resourceGroup.GroupVersion,
+				Name:         resourceGroup.APIResources[i].Name,
+				Kind:         resourceGroup.APIResources[i].Kind,
+				Namespaced:   resourceGroup.APIResources[i].Namespaced})
+		}
+	}
+	log.Info("discovered %d fetchable resource types", len(resourceTypes))
+	return resourceTypes, nil
+}
+
+func (c *kubernetesClient) GetNamespacedResources(resourceType ResourceType, namespace string) ([]*Resource, error) {
+	if resourceType.Namespaced {
+		return nil, fmt.Errorf("resource type is not namespaced")
+	}
+	groupVersionResource := resourceType.mustParseGroupVersion().WithResource(resourceType.Name)
+	resourceList, err := c.client.Resource(groupVersionResource).Namespace(namespace).List(c.ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]*Resource, len(resourceList.Items))
+	for i := range resourceList.Items {
+		results[i] = &Resource{
+			Type: resourceType,
+			Data: resourceList.Items[i].Object,
+		}
+	}
+	return results, nil
+}
+
+func stringSliceContains(hay []string, needle string) bool {
+	for _, v := range hay {
+		if v == needle {
+			return true
+		}
+	}
+	return false
 }
