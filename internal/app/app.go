@@ -20,10 +20,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/outputs"
+	"github.com/google/gke-policy-automation/internal/outputs/storage"
 	"github.com/google/gke-policy-automation/internal/policy"
 )
 
@@ -40,22 +42,23 @@ type PolicyAutomation interface {
 }
 
 type PolicyAutomationApp struct {
-	ctx       context.Context
-	config    *Config
-	out       *outputs.Output
-	collector outputs.ValidationResultCollector
-	gke       *gke.GKEClient
-	gkeLocal  *gke.GKELocalClient
-	discovery gke.DiscoveryClient
+	ctx        context.Context
+	config     *Config
+	out        *outputs.Output
+	collectors []outputs.ValidationResultCollector
+	gke        *gke.GKEClient
+	gkeLocal   *gke.GKELocalClient
+	discovery  gke.DiscoveryClient
 }
 
 func NewPolicyAutomationApp() PolicyAutomation {
 	out := outputs.NewSilentOutput()
 	return &PolicyAutomationApp{
-		ctx:       context.Background(),
-		config:    &Config{},
-		out:       out,
-		collector: outputs.NewConsoleResultCollector(out)}
+		ctx:        context.Background(),
+		config:     &Config{},
+		out:        out,
+		collectors: []outputs.ValidationResultCollector{outputs.NewConsoleResultCollector(out)},
+	}
 }
 
 func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, validateFn ValidateConfig) error {
@@ -81,7 +84,7 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 	p.config = config
 	if !p.config.SilentMode {
 		p.out = outputs.NewStdOutOutput()
-		p.collector = outputs.NewConsoleResultCollector(p.out)
+		p.collectors = []outputs.ValidationResultCollector{outputs.NewConsoleResultCollector(p.out)}
 	}
 	if p.config.DumpFile != "" {
 		// read file and instantate the configuration
@@ -92,6 +95,25 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 		p.gke, err = gke.NewClientWithCredentialsFile(p.ctx, p.config.CredentialsFile)
 	} else {
 		p.gke, err = gke.NewClient(p.ctx)
+	}
+	for _, o := range p.config.Outputs {
+		if o.FileName != "" {
+			p.collectors = append(p.collectors, outputs.NewJSONResultToFileCollector(o.FileName))
+		}
+		if o.CloudStorage.Bucket != "" && o.CloudStorage.Path != "" {
+
+			var storageClient *storage.CloudStorageClient
+			if p.config.CredentialsFile != "" {
+				storageClient, err = storage.NewCloudStorageClientWithCredentialsFile(p.ctx, p.config.CredentialsFile)
+			} else {
+				storageClient, err = storage.NewCloudStorageClient(p.ctx)
+			}
+			storageCollector, err := outputs.NewCloudStorageResultCollector(storageClient, outputs.MapEvaluationResultsToJsonWithTime, o.CloudStorage.Bucket, o.CloudStorage.Path)
+			if err != nil {
+				return err
+			}
+			p.collectors = append(p.collectors, storageCollector)
+		}
 	}
 	return
 }
@@ -160,17 +182,25 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 		evalResult.ClusterName = clusterId
 		evalResults = append(evalResults, evalResult)
 	}
-	err = p.collector.RegisterResult(evalResults)
-	if err != nil {
-		p.out.ErrorPrint("failed to register evaluation results", err)
-		log.Errorf("could not register evaluation results: %s", err)
-		return err
+
+	for _, c := range p.collectors {
+		err = c.RegisterResult(evalResults)
+
+		if err != nil {
+			p.out.ErrorPrint("failed to register evaluation results", err)
+			log.Errorf("could not register evaluation results: %s", err)
+			return err
+		}
 	}
-	err = p.collector.Close()
-	if err != nil {
-		p.out.ErrorPrint("failed to close results registration", err)
-		log.Errorf("could not finalize registering evaluation results: %s", err)
-		return err
+
+	for _, c := range p.collectors {
+		err = c.Close()
+		if err != nil {
+			p.out.ErrorPrint("failed to close results registration", err)
+			log.Errorf("could not finalize registering evaluation results: %s", err)
+			return err
+		}
+		log.Infof("Collector %s processing closed", reflect.TypeOf(c).Name())
 	}
 	return nil
 }
@@ -217,17 +247,24 @@ func (p *PolicyAutomationApp) ClusterOfflineReview() error {
 	evalResult.ClusterName = clusterName
 	evalResults = append(evalResults, evalResult)
 
-	err = p.collector.RegisterResult(evalResults)
-	if err != nil {
-		p.out.ErrorPrint("failed to register evaluation results", err)
-		log.Errorf("could not register evaluation results: %s", err)
-		return err
+	for _, c := range p.collectors {
+		err = c.RegisterResult(evalResults)
+
+		if err != nil {
+			p.out.ErrorPrint("failed to register evaluation results", err)
+			log.Errorf("could not register evaluation results: %s", err)
+			return err
+		}
 	}
-	err = p.collector.Close()
-	if err != nil {
-		p.out.ErrorPrint("failed to close results registration", err)
-		log.Errorf("could not finalize registering evaluation results: %s", err)
-		return err
+
+	for _, c := range p.collectors {
+		err = c.Close()
+		if err != nil {
+			p.out.ErrorPrint("failed to close results registration", err)
+			log.Errorf("could not finalize registering evaluation results: %s", err)
+			return err
+		}
+		log.Infof("Collector %s processing closed", reflect.TypeOf(c).Name())
 	}
 	return nil
 }
@@ -381,6 +418,10 @@ func newConfigFromCli(cliConfig *CliConfig) *Config {
 			},
 		}
 	}
+	config.Outputs = append(config.Outputs, ConfigOutput{
+		FileName: cliConfig.OutputFile,
+	})
+
 	if cliConfig.LocalDirectory != "" || cliConfig.GitRepository != "" {
 		config.Policies = append(config.Policies, ConfigPolicy{
 			LocalDirectory: cliConfig.LocalDirectory,

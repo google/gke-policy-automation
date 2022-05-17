@@ -11,9 +11,11 @@ The GKE Policy Automation is a command line tool that validates GKE clusters aga
   * [Binary](#binary)
   * [Source code](#source-code)
 * [Authentication](#authentication)
+  * [Required IAM roles](#required-iam-roles)
 * [Cluster commands](#cluster-commands)
   * [Specifying single cluster](#specifying-single-cluster)
   * [Specifying multiple clusters](#specifying-multiple-clusters)
+  * [Cluster discovery](#cluster-discovery)
   * [Reviewing clusters](#reviewing-clusters)
   * [Printing cluster data](#printing-cluster-data)
 * [Policy Commands](#policy-commands)
@@ -67,8 +69,12 @@ by default
 default credentials
 * To use credentials from service account key file pass `--creds` parameter with a path to the file.
 
-The minimum required IAM role is `roles/container.clusterViewer`
-on a cluster projects.
+### Required IAM roles
+
+* The minimum required IAM role is `roles/container.clusterViewer` on a cluster projects
+* For cluster discovery the `cloudasset.assets.searchAllResources` permission is needed on a target
+projects, folders or organization. This permission is included, among others, in a `roles/cloudasset.viewer`
+role
 
 ## Cluster commands
 
@@ -112,6 +118,43 @@ clusters:
     project: my-project-three
     location: europe-north1
 ```
+
+### Cluster discovery
+
+The cluster discovery mechanism is leveraging [Cloud Asset Inventory](https://cloud.google.com/asset-inventory)
+API to find GKE clusters in a given GCP projects, folders or in an entire organization. The cluster
+discovery can be used in place of a fixed list of cluster identifiers.
+
+Setting cluster discovery is possible using [configuration file](#configuration-file) only.
+
+* cluster discovery can't be configured along with a list of clusters
+* cluster discovery projects are referenced by the project identifiers
+* cluster discovery folders are referenced by the folder numbers
+* cluster discovery organization is referenced by the organization number
+
+The example `config.yaml` file with a cluster discovery enabled on the selected projects and folders:
+
+```yaml
+clusterDiscovery:
+  enabled: true
+  projects:
+    - project-one
+    - project-two
+    - project-three
+  folders:
+    - "123456789123"
+    - "987654321098"
+```
+
+The example `config.yaml` file with a cluster discovery enabled on the entire organization:
+
+```yaml
+clusterDiscovery:
+  enabled: true
+  organization: "123456789012"
+```
+
+**NOTE**: it might take some time for a GKE clusters to appear in a Cloud Asset Inventory search results.
 
 ### Reviewing clusters
 
@@ -210,9 +253,27 @@ Example:
 
 ## Outputs
 
-The GKE Policy Automation tool produces output to the stderr.
+The GKE Policy Automation tool produces output to the stderr, json file, GCS bucket or PubSub topic.
+Additional output to json file can be specified with a command line flag, and all output types
+can be specified in a [configuration file](#configuration-file).
 
-There is a plan to add more output options in the next releases.
+For command line flags:
+
+* `out-file` is a path to output file
+
+For config file options:
+
+* `file` is a path to output file
+* `pubsub:` is configuration of PubSub
+* `cloudStorage:` is configuration of GCS
+
+Example of a cluster review command with a file output:
+
+  ```sh
+  ./gke-policy cluster review \
+  --project my-project --location europe-west2 --name my-cluster \
+  --out-file output.json
+  ```
 
 ## Silent mode
 
@@ -247,11 +308,28 @@ clusters:
     project: my-project-one
     location: europe-central2
   - id: projects/my-project-two/locations/europe-west2/clusters/prod-west
+clusterDiscovery:
+  enabled: true
+  projects:
+    - project-one
+    - project-two
+    - project-three
+  folders:
+    - "123456789123" #folder number
+    - "987654321098"
+  organization: "123456789012" #organization number
 policies:
   - repository: https://github.com/google/gke-policy-automation
     branch: main
     directory: gke-policies
   - local: ./my-policies
+outputs:
+  - file: output-file.json
+  - pubsub:
+      topic: testTopic
+  - cloudStorage:
+      bucket: bucket
+      path: path/to/write
 ```
 
 ## Debugging

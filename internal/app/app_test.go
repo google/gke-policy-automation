@@ -62,10 +62,10 @@ func TestNewPolicyAutomationApp(t *testing.T) {
 	if paApp.out == nil {
 		t.Fatalf("policyAutomationApp output is nil")
 	}
-	if paApp.collector == nil {
+	if len(paApp.collectors) == 0 {
 		t.Fatalf("policyAutomationApp collector is nil")
 	}
-	if _, ok := paApp.collector.(*outputs.ConsoleResultCollector); !ok {
+	if _, ok := paApp.collectors[0].(*outputs.ConsoleResultCollector); !ok {
 		t.Fatalf("policyAutomationApp collector is not ConsoleResultCollector (default)")
 	}
 }
