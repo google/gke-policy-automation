@@ -30,6 +30,7 @@ import (
 type KubernetesClient interface {
 	GetNamespaces() ([]string, error)
 	GetFetchableResourceTypes() ([]*ResourceType, error)
+	GetNamespacedResources(resourceType ResourceType, namespace string) ([]*Resource, error)
 }
 
 type KubernetesDiscoveryClient interface {
@@ -43,18 +44,18 @@ type kubernetesClient struct {
 }
 
 type ResourceType struct {
-	GroupVersion string //migrate to Group + Version and do the parsing while fetching
-	Name         string
-	Kind         string
-	Namespaced   bool
+	Group      string
+	Version    string
+	Name       string
+	Namespaced bool
 }
 
-func (t ResourceType) mustParseGroupVersion() schema.GroupVersion {
-	gv, err := schema.ParseGroupVersion(t.GroupVersion)
-	if err != nil {
-		panic(err)
+func (r ResourceType) toGroupVersionResource() schema.GroupVersionResource {
+	return schema.GroupVersionResource{
+		Group:    r.Group,
+		Version:  r.Version,
+		Resource: r.Name,
 	}
-	return gv
 }
 
 type Resource struct {
@@ -110,9 +111,9 @@ func (c *kubernetesClient) GetFetchableResourceTypes() ([]*ResourceType, error) 
 	}
 	resourceTypes := make([]*ResourceType, 0)
 	for _, resourceGroup := range resourceGroupList {
-		if resourceGroup == nil {
-			log.Warn("got nil ptr to the resource type")
-			continue
+		resGroupVersion, err := schema.ParseGroupVersion(resourceGroup.GroupVersion)
+		if err != nil {
+			return nil, err
 		}
 		for i := range resourceGroup.APIResources {
 			if !stringSliceContains(resourceGroup.APIResources[i].Verbs, "get") {
@@ -121,13 +122,13 @@ func (c *kubernetesClient) GetFetchableResourceTypes() ([]*ResourceType, error) 
 				continue
 			}
 			resourceTypes = append(resourceTypes, &ResourceType{
-				GroupVersion: resourceGroup.GroupVersion,
-				Name:         resourceGroup.APIResources[i].Name,
-				Kind:         resourceGroup.APIResources[i].Kind,
-				Namespaced:   resourceGroup.APIResources[i].Namespaced})
+				Group:      resGroupVersion.Group,
+				Version:    resGroupVersion.Version,
+				Name:       resourceGroup.APIResources[i].Name,
+				Namespaced: resourceGroup.APIResources[i].Namespaced})
 		}
 	}
-	log.Info("discovered %d fetchable resource types", len(resourceTypes))
+	log.Infof("discovered %d fetchable resource types", len(resourceTypes))
 	return resourceTypes, nil
 }
 
@@ -135,12 +136,10 @@ func (c *kubernetesClient) GetNamespacedResources(resourceType ResourceType, nam
 	if resourceType.Namespaced {
 		return nil, fmt.Errorf("resource type is not namespaced")
 	}
-	groupVersionResource := resourceType.mustParseGroupVersion().WithResource(resourceType.Name)
-	resourceList, err := c.client.Resource(groupVersionResource).Namespace(namespace).List(c.ctx, metav1.ListOptions{})
+	resourceList, err := c.client.Resource(resourceType.toGroupVersionResource()).Namespace(namespace).List(c.ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
-
 	results := make([]*Resource, len(resourceList.Items))
 	for i := range resourceList.Items {
 		results[i] = &Resource{
