@@ -25,4 +25,7 @@ policies:
   - local: /tmp
   - repo: https://bla.com
 outputs:
-  - file: /some/file.json
+- file: /some/file.json
+- pubsub:
+    project: my-pubsub-project
+    topic: my-topic

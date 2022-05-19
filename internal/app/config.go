@@ -60,8 +60,10 @@ type ConfigOutput struct {
 	PubSub       PubSubOutput       `yaml:"pubsub"`
 	CloudStorage CloudStorageOutput `yaml:"cloudStorage"`
 }
+
 type PubSubOutput struct {
-	Topic string `yaml:"topic"`
+	Project string `yaml:"project"`
+	Topic   string `yaml:"topic"`
 }
 type CloudStorageOutput struct {
 	Bucket string `yaml:"bucket"`
@@ -218,6 +220,18 @@ func validateOutputConfig(outputs []ConfigOutput) []error {
 		if output.CloudStorage.Bucket != "" && output.CloudStorage.Path == "" {
 			errors = append(errors, fmt.Errorf("invalid output - path empty for bucket: %s", output.CloudStorage.Bucket))
 		}
+		errors = append(errors, validatePubSubConfig(output.PubSub)...)
+	}
+	return errors
+}
+
+func validatePubSubConfig(pubsub PubSubOutput) []error {
+	var errors = make([]error, 0)
+	if pubsub.Project != "" && pubsub.Topic == "" {
+		errors = append(errors, fmt.Errorf("PubSub Topic is not set for the project [%s]", pubsub.Project))
+	}
+	if pubsub.Topic != "" && pubsub.Project == "" {
+		errors = append(errors, fmt.Errorf("PubSub Project name is not set for the topic [%s]", pubsub.Topic))
 	}
 	return errors
 }
