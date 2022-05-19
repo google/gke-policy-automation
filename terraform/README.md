@@ -10,6 +10,7 @@ Unfortunately, this service is currently only available in one region and not su
 ## Before you begin
 
 Before running the script and the additional gcloud commands, please set the following environment variables:
+
 `export TF_VAR_job_name="gke-policy-automation-job"`
 
 `export TF_VAR_project_id="YOUR GCP PROJECT ID"`
@@ -20,14 +21,15 @@ Change the config.yaml file to match your GKE cluster. Replace the following pro
 <pre>
 clusters:
     - name: <b>YOUR_CLUSTER_NAME</b>
-    project: <b>YOUR_PROJECT</b>
-    location: <b>YOUR_CLUSTER_LOCATION</b>
+      project: <b>YOUR_PROJECT</b>
+      location: <b>YOUR_CLUSTER_LOCATION</b>
 </pre>
 
 Please do **NOT** modify the ((BUCKET_NAME)) placeholder as this will be automatically added by Terraform before uploading the file to Secret Manager.
 
 ## What happens behind the scenes
 The Terraform script within this folder enables all required APIs for you and creates necessary service accounts and IAM bindings. It also creates the Artifact Registry required by Cloud Run, the GCS bucket for storing the reports and a Secret Manager. The Secret Manager is used to provide the config.yaml file to the Cloud Run Job, as Cloud Run does not easily support persistent file storage. 
+
 Additionally, the script creates a Cloud Scheduler running every 15 minutes. That scheduler will ultimately trigger the CLoud Run Job. The 15 minute interval is most likely too frequent for actual use, but is ideal for demo purposes.
 
 ## Deploying required resources via Terraform
@@ -39,16 +41,21 @@ Create all required resources with `terraform apply`
 Only images stored in Artifact Registry (and the deprecated Container Registry) can be deployed to Cloud Run, other registries are not supported. Therefore you have to copy the existing container image from the GitHub Container Registry to Artifact Registry.
 
 Pull the container image from the GitHub Container Registry:
+
 `docker pull ghcr.io/google/gke-policy-automation:latest`
 
 Authenticate against your newly created Artifact Registry:
+
 `gcloud auth configure-docker ${TF_VAR_region}-docker.pkg.dev`
+
 `gcloud auth print-access-token  | docker login   -u oauth2accesstoken   --password-stdin https://${TF_VAR_region}-docker.pkg.dev`
 
 Tag the image for the new location: 
+
 `sudo docker tag ghcr.io/google/gke-policy-automation:latest ${TF_VAR_region}-docker.pkg.dev/${TF_VAR_project_id}/gke-policy-automation-mirror/gke-policy-automation:1.0`
 
 Push the image to Artifact Registry:
+
 `docker push ${TF_VAR_region}-docker.pkg.dev/${TF_VAR_project_id}/gke-policy-automation-mirror/gke-policy-automation:1.0`
 
 ## Create a Cloud Run Job
