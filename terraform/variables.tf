@@ -15,19 +15,22 @@
  */
 
 variable "project_id" {
+  type = string
+  description = "GCP project ID of project to deploy the GKE policy review tool into"
 }
 
 variable "region" {
-  default = "europe-west1"
+  type        = string
+  description = "GCP region in which to deploy the resources"
 }
 
 variable "job_region" {
   default = "europe-west9"
+  type        = string
+  description = "GCP region in which to deploy the Cloud Run Job"
 }
 
 variable "job_name" {
-}
-
-variable "config_file_path" {
-  default = "config.yaml"
+  type        = string
+  description = "Name for the Cloud Run Job"
 }
