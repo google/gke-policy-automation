@@ -18,11 +18,17 @@ Jobs have to be deployed manually with the gcloud CLI until the Terraform provid
 Before running the script and the additional gcloud commands, please set the following environment
 variables:
 
-`export TF_VAR_job_name="gke-policy-automation-job"`
+```bash
+export TF_VAR_job_name="gke-policy-automation-job"
+```
 
-`export TF_VAR_project_id="YOUR GCP PROJECT ID"`
+```bash
+export TF_VAR_project_id="YOUR GCP PROJECT ID"
+```
 
-`export TF_VAR_region="YOUR GCP REGION, e.g. europe-west1"`
+```bash
+export TF_VAR_region="YOUR GCP REGION, e.g. europe-west1"
+```
 
 Change the config.yaml file to match your GKE cluster. Replace the following properties:
 
@@ -60,11 +66,15 @@ image from the GitHub Container Registry to Artifact Registry.
 
 Pull the container image from the GitHub Container Registry:
 
-`docker pull ghcr.io/google/gke-policy-automation:latest`
+```bash
+docker pull ghcr.io/google/gke-policy-automation:latest
+```
 
 Authenticate against your newly created Artifact Registry:
 
-`gcloud auth configure-docker ${TF_VAR_region}-docker.pkg.dev`
+```bash
+gcloud auth configure-docker ${TF_VAR_region}-docker.pkg.dev
+```
 
 ```bash
 gcloud auth print-access-token | \
@@ -73,11 +83,15 @@ docker login -u oauth2accesstoken --password-stdin https://${TF_VAR_region}-dock
 
 Tag the image for the new location:
 
-`sudo docker tag ghcr.io/google/gke-policy-automation:latest${TF_VAR_region}-docker.pkg.dev/${TF_VAR_project_id}/gke-policy-automation-mirror/gke-policy-automation:1.0`
+```bash
+sudo docker tag ghcr.io/google/gke-policy-automation:latest${TF_VAR_region}-docker.pkg.dev/${TF_VAR_project_id}/gke-policy-automation-mirror/gke-policy-automation:1.0
+```
 
 Push the image to Artifact Registry:
 
-`docker push ${TF_VAR_region}-docker.pkg.dev/${TF_VAR_project_id}/gke-policy-automation-mirror/gke-policy-automation:1.0`
+```bash
+docker push ${TF_VAR_region}-docker.pkg.dev/${TF_VAR_project_id}/gke-policy-automation-mirror/gke-policy-automation:1.0
+```
 
 ## Create a Cloud Run Job
 
