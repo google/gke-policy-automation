@@ -1,4 +1,4 @@
-# Automating 
+# Setting up an automatic review job
 
 ## Introduction
 To receive regular reports on the status of your GKE cluster, you can deploy the GKE Policy Review tool as a serverless CRON job on GCP.
@@ -11,19 +11,19 @@ Unfortunately, this service is currently only available in one region and not su
 
 Before running the script and the additional gcloud commands, please set the following environment variables:
 `export TF_VAR_job_name="gke-policy-automation-job"`
+
 `export TF_VAR_project_id="YOUR GCP PROJECT ID"`
+
 `export TF_VAR_region="YOUR GCP REGION, e.g. europe-west1"`
 
 Change the config.yaml file to match your GKE cluster. Replace the following properties:
 <pre>
-- name: <b>YOUR_CLUSTER_NAME</b>
-  project: <b>YOUR_PROJECT</b>
-  location: <b>YOUR_CLUSTER_LOCATION</b>
-</pre>
-```
 clusters:
-  
-```
+    - name: <b>YOUR_CLUSTER_NAME</b>
+    project: <b>YOUR_PROJECT</b>
+    location: <b>YOUR_CLUSTER_LOCATION</b>
+</pre>
+
 Please do **NOT** modify the ((BUCKET_NAME)) placeholder as this will be automatically added by Terraform before uploading the file to Secret Manager.
 
 ## What happens behind the scenes
