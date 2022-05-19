@@ -25,20 +25,19 @@ variables:
 `export TF_VAR_region="YOUR GCP REGION, e.g. europe-west1"`
 
 Change the config.yaml file to match your GKE cluster. Replace the following properties:
+
 ```yaml
 clusters:
     - name: YOUR_CLUSTER_NAME
       project: YOUR_PROJECT
       location: YOUR_CLUSTER_LOCATION
 ```
-<pre>
-
-</pre>
 
 Please do **NOT** modify the ((BUCKET_NAME)) placeholder as this will be automatically added by
 Terraform before uploading the file to Secret Manager.
 
 ## What happens behind the scenes
+
 The Terraform script within this folder enables all required APIs for you and creates necessary
 service accounts and IAM bindings. It also creates the Artifact Registry required by Cloud Run,
 the GCS bucket for storing the reports and a Secret Manager. The Secret Manager is used to provide
