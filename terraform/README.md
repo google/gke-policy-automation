@@ -62,7 +62,15 @@ Push the image to Artifact Registry:
 
 Create a Cloud Run Job with the image from Artifact Registry:
 
-`gcloud beta run jobs create ${TF_VAR_job_name} --image ${TF_VAR_region}-docker.pkg.dev/${TF_VAR_project_id}/gke-policy-automation-mirror/gke-policy-automation:1.0 --command=/gke-policy,cluster,review --args=-c,/etc/secrets/config.yaml --set-secrets /etc/secrets/config.yaml=gke-policy-review-config:latest --service-account=sa-gke-policy-au@${TF_VAR_project_id}.iam.gserviceaccount.com --region=europe-west9`
+```
+gcloud beta run jobs create ${TF_VAR_job_name} \
+    --image ${TF_VAR_region}-docker.pkg.dev/${TF_VAR_project_id}/gke-policy-automation-mirror/gke-policy-automation:1.0 \
+    --command=/gke-policy,cluster,review \
+    --args=-c,/etc/secrets/config.yaml \
+    --set-secrets /etc/secrets/config.yaml=gke-policy-review-config:latest \
+    --service-account=sa-gke-policy-au@${TF_VAR_project_id}.iam.gserviceaccount.com \
+    --region=europe-west9
+```
 
 ## Test the job
 Either wait until the job is triggered automatically by Cloud Scheduler, or head to the Google Cloud Console to trigger the Cloud Scheduler manually. 
