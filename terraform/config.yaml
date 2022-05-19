@@ -1,0 +1,12 @@
+clusters:
+  - name: YOUR_CLUSTER_NAME
+    project: YOUR_PROJECT
+    location: YOUR_CLUSTER_LOCATION
+policies:
+  - repository: https://github.com/google/gke-policy-automation
+    branch: main
+    directory: gke-policies
+outputs:
+  - cloudStorage:
+      bucket: ((BUCKET_NAME))
+      path: reports/report.json
