@@ -304,9 +304,9 @@ Pub/Sub output can be enabled using [configuration file](#configuration-file), e
 clusters:
   - id: projects/my-project-two/locations/europe-west2/clusters/my-cluster
 outputs:
-  - cloudStorage:
-      bucket: bucket-name
-      path: path/to/write
+  - pubsub:
+      topic: testTopic
+      project: my-pubsub-project
 ```
 
 ## Silent mode
