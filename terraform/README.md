@@ -99,7 +99,7 @@ Create a Cloud Run Job with the image from Artifact Registry:
 
 ```bash
 gcloud beta run jobs create ${TF_VAR_job_name} \
-    --image ${TF_VAR_region}-docker.pkg.dev/${TF_VAR_project_id}/gke-policy-automation-mirror/gke-policy-automation:1.0 \
+    --image ${TF_VAR_region}-docker.pkg.dev/${TF_VAR_project_id}/gke-policy-automation-mirror/gke-policy-automation:1.0\
     --command=/gke-policy,cluster,review \
     --args=-c,/etc/secrets/config.yaml \
     --set-secrets /etc/secrets/config.yaml=gke-policy-review-config:latest \
