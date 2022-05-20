@@ -16,13 +16,14 @@ package gke
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	b64 "encoding/base64"
 
-	"github.com/stretchr/testify/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -30,12 +31,21 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
+type kubeDynamicClientMock struct {
+	ResourceFn func(resource schema.GroupVersionResource) dynamic.NamespaceableResourceInterface
+}
+
+func (m *kubeDynamicClientMock) Resource(resource schema.GroupVersionResource) dynamic.NamespaceableResourceInterface {
+	return m.ResourceFn(resource)
+}
+
 type kubeNamespacedResourceMock struct {
-	mock.Mock
+	NamespaceFn func(n string) dynamic.ResourceInterface
+	ListFn      func(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error)
 }
 
 func (m *kubeNamespacedResourceMock) Namespace(n string) dynamic.ResourceInterface {
-	return nil
+	return m.NamespaceFn(n)
 }
 
 func (m *kubeNamespacedResourceMock) Create(ctx context.Context, obj *unstructured.Unstructured, options metav1.CreateOptions, subresources ...string) (*unstructured.Unstructured, error) {
@@ -63,7 +73,7 @@ func (m *kubeNamespacedResourceMock) Get(ctx context.Context, name string, optio
 }
 
 func (m *kubeNamespacedResourceMock) List(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
-	return nil, nil
+	return m.ListFn(ctx, opts)
 }
 
 func (m *kubeNamespacedResourceMock) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
@@ -72,6 +82,14 @@ func (m *kubeNamespacedResourceMock) Watch(ctx context.Context, opts metav1.List
 
 func (m *kubeNamespacedResourceMock) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
 	return nil, nil
+}
+
+type dicoveryClientMock struct {
+	ServerGroupsAndResourcesFn func() ([]*metav1.APIGroup, []*metav1.APIResourceList, error)
+}
+
+func (m dicoveryClientMock) ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error) {
+	return m.ServerGroupsAndResourcesFn()
 }
 
 func TestResourceTypeToGroupVersionResource(t *testing.T) {
@@ -135,5 +153,178 @@ func TestNewKubernetesClient(t *testing.T) {
 }
 
 func TestGetNamespaces(t *testing.T) {
+	ns1Name := "namespace-one"
+	ns1 := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"name": ns1Name,
+		},
+	}
+	ns2Name := "namespace-two"
+	ns2 := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"name": ns2Name,
+		},
+	}
 
+	dynCliMock := &kubeDynamicClientMock{
+		ResourceFn: func(resource schema.GroupVersionResource) dynamic.NamespaceableResourceInterface {
+			if resource.Resource != "namespaces" || resource.Version != "v1" {
+				t.Fatal("resrouce function received resource that is not v1/namespaces")
+			}
+			return &kubeNamespacedResourceMock{
+				ListFn: func(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+					return &unstructured.UnstructuredList{
+						Items: []unstructured.Unstructured{{Object: ns1}, {Object: ns2}},
+					}, nil
+				},
+			}
+		},
+	}
+
+	client := &kubernetesClient{ctx: context.TODO(), client: dynCliMock}
+	results, err := client.GetNamespaces()
+	if err != nil {
+		t.Fatalf("err is not nil; want nil; err = %s", err)
+	}
+	if len(results) != 2 {
+		t.Fatalf("number of results is %v; want %v", len(results), 2)
+	}
+	if results[0] != ns1Name {
+		t.Errorf("result[0] is %v; want %v", results[0], ns1Name)
+	}
+	if results[1] != ns2Name {
+		t.Errorf("result[1] is %v; want %v", results[1], ns2Name)
+	}
+}
+
+func TestGetFetchableResourceTypes(t *testing.T) {
+	list := []*metav1.APIResourceList{
+		{
+			GroupVersion: "apps/v1",
+			APIResources: []metav1.APIResource{
+				{Name: "deployments", Namespaced: true, Verbs: []string{"get", "delete"}},
+				{Name: "statefulsets", Namespaced: true, Verbs: []string{"get", "delete"}},
+			},
+		},
+		{
+			GroupVersion: "mikotest/v2",
+			APIResources: []metav1.APIResource{
+				{Name: "sweets", Namespaced: false, Verbs: []string{"get", "eat"}},
+				{Name: "cars", Namespaced: false, Verbs: []string{"ride", "repair"}},
+			},
+		},
+	}
+	expected := []*ResourceType{
+		{Group: "apps", Version: "v1", Name: "deployments", Namespaced: true},
+		{Group: "apps", Version: "v1", Name: "statefulsets", Namespaced: true},
+		{Group: "mikotest", Version: "v2", Name: "sweets", Namespaced: false},
+	}
+	client := kubernetesClient{
+		ctx: context.TODO(),
+		discovery: dicoveryClientMock{
+			ServerGroupsAndResourcesFn: func() ([]*metav1.APIGroup, []*metav1.APIResourceList, error) {
+				return []*metav1.APIGroup{}, list, nil
+			},
+		},
+	}
+
+	results, err := client.GetFetchableResourceTypes()
+	if err != nil {
+		t.Fatalf("err is not nil; want nil; err = %s", err)
+	}
+	if len(results) != len(expected) {
+		t.Fatalf("number of results is %d; want %d", len(results), len(expected))
+	}
+	for i := range results {
+		result := *results[i]
+		expected := *expected[i]
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("result[%d] is %v; want %v", i, result, expected)
+		}
+	}
+}
+
+func TestGetNamespacedResources(t *testing.T) {
+	resourceOne := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"name": "some-object-one",
+		},
+	}
+	resourceTwo := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"name": "some-object-two",
+		},
+	}
+	resourceType := ResourceType{Group: "apps", Version: "v1", Name: "deployments", Namespaced: true}
+	namespace := "my-test-namespace"
+
+	dynCliMock := &kubeDynamicClientMock{
+		ResourceFn: func(resource schema.GroupVersionResource) dynamic.NamespaceableResourceInterface {
+			if resource.Group != resourceType.Group {
+				t.Fatalf("resource group is %v; want %v", resource.Group, resourceType.Group)
+			}
+			if resource.Version != resourceType.Version {
+				t.Fatalf("resource version is %v; want %v", resource.Version, resourceType.Version)
+			}
+			if resource.Resource != resourceType.Name {
+				t.Fatalf("resource name is %v; want %v", resource.Resource, resourceType.Name)
+			}
+			return &kubeNamespacedResourceMock{
+				NamespaceFn: func(n string) dynamic.ResourceInterface {
+					if n != namespace {
+						t.Fatalf("namespace is %v; want %v", n, namespace)
+					}
+					return &kubeNamespacedResourceMock{
+						ListFn: func(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+							return &unstructured.UnstructuredList{
+								Items: []unstructured.Unstructured{{Object: resourceOne}, {Object: resourceTwo}},
+							}, nil
+						},
+					}
+				},
+			}
+		},
+	}
+	expected := []*Resource{{Type: resourceType, Data: resourceOne}, {Type: resourceType, Data: resourceTwo}}
+
+	client := &kubernetesClient{ctx: context.TODO(), client: dynCliMock}
+	results, err := client.GetNamespacedResources(resourceType, namespace)
+	if err != nil {
+		t.Fatalf("err is not nil; want nil; err = %s", err)
+	}
+	if len(results) != len(expected) {
+		t.Fatalf("number of results is %d; want %d", len(results), len(expected))
+	}
+	for i := range results {
+		result := *results[i]
+		expected := *expected[i]
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("result[%d] is %v; want %v", i, result, expected)
+		}
+	}
+}
+
+func TestGetNamespacedResources_notNamespaced(t *testing.T) {
+	resourceType := ResourceType{Group: "apps", Version: "v1", Name: "deployments", Namespaced: false}
+	client := &kubernetesClient{}
+	_, err := client.GetNamespacedResources(resourceType, "my-test-namespace")
+	if err == nil {
+		t.Fatalf("err is not nil; want err")
+	}
+}
+
+func TestStringSliceContains(t *testing.T) {
+	hay := []string{"elem-one", "elem-two", "elem-three", "elem-two"}
+	needle := "elem-two"
+	if !stringSliceContains(hay, needle) {
+		t.Errorf("result of stringSliceContains is false; want true")
+	}
+}
+
+func TestStringSliceContains_negative(t *testing.T) {
+	hay := []string{"elem-one", "elem-two", "elem-three", "elem-two"}
+	needle := "elem-six"
+	if stringSliceContains(hay, needle) {
+		t.Errorf("result of stringSliceContains is true; want false")
+	}
 }

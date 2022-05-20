@@ -133,7 +133,7 @@ func (c *kubernetesClient) GetFetchableResourceTypes() ([]*ResourceType, error) 
 }
 
 func (c *kubernetesClient) GetNamespacedResources(resourceType ResourceType, namespace string) ([]*Resource, error) {
-	if resourceType.Namespaced {
+	if !resourceType.Namespaced {
 		return nil, fmt.Errorf("resource type is not namespaced")
 	}
 	resourceList, err := c.client.Resource(resourceType.toGroupVersionResource()).Namespace(namespace).List(c.ctx, metav1.ListOptions{})
