@@ -84,7 +84,7 @@ docker login -u oauth2accesstoken --password-stdin https://${TF_VAR_region}-dock
 Tag the image for the new location:
 
 ```bash
-sudo docker tag ghcr.io/google/gke-policy-automation:latest${TF_VAR_region}-docker.pkg.dev/${TF_VAR_project_id}/gke-policy-automation-mirror/gke-policy-automation:1.0
+docker tag ghcr.io/google/gke-policy-automation:latest ${TF_VAR_region}-docker.pkg.dev/${TF_VAR_project_id}/gke-policy-automation-mirror/gke-policy-automation:1.0
 ```
 
 Push the image to Artifact Registry:

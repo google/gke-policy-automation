@@ -34,3 +34,9 @@ variable "job_name" {
   type        = string
   description = "Name for the Cloud Run Job"
 }
+
+variable "config_file_path" {
+  default = "config.yaml"
+  type = string
+  description = "Path to the file containing the YAML configuration"
+}
