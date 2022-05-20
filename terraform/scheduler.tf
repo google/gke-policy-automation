@@ -16,7 +16,7 @@
 
 resource "google_cloud_scheduler_job" "policy_review_job" {
   name             = "gke-policy-review-job"
-  schedule         = "*/4 * * * *"
+  schedule         = var.cron_interval
   description      = "Job triggering GKE policy review"
   time_zone        = "Europe/London"
   attempt_deadline = "320s"
