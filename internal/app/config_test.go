@@ -258,7 +258,7 @@ func TestSetConfigDefaults_policySrc(t *testing.T) {
 func TestValidateOutputConfig(t *testing.T) {
 	config := []ConfigOutput{
 		{FileName: "out.json"},
-		{PubSub: PubSubOutput{Topic: "test"}},
+		{PubSub: PubSubOutput{Project: "test", Topic: "test"}},
 		{CloudStorage: CloudStorageOutput{Bucket: "bucket", Path: "path"}},
 	}
 

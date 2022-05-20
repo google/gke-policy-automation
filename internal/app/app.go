@@ -25,6 +25,7 @@ import (
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/outputs"
+	pbc "github.com/google/gke-policy-automation/internal/outputs/pubsub"
 	"github.com/google/gke-policy-automation/internal/outputs/storage"
 	"github.com/google/gke-policy-automation/internal/policy"
 )
@@ -113,6 +114,18 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 				return err
 			}
 			p.collectors = append(p.collectors, storageCollector)
+		}
+		if len(o.PubSub.Topic) > 0 {
+			var client outputs.PubSubClient
+			if p.config.CredentialsFile != "" {
+				client, err = pbc.NewPubSubClientWithCredentialsFile(p.ctx, o.PubSub.Project, p.config.CredentialsFile)
+			} else {
+				client, err = pbc.NewPubSubClient(p.ctx, o.PubSub.Project)
+			}
+			if err != nil {
+				return err
+			}
+			p.collectors = append(p.collectors, outputs.NewPubSubResultCollector(client, o.PubSub.Project, o.PubSub.Topic))
 		}
 	}
 	return

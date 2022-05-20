@@ -23,6 +23,9 @@ The GKE Policy Automation is a command line tool that validates GKE clusters aga
   * [Specifying local policy source](#specifying-local-policy-source)
   * [Validating policies](#validating-policies)
 * [Outputs](#outputs)
+  * [Local JSON file](#local-json-file)
+  * [Cloud Storage bucket](#cloud-storage-bucket)
+  * [Pub/Sub topic](#pubsub-topic)
 * [Silent mode](#silent-mode)
 * [Configuration file](#configuration-file)
 * [Debugging](#debugging)
@@ -253,27 +256,58 @@ Example:
 
 ## Outputs
 
-The GKE Policy Automation tool produces output to the stderr, json file, GCS bucket or PubSub topic.
-Additional output to json file can be specified with a command line flag, and all output types
-can be specified in a [configuration file](#configuration-file).
+The GKE Policy Automation tool produces cluster validation results to the stderr, local JSON file,
+file on a GCS bucket and Pub/Sub topic.
 
-For command line flags:
+### Local JSON file
 
-* `out-file` is a path to output file
+The validation results can be stored in the local file in a JSON format.
+Local file output can be enabled using either command line flag or in a [configuration file](#configuration-file).
 
-For config file options:
+Example of enabling local file output in a command line:
 
-* `file` is a path to output file
-* `pubsub:` is configuration of PubSub
-* `cloudStorage:` is configuration of GCS
-
-Example of a cluster review command with a file output:
-
-  ```sh
+```sh
   ./gke-policy cluster review \
   --project my-project --location europe-west2 --name my-cluster \
-  --out-file output.json
-  ```
+  --out-file my-cluster-results.json
+```
+
+Example of defining local file output using configuration file:
+
+```yaml
+clusters:
+  - id: projects/my-project-two/locations/europe-west2/clusters/my-cluster
+outputs:
+  - file: my-cluster-results.json
+```
+
+### Cloud storage bucket
+
+The validation results can be stored in a JSON format as an object in Cloud Storage bucket.
+Cloud storage output can be enabled using [configuration file](#configuration-file), example:
+
+```yaml
+clusters:
+  - id: projects/my-project-two/locations/europe-west2/clusters/my-cluster
+outputs:
+  - cloudStorage:
+      bucket: bucket
+      path: path/to/write
+```
+
+### Pub/Sub topic
+
+The validation results can be pushed as a JSON message to the Pub/Sub topic.
+Pub/Sub output can be enabled using [configuration file](#configuration-file), example:
+
+```yaml
+clusters:
+  - id: projects/my-project-two/locations/europe-west2/clusters/my-cluster
+outputs:
+  - pubsub:
+      topic: testTopic
+      project: my-pubsub-project
+```
 
 ## Silent mode
 
@@ -327,8 +361,9 @@ outputs:
   - file: output-file.json
   - pubsub:
       topic: testTopic
+      project: my-pubsub-project
   - cloudStorage:
-      bucket: bucket
+      bucket: bucket-name
       path: path/to/write
 ```
 
