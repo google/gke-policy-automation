@@ -83,34 +83,6 @@ clusters:
   - id: projects/my-project-two/locations/europe-west2/clusters/prod-west
 ```
 
-### Defining outputs
-
-Specify the desired outputs for validation results.
-
-* JSON file output with command line flags
-
-```sh
-./gke-policy cluster review \
---project my-project --location europe-west2 --name my-cluster \
---out-file output.json
-```
-
-* JSON file, GCS bucket or PubSub topic with configuration file
-
-```yaml
-clusters:
-  - name: my-cluster
-    project: my-project
-    location: europe-west2
-outputs:
-  - file: output.json
-  - pubsub:
-      topic: Test
-  - cloudStorage:
-      bucket: bucket
-      path: path/to/write
-```
-
 ### Discovering and checking multiple clusters
 
 Discover clusters in a selected GCP projects, folders or in the entire organization using
@@ -128,6 +100,35 @@ clusterDiscovery:
   enabled: true
   organization: "123456789012"
 ```
+
+### Defining outputs
+
+Specify the desired outputs for validation results.
+
+* JSON file output with command line flags
+
+  ```sh
+  ./gke-policy cluster review \
+  --project my-project --location europe-west2 --name my-cluster \
+  --out-file output.json
+  ```
+
+* JSON file, GCS bucket or PubSub topic with configuration file
+
+  ```yaml
+  clusters:
+    - name: my-cluster
+      project: my-project
+      location: europe-west2
+  outputs:
+    - file: output.json
+    - pubsub:
+        topic: Test
+        project: my-pubsub-project
+    - cloudStorage:
+        bucket: bucket-name
+        path: path/to/write
+  ```
 
 ### Custom Policy repository
 
