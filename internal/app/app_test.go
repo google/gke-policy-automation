@@ -20,6 +20,7 @@ import (
 	"os"
 	"reflect"
 	"testing"
+	"time"
 
 	"gopkg.in/yaml.v2"
 
@@ -382,5 +383,17 @@ func TestPolicyAutomationAppClose_negative(t *testing.T) {
 	}
 	if err != closeErr {
 		t.Errorf("error is %v; want %v", err, closeErr)
+	}
+}
+
+func TestAddDatetimePrefix(t *testing.T) {
+
+	testDate := time.Date(1994, 7, 20, 5, 20, 0, 0, time.UTC)
+	expectedResult := "19940720_0520_value"
+
+	result := addDatetimePrefix("value", testDate)
+
+	if result != expectedResult {
+		t.Errorf("%s should be %s", result, expectedResult)
 	}
 }

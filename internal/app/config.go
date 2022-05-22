@@ -66,8 +66,9 @@ type PubSubOutput struct {
 	Topic   string `yaml:"topic"`
 }
 type CloudStorageOutput struct {
-	Bucket string `yaml:"bucket"`
-	Path   string `yaml:"path"`
+	Bucket         string `yaml:"bucket"`
+	Path           string `yaml:"path"`
+	SkipDatePrefix bool   `yaml:"skipDatePrefix"`
 }
 type ClusterDiscovery struct {
 	Enabled      bool     `yaml:"enabled"`
