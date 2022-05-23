@@ -21,7 +21,7 @@ LDFLAGS			=-s -w
 
 ifneq (, $(shell git 2>/dev/null))
 	COMMIT_SHA	=$(shell git rev-parse --short HEAD)
-	LDFLAGS		+= -X ${APP_MODULE}.Version=git-${COMMIT_SHA}
+	LDFLAGS		+= -X ${VERSION_MODULE}.Version=git-${COMMIT_SHA}
 endif
 
 default: clean build test
