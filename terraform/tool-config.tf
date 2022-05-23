@@ -29,10 +29,18 @@ resource "google_secret_manager_secret" "config" {
   ]
 }
 
-resource "google_secret_manager_secret_version" "config-v1" {
+data "template_file" "config-template" {
+  template = file("${var.config_file_path}")
+  vars = {
+    PROJECT_ID  = var.project_id
+    BUCKET_NAME = google_storage_bucket.report_bucket.name
+  }
+}
 
+resource "google_secret_manager_secret_version" "config-v1" {
   secret      = google_secret_manager_secret.config.id
-  secret_data = replace(file("${var.config_file_path}"), "((BUCKET_NAME))", "${google_storage_bucket.report_bucket.name}")
+  secret_data = data.template_file.config-template.rendered
+  depends_on  = [data.template_file.config-template]
 }
 
 resource "google_secret_manager_secret_iam_member" "job-sa" {

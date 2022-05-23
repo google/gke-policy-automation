@@ -12,15 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-clusters:
-  - name: YOUR_CLUSTER_NAME
-    project: YOUR_PROJECT
-    location: YOUR_CLUSTER_LOCATION
-policies:
-  - repository: https://github.com/google/gke-policy-automation
-    branch: main
-    directory: gke-policies
+silent: true
+clusterDiscovery:
+  enabled: true
+  projects:
+    - ${PROJECT_ID}
 outputs:
   - cloudStorage:
-      bucket: ((BUCKET_NAME))
+      bucket: ${BUCKET_NAME}
       path: reports/report.json

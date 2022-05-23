@@ -59,3 +59,9 @@ resource "google_project_iam_binding" "gcs_writer" {
     "serviceAccount:${google_service_account.service_account_cr.email}",
   ]
 }
+
+resource "google_project_iam_member" "asset_inventory_search" {
+  project = var.project_id
+  role    = "roles/cloudasset.viewer"
+  member  = "serviceAccount:${google_service_account.service_account_cr.email}"
+}

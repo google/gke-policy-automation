@@ -30,17 +30,13 @@ export TF_VAR_project_id="YOUR GCP PROJECT ID"
 export TF_VAR_region="YOUR GCP REGION, e.g. europe-west1"
 ```
 
-Change the config.yaml file to match your GKE cluster. Replace the following properties:
+Adjust the `config.yaml` file according to your preferences. The provided example will use cluster discovery
+on a GCP project, Cloud Storage output for reports and the default set of GKE policies.
 
-```yaml
-clusters:
-    - name: YOUR_CLUSTER_NAME
-      project: YOUR_PROJECT
-      location: YOUR_CLUSTER_LOCATION
-```
+Please check the [User Guide](../docs/user-guide.md) for all available configuration options.
 
-Please do **NOT** modify the ((BUCKET_NAME)) placeholder as this will be automatically added by
-Terraform before uploading the file to Secret Manager.
+Please do **NOT** modify the `${PROJECT_ID}` and `${BUCKET_NAME}` placeholders as they will be automatically
+added by Terraform before uploading the file to Secret Manager.
 
 ## What happens behind the scenes
 
@@ -104,7 +100,8 @@ gcloud beta run jobs create ${TF_VAR_job_name} \
     --args=-c,/etc/secrets/config.yaml \
     --set-secrets /etc/secrets/config.yaml=gke-policy-review-config:latest \
     --service-account=sa-gke-policy-au@${TF_VAR_project_id}.iam.gserviceaccount.com \
-    --region=europe-west9
+    --region=europe-west9 \
+    --set-env-vars=GKE_POLICY_LOG=INFO
 ```
 
 ## Test the job
