@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"time"
 
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/log"
@@ -109,7 +110,14 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 			} else {
 				storageClient, err = storage.NewCloudStorageClient(p.ctx)
 			}
-			storageCollector, err := outputs.NewCloudStorageResultCollector(storageClient, outputs.MapEvaluationResultsToJsonWithTime, o.CloudStorage.Bucket, o.CloudStorage.Path)
+
+			var storagePath = o.CloudStorage.Path
+
+			if !o.CloudStorage.SkipDatePrefix {
+				storagePath = addDatetimePrefix(storagePath, time.Now())
+			}
+
+			storageCollector, err := outputs.NewCloudStorageResultCollector(storageClient, outputs.MapEvaluationResultsToJsonWithTime, o.CloudStorage.Bucket, storagePath)
 			if err != nil {
 				return err
 			}
@@ -411,6 +419,10 @@ func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 	}
 	log.Debugf("discovered %v clusters in projects and folders", len(clusters))
 	return clusters, nil
+}
+
+func addDatetimePrefix(value string, time time.Time) string {
+	return fmt.Sprintf("%s_%s", time.Format("20060102_1504"), value)
 }
 
 func newConfigFromFile(path string) (*Config, error) {
