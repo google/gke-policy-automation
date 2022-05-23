@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"cloud.google.com/go/storage"
+	"github.com/google/gke-policy-automation/internal/version"
 	"google.golang.org/api/option"
 )
 
@@ -27,22 +28,16 @@ type CloudStorageClient struct {
 }
 
 func NewCloudStorageClient(ctx context.Context) (*CloudStorageClient, error) {
-
-	client, err := storage.NewClient(ctx)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &CloudStorageClient{
-		ctx:    ctx,
-		client: client,
-	}, nil
+	return newCloudStorageClient(ctx)
 }
 
 func NewCloudStorageClientWithCredentialsFile(ctx context.Context, credentialsFile string) (*CloudStorageClient, error) {
+	return newCloudStorageClient(ctx, option.WithCredentialsFile(credentialsFile))
+}
 
-	client, err := storage.NewClient(ctx, option.WithCredentialsFile(credentialsFile))
+func newCloudStorageClient(ctx context.Context, opts ...option.ClientOption) (*CloudStorageClient, error) {
+	opts = append(opts, option.WithUserAgent(version.UserAgent))
+	client, err := storage.NewClient(ctx, opts...)
 
 	if err != nil {
 		return nil, err
