@@ -29,6 +29,7 @@ import (
 	pbc "github.com/google/gke-policy-automation/internal/outputs/pubsub"
 	"github.com/google/gke-policy-automation/internal/outputs/storage"
 	"github.com/google/gke-policy-automation/internal/policy"
+	"github.com/google/gke-policy-automation/internal/version"
 )
 
 var errNoPolicies = errors.New("no policies to check against")
@@ -314,7 +315,7 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 }
 
 func (p *PolicyAutomationApp) Version() error {
-	p.out.Printf("%s\n", Version)
+	p.out.Printf("%s\n", version.Version)
 	return nil
 }
 

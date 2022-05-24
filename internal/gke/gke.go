@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	container "cloud.google.com/go/container/apiv1"
+	"github.com/google/gke-policy-automation/internal/version"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/option"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
@@ -52,6 +53,7 @@ func NewClientWithCredentialsFile(ctx context.Context, credentialsFile string) (
 }
 
 func newGKEClient(ctx context.Context, opts ...option.ClientOption) (*GKEClient, error) {
+	opts = append(opts, option.WithUserAgent(version.UserAgent))
 	cli, err := container.NewClusterManagerClient(ctx, opts...)
 	if err != nil {
 		return nil, err

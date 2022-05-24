@@ -21,6 +21,7 @@ import (
 
 	asset "cloud.google.com/go/asset/apiv1"
 	"github.com/google/gke-policy-automation/internal/log"
+	"github.com/google/gke-policy-automation/internal/version"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
@@ -63,6 +64,7 @@ func NewDiscoveryClientWithCredentialsFile(ctx context.Context, credentialsFile 
 }
 
 func newAssetInventoryDiscoveryClient(ctx context.Context, opts ...option.ClientOption) (*AssetInventoryDiscoveryClient, error) {
+	opts = append(opts, option.WithUserAgent(version.UserAgent))
 	client, err := asset.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
