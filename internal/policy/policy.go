@@ -34,6 +34,7 @@ type PolicyAgent struct {
 	compiler  *ast.Compiler
 	policies  []*Policy
 	evalCache map[string]*Policy
+	excludes  ConfigPolicyExclusions
 }
 
 type Policy struct {
@@ -74,6 +75,11 @@ func NewPolicyEvaluationResult() *PolicyEvaluationResult {
 		Violated: make(map[string][]*Policy),
 		Errored:  make([]*Policy, 0),
 	}
+}
+
+type ConfigPolicyExclusions struct {
+	Policies     []string `yaml:"policies"`
+	PolicyGroups []string `yaml:"policyGroups"`
 }
 
 func (r *PolicyEvaluationResult) Groups() []string {
@@ -130,13 +136,83 @@ func (pa *PolicyAgent) Compile(files []*PolicyFile) error {
 	for _, file := range files {
 		modules[file.FullName] = file.Content
 	}
-	compiler, err := ast.CompileModulesWithOpt(modules,
+	compiler, err := pa.compileModulesWithOpt(modules,
 		ast.CompileOpts{ParserOptions: ast.ParserOptions{ProcessAnnotation: true}})
 	if err != nil {
 		return err
 	}
 	pa.compiler = compiler
 	return nil
+}
+
+func (pa *PolicyAgent) initPolicyExcludeCache() map[string]bool {
+	cache := make(map[string]bool)
+	for _, policy := range pa.excludes.Policies {
+		cache["data."+policy] = true
+	}
+	return cache
+}
+
+func (pa *PolicyAgent) initGroupExcludeCache() map[string]bool {
+	cache := make(map[string]bool)
+	for _, g := range pa.excludes.PolicyGroups {
+		group := fmt.Sprint(g)
+		cache[group] = true
+	}
+	return cache
+}
+
+func isExcluded(s string, m map[string]bool) (bool, error) {
+	result, ok := m[s]
+	if !ok {
+		return false, fmt.Errorf("cache does not contain key: %q", s)
+	}
+	return result, nil
+}
+
+func (pa *PolicyAgent) compileModulesWithOpt(modules map[string]string, opts ast.CompileOpts) (*ast.Compiler, error) {
+
+	parsed := make(map[string]*ast.Module, len(modules))
+
+	policyExcludeCache := pa.initPolicyExcludeCache()
+	groupExcludeCache := pa.initGroupExcludeCache()
+
+module:
+	for f, module := range modules {
+		// Filter out tests
+		if strings.Contains(f, "test.rego") {
+			continue module
+		}
+		var pm *ast.Module
+		var err error
+		if pm, err = ast.ParseModuleWithOpts(f, module, opts.ParserOptions); err != nil {
+			return nil, err
+		}
+
+		// Check if the policy is excluded
+		if _, err := isExcluded(pm.Package.Path.String(), policyExcludeCache); err == nil {
+			continue module
+		}
+
+		// Check if the group is excluded
+		for _, annot := range pm.Annotations {
+			if group, ok := annot.Custom["group"]; ok {
+				if _, err := isExcluded(fmt.Sprint(group), groupExcludeCache); err == nil {
+					continue module
+				}
+			}
+		}
+		parsed[f] = pm
+	}
+
+	compiler := ast.NewCompiler().WithEnablePrintStatements(opts.EnablePrintStatements)
+	compiler.Compile(parsed)
+
+	if compiler.Failed() {
+		return nil, compiler.Errors
+	}
+
+	return compiler, nil
 }
 
 func (pa *PolicyAgent) ParseCompiled() []error {
@@ -160,7 +236,8 @@ func (pa *PolicyAgent) ParseCompiled() []error {
 	return errors
 }
 
-func (pa *PolicyAgent) WithFiles(files []*PolicyFile) error {
+func (pa *PolicyAgent) WithFiles(files []*PolicyFile, excludes ConfigPolicyExclusions) error {
+	pa.excludes = excludes
 	if err := pa.Compile(files); err != nil {
 		return err
 	}

@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/google/gke-policy-automation/internal/log"
+	"github.com/google/gke-policy-automation/internal/policy"
 	"gopkg.in/yaml.v2"
 )
 
@@ -32,14 +33,15 @@ type ReadFileFn func(string) ([]byte, error)
 type ValidateConfig func(config Config) error
 
 type Config struct {
-	SilentMode       bool             `yaml:"silent"`
-	K8SCheck         bool             `yaml:"k8sCheck"`
-	DumpFile         string           `yaml:"dumpFile"`
-	CredentialsFile  string           `yaml:"credentialsFile"`
-	Clusters         []ConfigCluster  `yaml:"clusters"`
-	Policies         []ConfigPolicy   `yaml:"policies"`
-	Outputs          []ConfigOutput   `yaml:"outputs"`
-	ClusterDiscovery ClusterDiscovery `yaml:"clusterDiscovery"`
+	SilentMode       bool                          `yaml:"silent"`
+	K8SCheck         bool                          `yaml:"k8sCheck"`
+	DumpFile         string                        `yaml:"dumpFile"`
+	CredentialsFile  string                        `yaml:"credentialsFile"`
+	Clusters         []ConfigCluster               `yaml:"clusters"`
+	Policies         []ConfigPolicy                `yaml:"policies"`
+	Outputs          []ConfigOutput                `yaml:"outputs"`
+	ClusterDiscovery ClusterDiscovery              `yaml:"clusterDiscovery"`
+	PolicyExclusions policy.ConfigPolicyExclusions `yaml:"policyExclusions"`
 }
 
 type ConfigPolicy struct {

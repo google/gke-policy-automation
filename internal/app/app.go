@@ -174,8 +174,8 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 	}
 	pa := policy.NewPolicyAgent(p.ctx)
 	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
-	log.Info("Parsing REGO policies")
-	if err := pa.WithFiles(files); err != nil {
+	log.Info("Parsing rego policies")
+	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
 		p.out.ErrorPrint("could not parse policy files", err)
 		log.Errorf("could not parse policy files: %s", err)
 		return err
@@ -243,7 +243,7 @@ func (p *PolicyAutomationApp) ClusterOfflineReview() error {
 	pa := policy.NewPolicyAgent(p.ctx)
 	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
 	log.Info("Parsing rego policies")
-	if err := pa.WithFiles(files); err != nil {
+	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
 		p.out.ErrorPrint("could not parse policy files", err)
 		log.Errorf("could not parse policy files: %s", err)
 		return err
@@ -333,7 +333,7 @@ func (p *PolicyAutomationApp) PolicyCheck() error {
 		return err
 	}
 	pa := policy.NewPolicyAgent(p.ctx)
-	if err := pa.WithFiles(files); err != nil {
+	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
 		p.out.ErrorPrint("could not parse policy files", err)
 		log.Errorf("could not parse policy files: %s", err)
 		return err
