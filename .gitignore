@@ -12,3 +12,6 @@
 *.iml
 
 gke-policy
+
+terraform/.terraform*
+terraform/terraform*
