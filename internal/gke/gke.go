@@ -25,8 +25,6 @@ import (
 	"google.golang.org/api/option"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-
-	"github.com/google/gke-policy-automation/internal/config"
 )
 
 type ClusterManagerClient interface {
@@ -71,7 +69,7 @@ func newGKEClient(ctx context.Context, opts ...option.ClientOption) (*GKEClient,
 	}, nil
 }
 
-func (c *GKEClient) GetCluster(name string) (*Cluster, error) {
+func (c *GKEClient) GetCluster(name string, apiVersions []string) (*Cluster, error) {
 	req := &containerpb.GetClusterRequest{
 		Name: name}
 	cluster, err := c.client.GetCluster(c.ctx, req)
@@ -79,7 +77,7 @@ func (c *GKEClient) GetCluster(name string) (*Cluster, error) {
 		return nil, err
 	}
 
-	resources, err := c.getResources(c.ctx)
+	resources, err := c.getResources(c.ctx, apiVersions)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +85,7 @@ func (c *GKEClient) GetCluster(name string) (*Cluster, error) {
 	return &Cluster{cluster, resources}, err
 }
 
-func (c *GKEClient) getResources(ctx context.Context) ([]*Resource, error) {
+func (c *GKEClient) getResources(ctx context.Context, apiVersions []string) ([]*Resource, error) {
 
 	var resources []*Resource
 	namespaces, err := c.k8client.GetNamespaces()
@@ -100,7 +98,7 @@ func (c *GKEClient) getResources(ctx context.Context) ([]*Resource, error) {
 		return nil, err
 	}
 
-	resourceGroupsToBeFetched := config.APIVERSIONS
+	resourceGroupsToBeFetched := apiVersions
 
 	toBeFetched := []*ResourceType{}
 	for _, i := range resourceTypes {

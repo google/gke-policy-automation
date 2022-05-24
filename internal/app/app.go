@@ -23,6 +23,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/outputs"
@@ -187,7 +188,7 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 	evalResults := make([]*policy.PolicyEvaluationResult, 0)
 	for _, clusterId := range clusterIds {
 		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [%s]\n", clusterId)
-		cluster, err := p.gke.GetCluster(clusterId)
+		cluster, err := p.gke.GetCluster(clusterId, config.APIVERSIONS)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
@@ -298,7 +299,7 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 		log.Errorf("could not get clusters: %s", err)
 	}
 	for _, clusterId := range clusterIds {
-		cluster, err := p.gke.GetCluster(clusterId)
+		cluster, err := p.gke.GetCluster(clusterId, config.APIVERSIONS)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
