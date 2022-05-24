@@ -17,8 +17,6 @@ package gke
 import (
 	"context"
 	"testing"
-
-	containerpb "google.golang.org/genproto/googleapis/container/v1"
 )
 
 // TestLocalGetClusterName() to test GetClusterName()
@@ -38,7 +36,7 @@ func TestLocalGetClusterName(t *testing.T) {
 
 // TestLocalGetCluster() to test GetCluster()
 func TestLocalGetCluster(t *testing.T) {
-	var cluster *containerpb.Cluster
+	var cluster *Cluster
 	client, err := NewGKELocalClient(context.TODO(), "../app/test-fixtures/backup.json")
 	if err != nil {
 		t.Fatalf(err.Error())

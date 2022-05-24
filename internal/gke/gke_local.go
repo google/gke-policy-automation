@@ -50,9 +50,9 @@ func (c *GKELocalClient) GetClusterName() (string, error) {
 }
 
 // GetCluster() returns cluster data gathered from file
-func (c *GKELocalClient) GetCluster() (*containerpb.Cluster, error) {
+func (c *GKELocalClient) GetCluster() (*Cluster, error) {
 	var err error
-	var cluster containerpb.Cluster
+	var cluster Cluster
 
 	clusterData, err := openData(c.dumpFile)
 	if err != nil {

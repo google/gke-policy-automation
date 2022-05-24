@@ -196,7 +196,7 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 			cluster.Id)
 		evalResult, err := pa.Evaluate(cluster)
 		if err != nil {
-			p.out.ErrorPrint("failed to evalute policies", err)
+			p.out.ErrorPrint("failed to evaluate policies", err)
 			log.Errorf("could not evaluate rego policies on cluster %s: %s", cluster.Id, err)
 			return err
 		}
