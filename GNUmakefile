@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-GOCMD		=go
-TEST		?=$$(go list ./... |grep -v 'vendor')
-BINARY		=gke-policy
-APP_MODULE	=github.com/google/gke-policy-automation/internal/app
-GOFMT_FILES	?=$$(find . -name '*.go' |grep -v vendor)
-LDFLAGS		=-s -w
+GOCMD			=go
+TEST			?=$$(go list ./... |grep -v 'vendor')
+BINARY			=gke-policy
+VERSION_MODULE	=github.com/google/gke-policy-automation/internal/version
+GOFMT_FILES		?=$$(find . -name '*.go' |grep -v vendor)
+LDFLAGS			=-s -w
 
 ifneq (, $(shell git 2>/dev/null))
 	COMMIT_SHA	=$(shell git rev-parse --short HEAD)
-	LDFLAGS		+= -X ${APP_MODULE}.Version=git-${COMMIT_SHA}
+	LDFLAGS		+= -X ${VERSION_MODULE}.Version=git-${COMMIT_SHA}
 endif
 
 default: clean build test

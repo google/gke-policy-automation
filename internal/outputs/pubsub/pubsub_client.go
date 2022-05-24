@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/google/gke-policy-automation/internal/version"
 	"google.golang.org/api/option"
 )
 
@@ -27,20 +28,16 @@ type CollectorPubSubClient struct {
 }
 
 func NewPubSubClient(ctx context.Context, project string) (*CollectorPubSubClient, error) {
-	client, err := pubsub.NewClient(ctx, project)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &CollectorPubSubClient{
-		ctx:    ctx,
-		client: client,
-	}, nil
+	return newPubSubClient(ctx, project)
 }
 
 func NewPubSubClientWithCredentialsFile(ctx context.Context, project string, credentialsFile string) (*CollectorPubSubClient, error) {
-	client, err := pubsub.NewClient(ctx, project, option.WithCredentialsFile(credentialsFile))
+	return newPubSubClient(ctx, project, option.WithCredentialsFile(credentialsFile))
+}
+
+func newPubSubClient(ctx context.Context, project string, opts ...option.ClientOption) (*CollectorPubSubClient, error) {
+	opts = append(opts, option.WithUserAgent(version.UserAgent))
+	client, err := pubsub.NewClient(ctx, project, opts...)
 
 	if err != nil {
 		return nil, err
