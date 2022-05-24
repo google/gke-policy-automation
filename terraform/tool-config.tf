@@ -37,7 +37,7 @@ data "template_file" "config-template" {
   }
 }
 
-resource "google_secret_manager_secret_version" "config-v1" {
+resource "google_secret_manager_secret_version" "config" {
   secret      = google_secret_manager_secret.config.id
   secret_data = data.template_file.config-template.rendered
   depends_on  = [data.template_file.config-template]

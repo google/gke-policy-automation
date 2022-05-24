@@ -33,31 +33,22 @@ resource "google_service_account" "service_account_cr" {
   project      = var.project_id
 }
 
-resource "google_project_iam_binding" "run_invoker" {
+resource "google_project_iam_member" "run_invoker" {
   project = var.project_id
   role    = "roles/run.invoker"
-
-  members = [
-    "serviceAccount:${google_service_account.service_account_cr.email}",
-  ]
+  member = "serviceAccount:${google_service_account.service_account_cr.email}"
 }
 
-resource "google_project_iam_binding" "cluster_viewer" {
+resource "google_project_iam_member" "cluster_viewer" {
   project = var.project_id
   role    = "roles/container.clusterViewer"
-
-  members = [
-    "serviceAccount:${google_service_account.service_account_cr.email}",
-  ]
+  member = "serviceAccount:${google_service_account.service_account_cr.email}"
 }
 
-resource "google_project_iam_binding" "gcs_writer" {
+resource "google_project_iam_member" "gcs_writer" {
   project = var.project_id
   role    = "roles/storage.admin"
-
-  members = [
-    "serviceAccount:${google_service_account.service_account_cr.email}",
-  ]
+  member  = "serviceAccount:${google_service_account.service_account_cr.email}"
 }
 
 resource "google_project_iam_member" "asset_inventory_search" {

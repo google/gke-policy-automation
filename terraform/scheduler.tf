@@ -38,6 +38,4 @@ resource "google_cloud_scheduler_job" "policy_review_job" {
   depends_on = [
     google_project_service.project
   ]
-
-
 }
