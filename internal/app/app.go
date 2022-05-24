@@ -90,7 +90,7 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 		p.collectors = []outputs.ValidationResultCollector{outputs.NewConsoleResultCollector(p.out)}
 	}
 	if p.config.DumpFile != "" {
-		// read file and instantate the configuration
+		// read file and instantiate the configuration
 		p.gkeLocal, err = gke.NewGKELocalClient(p.ctx, p.config.DumpFile)
 		return
 	}

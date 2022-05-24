@@ -58,10 +58,24 @@ func TestNewGKEClient(t *testing.T) {
 	}
 }
 
+type mockK8Client struct {
+}
+
+func (mockK8Client) GetNamespaces() ([]string, error) {
+	return nil, nil
+}
+func (mockK8Client) GetFetchableResourceTypes() ([]*ResourceType, error) {
+	return nil, nil
+}
+func (mockK8Client) GetNamespacedResources(resourceType ResourceType, namespace string) ([]*Resource, error) {
+	return nil, nil
+}
+
 func TestGetCluster(t *testing.T) {
 	client := GKEClient{
-		ctx:    context.Background(),
-		client: &mockClusterManagerClient{},
+		ctx:      context.Background(),
+		client:   &mockClusterManagerClient{},
+		k8client: &mockK8Client{},
 	}
 	projectID := "test-project"
 	clusterLocation := "europe-central2"

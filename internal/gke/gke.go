@@ -35,8 +35,9 @@ type ClusterManagerClient interface {
 }
 
 type GKEClient struct {
-	ctx    context.Context
-	client ClusterManagerClient
+	ctx      context.Context
+	client   ClusterManagerClient
+	k8client KubernetesClient
 }
 
 type Cluster struct {
@@ -58,9 +59,15 @@ func newGKEClient(ctx context.Context, opts ...option.ClientOption) (*GKEClient,
 	if err != nil {
 		return nil, err
 	}
+	k8cli, err := NewKubernetesClient(ctx, getKubeConfig())
+	if err != nil {
+		return nil, err
+	}
+
 	return &GKEClient{
-		ctx:    ctx,
-		client: cli,
+		ctx:      ctx,
+		client:   cli,
+		k8client: k8cli,
 	}, nil
 }
 
@@ -72,7 +79,7 @@ func (c *GKEClient) GetCluster(name string) (*Cluster, error) {
 		return nil, err
 	}
 
-	resources, err := getResources(c.ctx)
+	resources, err := c.getResources(c.ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -80,21 +87,15 @@ func (c *GKEClient) GetCluster(name string) (*Cluster, error) {
 	return &Cluster{cluster, resources}, err
 }
 
-func getResources(ctx context.Context) ([]*Resource, error) {
+func (c *GKEClient) getResources(ctx context.Context) ([]*Resource, error) {
 
 	var resources []*Resource
-
-	cli, err := NewKubernetesClient(ctx, getKubeConfig())
+	namespaces, err := c.k8client.GetNamespaces()
 	if err != nil {
 		return nil, err
 	}
 
-	namespaces, err := cli.GetNamespaces()
-	if err != nil {
-		return nil, err
-	}
-
-	resourceTypes, err := cli.GetFetchableResourceTypes()
+	resourceTypes, err := c.k8client.GetFetchableResourceTypes()
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +111,7 @@ func getResources(ctx context.Context) ([]*Resource, error) {
 
 	for ns := range namespaces {
 		for rt := range toBeFetched {
-			res, err := cli.GetNamespacedResources(*toBeFetched[rt], namespaces[ns])
+			res, err := c.k8client.GetNamespacedResources(*toBeFetched[rt], namespaces[ns])
 			resources = append(resources, res...)
 			if err != nil {
 				return nil, err
