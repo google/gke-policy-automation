@@ -26,6 +26,7 @@ The GKE Policy Automation is a command line tool that validates GKE clusters aga
   * [Local JSON file](#local-json-file)
   * [Cloud Storage bucket](#cloud-storage-bucket)
   * [Pub/Sub topic](#pubsub-topic)
+* [Serverless execution](#serverless-execution)
 * [Silent mode](#silent-mode)
 * [Configuration file](#configuration-file)
 * [Debugging](#debugging)
@@ -78,6 +79,8 @@ default credentials
 * For cluster discovery the `cloudasset.assets.searchAllResources` permission is needed on a target
 projects, folders or organization. This permission is included, among others, in a `roles/cloudasset.viewer`
 role
+* For Cloud Storage output, the `roles/storage.objectCreator` role is needed on a target bucket
+* For Pub/Sub output, the `roles/pubsub.publisher` role is needed on a target topic
 
 ## Cluster commands
 
@@ -281,7 +284,7 @@ outputs:
   - file: my-cluster-results.json
 ```
 
-### Cloud storage bucket
+### Cloud Storage bucket
 
 The validation results can be stored in a JSON format as an object in Cloud Storage bucket.
 Cloud storage output can be enabled using [configuration file](#configuration-file), example:
@@ -294,6 +297,10 @@ outputs:
       bucket: bucket
       path: path/to/write
 ```
+
+The Cloud Storage output adds date-time prefix to the given path by default, so the reports from
+subsequent checks are not overwritten. This behavior can be disabled by setting `skipDatePrefix`
+option to `true`.
 
 ### Pub/Sub topic
 
@@ -308,6 +315,12 @@ outputs:
       topic: testTopic
       project: my-pubsub-project
 ```
+
+## Serverless execution
+
+The GKE Policy Automation tool can be executed in a serverless way to perform automatic evaluations
+of a clusters running in your organization. Please check our [Reference Terraform Solution](../terraform/README.md)
+that leverages GCP serverless solutions including Cloud Scheduler and Cloud Run.
 
 ## Silent mode
 
@@ -365,6 +378,8 @@ outputs:
   - cloudStorage:
       bucket: bucket-name
       path: path/to/write
+      skipDatePrefix: true
+
 ```
 
 ## Debugging

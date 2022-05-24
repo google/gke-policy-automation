@@ -175,7 +175,13 @@ default credentials
 * To use credentials from service account key file pass `--creds` parameter with a path to the file.
 
 The minimum required IAM role is `roles/container.clusterViewer`
-on a cluster projects.
+on a cluster projects. Additional roles may be needed, depending on configured [outputs](./docs/user-guide.md#outputs).
+
+### Serverless execution
+
+The GKE Policy Automation tool can be executed in a serverless way to perform automatic evaluations
+of a clusters running in your organization. Please check our [reference Terraform Solution](./terraform/README.md)
+that leverages GCP serverless solutions including Cloud Scheduler and Cloud Run.
 
 ## Contributing
 
