@@ -100,8 +100,9 @@ gcloud beta run jobs create ${TF_VAR_job_name} \
     --args=-c,/etc/secrets/config.yaml \
     --set-secrets /etc/secrets/config.yaml=gke-policy-review-config:latest \
     --service-account=sa-gke-policy-au@${TF_VAR_project_id}.iam.gserviceaccount.com \
+    --set-env-vars=GKE_POLICY_LOG=INFO \
     --region=europe-west9 \
-    --set-env-vars=GKE_POLICY_LOG=INFO
+    --project=${TF_VAR_project_id}
 ```
 
 ## Test the job
