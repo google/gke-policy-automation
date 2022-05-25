@@ -1,6 +1,26 @@
 # Changelog
 
-## 0.2.0 (Unreleased)
+## 1.0.0 (May 25, 2022)
+
+FEATURES:
+
+* Terraform serverless solution [#75](https://github.com/google/gke-policy-automation/pull/75)
+* Cluster discovery mechanism [#59](https://github.com/google/gke-policy-automation/pull/59)
+* Cluster review with cluster data from a file [#50](https://github.com/google/gke-policy-automation/pull/50)
+* Command that prints raw cluster data [#37](https://github.com/google/gke-policy-automation/pull/37)
+* Policy Evaluation result JSON output to Cloud Storage [#34](https://github.com/google/gke-policy-automation/issues/34)
+* Policy Evaluation result JSON output to Pub/Sub [#33](https://github.com/google/gke-policy-automation/issues/33)
+* Policy Evaluation result JSON output to local file [#5](https://github.com/google/gke-policy-automation/issues/5)
+
+IMPROVEMENTS:
+
+* Adjusted exit code on errors and improved logging[#81](https://github.com/google/gke-policy-automation/pull/81)
+* Custom user-agent in GCP API calls [#78](https://github.com/google/gke-policy-automation/pull/78)
+* Default GIT policy source params are set in consistent way [#43](https://github.com/google/gke-policy-automation/pull/43)
+
+BUG FIXES:
+
+* Tool fetches cluster details even if there are no policies [#45](https://github.com/google/gke-policy-automation/issues/45)
 
 ## 0.1.0 (April 15, 2022)
 
