@@ -20,6 +20,7 @@ import (
 	"reflect"
 	"strings"
 
+	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
@@ -34,7 +35,7 @@ type PolicyAgent struct {
 	compiler  *ast.Compiler
 	policies  []*Policy
 	evalCache map[string]*Policy
-	excludes  ConfigPolicyExclusions
+	excludes  cfg.ConfigPolicyExclusions
 }
 
 type Policy struct {
@@ -75,11 +76,6 @@ func NewPolicyEvaluationResult() *PolicyEvaluationResult {
 		Violated: make(map[string][]*Policy),
 		Errored:  make([]*Policy, 0),
 	}
-}
-
-type ConfigPolicyExclusions struct {
-	Policies     []string `yaml:"policies"`
-	PolicyGroups []string `yaml:"policyGroups"`
 }
 
 func (r *PolicyEvaluationResult) Groups() []string {
@@ -236,7 +232,7 @@ func (pa *PolicyAgent) ParseCompiled() []error {
 	return errors
 }
 
-func (pa *PolicyAgent) WithFiles(files []*PolicyFile, excludes ConfigPolicyExclusions) error {
+func (pa *PolicyAgent) WithFiles(files []*PolicyFile, excludes cfg.ConfigPolicyExclusions) error {
 	pa.excludes = excludes
 	if err := pa.Compile(files); err != nil {
 		return err
