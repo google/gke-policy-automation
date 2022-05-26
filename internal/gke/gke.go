@@ -43,23 +43,28 @@ type Cluster struct {
 	Resources []*Resource
 }
 
-func NewClient(ctx context.Context) (*GKEClient, error) {
-	return newGKEClient(ctx)
+func NewClient(ctx context.Context, k8sCheck bool) (*GKEClient, error) {
+	return newGKEClient(ctx, k8sCheck)
 }
 
-func NewClientWithCredentialsFile(ctx context.Context, credentialsFile string) (*GKEClient, error) {
-	return newGKEClient(ctx, option.WithCredentialsFile(credentialsFile))
+func NewClientWithCredentialsFile(ctx context.Context, k8sCheck bool, credentialsFile string) (*GKEClient, error) {
+	return newGKEClient(ctx, k8sCheck, option.WithCredentialsFile(credentialsFile))
 }
 
-func newGKEClient(ctx context.Context, opts ...option.ClientOption) (*GKEClient, error) {
+func newGKEClient(ctx context.Context, k8sCheck bool, opts ...option.ClientOption) (*GKEClient, error) {
 	opts = append(opts, option.WithUserAgent(version.UserAgent))
 	cli, err := container.NewClusterManagerClient(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
-	k8cli, err := NewKubernetesClient(ctx, getKubeConfig())
-	if err != nil {
-		return nil, err
+
+	var k8cli KubernetesClient = nil
+
+	if k8sCheck {
+		k8cli, err = NewKubernetesClient(ctx, getKubeConfig())
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &GKEClient{
@@ -69,7 +74,7 @@ func newGKEClient(ctx context.Context, opts ...option.ClientOption) (*GKEClient,
 	}, nil
 }
 
-func (c *GKEClient) GetCluster(name string, apiVersions []string) (*Cluster, error) {
+func (c *GKEClient) GetCluster(name string, k8sCheck bool, apiVersions []string) (*Cluster, error) {
 	req := &containerpb.GetClusterRequest{
 		Name: name}
 	cluster, err := c.client.GetCluster(c.ctx, req)
@@ -77,9 +82,13 @@ func (c *GKEClient) GetCluster(name string, apiVersions []string) (*Cluster, err
 		return nil, err
 	}
 
-	resources, err := c.getResources(c.ctx, apiVersions)
-	if err != nil {
-		return nil, err
+	var resources []*Resource = nil
+
+	if k8sCheck {
+		resources, err = c.getResources(c.ctx, apiVersions)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &Cluster{cluster, resources}, err

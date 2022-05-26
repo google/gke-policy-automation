@@ -47,7 +47,7 @@ func (mockClusterManagerClient) Close() error {
 
 func TestNewGKEClient(t *testing.T) {
 	testCredsFile := "test-fixtures/test_credentials.json"
-	c, err := NewClientWithCredentialsFile(context.Background(), testCredsFile)
+	c, err := NewClientWithCredentialsFile(context.Background(), true, testCredsFile)
 	if err != nil {
 		t.Fatalf("error when creating client: %v", err)
 	}
@@ -112,7 +112,29 @@ func TestGetCluster(t *testing.T) {
 	clusterLocation := "europe-central2"
 	clusterName := "warsaw"
 	apiVersions := []string{"v1"}
-	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName), apiVersions)
+	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName), true, apiVersions)
+	if err != nil {
+		t.Fatalf("error when fetching cluster: %v", err)
+	}
+	if cluster.Name != clusterName {
+		t.Errorf("cluster.Name = %s; want %s", cluster.Name, clusterName)
+	}
+	if cluster.Location != clusterLocation {
+		t.Errorf("cluster.Name = %s; want %s", cluster.Location, clusterLocation)
+	}
+}
+
+func TestGetClusterWithoutK8SApiCheckConfigured(t *testing.T) {
+	client := GKEClient{
+		ctx:      context.Background(),
+		client:   &mockClusterManagerClient{},
+		k8client: nil,
+	}
+	projectID := "test-project"
+	clusterLocation := "europe-central2"
+	clusterName := "warsaw"
+	apiVersions := []string{"v1"}
+	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName), false, apiVersions)
 	if err != nil {
 		t.Fatalf("error when fetching cluster: %v", err)
 	}
@@ -165,7 +187,7 @@ func TestGetClusterResourcesForEmptyConfig(t *testing.T) {
 	clusterLocation := "europe-central2"
 	clusterName := "warsaw"
 	apiVersions := []string{}
-	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName), apiVersions)
+	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName), true, apiVersions)
 	if err != nil {
 		t.Fatalf("error when fetching cluster: %v", err)
 	}
@@ -184,7 +206,7 @@ func TestGetClusterResourcesForNonEmptyConfig(t *testing.T) {
 	clusterLocation := "europe-central2"
 	clusterName := "warsaw"
 	apiVersions := []string{"v1"}
-	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName), apiVersions)
+	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName), true, apiVersions)
 	if err != nil {
 		t.Fatalf("error when fetching cluster: %v", err)
 	}

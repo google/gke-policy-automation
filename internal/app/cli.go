@@ -19,6 +19,7 @@ import cli "github.com/urfave/cli/v2"
 type CliConfig struct {
 	ConfigFile      string
 	SilentMode      bool
+	K8SCheck        bool
 	CredentialsFile string
 	DumpFile        string
 	ClusterName     string
@@ -166,6 +167,12 @@ func getClusterSourceFlags(config *CliConfig) []cli.Flag {
 			Aliases:     []string{"l"},
 			Usage:       "GKE cluster location (region or zone)",
 			Destination: &config.ClusterLocation,
+		},
+		&cli.BoolFlag{
+			Name:        "k8s-api",
+			Aliases:     []string{"k"},
+			Usage:       "Enables k8s api check",
+			Destination: &config.K8SCheck,
 		},
 	}
 }

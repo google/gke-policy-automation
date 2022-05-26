@@ -96,9 +96,9 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 		return
 	}
 	if p.config.CredentialsFile != "" {
-		p.gke, err = gke.NewClientWithCredentialsFile(p.ctx, p.config.CredentialsFile)
+		p.gke, err = gke.NewClientWithCredentialsFile(p.ctx, p.config.K8SCheck, p.config.CredentialsFile)
 	} else {
-		p.gke, err = gke.NewClient(p.ctx)
+		p.gke, err = gke.NewClient(p.ctx, p.config.K8SCheck)
 	}
 	for _, o := range p.config.Outputs {
 		if o.FileName != "" {
@@ -188,7 +188,7 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 	evalResults := make([]*policy.PolicyEvaluationResult, 0)
 	for _, clusterId := range clusterIds {
 		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [%s]\n", clusterId)
-		cluster, err := p.gke.GetCluster(clusterId, config.APIVERSIONS)
+		cluster, err := p.gke.GetCluster(clusterId, p.config.K8SCheck, config.APIVERSIONS)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
@@ -299,7 +299,7 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 		log.Errorf("could not get clusters: %s", err)
 	}
 	for _, clusterId := range clusterIds {
-		cluster, err := p.gke.GetCluster(clusterId, config.APIVERSIONS)
+		cluster, err := p.gke.GetCluster(clusterId, p.config.K8SCheck, config.APIVERSIONS)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
@@ -434,6 +434,7 @@ func newConfigFromFile(path string) (*Config, error) {
 func newConfigFromCli(cliConfig *CliConfig) *Config {
 	config := &Config{}
 	config.SilentMode = cliConfig.SilentMode
+	config.K8SCheck = cliConfig.K8SCheck
 	config.CredentialsFile = cliConfig.CredentialsFile
 	config.DumpFile = cliConfig.DumpFile
 	if cliConfig.ClusterName != "" || cliConfig.ClusterLocation != "" || cliConfig.ProjectName != "" {
