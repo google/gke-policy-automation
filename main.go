@@ -24,12 +24,13 @@ import (
 func main() {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println(fmt.Errorf("%s", err))
+			fmt.Printf("\nError: %s\n", err)
 			os.Exit(1)
 		}
 	}()
 
 	if err := app.NewPolicyAutomationCli(app.NewPolicyAutomationApp()).Run(os.Args); err != nil {
 		fmt.Printf("\nError: %s\n", err)
+		os.Exit(1)
 	}
 }

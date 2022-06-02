@@ -162,17 +162,19 @@ func (p *PolicyAutomationApp) Close() error {
 }
 
 func (p *PolicyAutomationApp) ClusterReview() error {
+	log.Info("Cluster review starting")
 	files, err := p.loadPolicyFiles()
 	if err != nil {
 		return err
 	}
 	if len(files) == 0 {
 		p.out.ColorPrintf("[yellow][bold]No policies to check against\n")
+		log.Errorf("No policies to check against")
 		return errNoPolicies
 	}
 	pa := policy.NewPolicyAgent(p.ctx)
 	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
-	log.Info("Parsing rego policies")
+	log.Info("Parsing REGO policies")
 	if err := pa.WithFiles(files); err != nil {
 		p.out.ErrorPrint("could not parse policy files", err)
 		log.Errorf("could not parse policy files: %s", err)
@@ -187,6 +189,7 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 	}
 	evalResults := make([]*policy.PolicyEvaluationResult, 0)
 	for _, clusterId := range clusterIds {
+		log.Infof("Fetching GKE cluster %s", clusterId)
 		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [%s]\n", clusterId)
 		cluster, err := p.gke.GetCluster(clusterId, p.config.K8SCheck, config.APIVERSIONS)
 		if err != nil {
@@ -196,6 +199,7 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 		}
 		p.out.ColorPrintf("[light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
 			cluster.Id)
+		log.Infof("Evaluating policies against GKE cluster %s", clusterId)
 		evalResult, err := pa.Evaluate(cluster)
 		if err != nil {
 			p.out.ErrorPrint("failed to evaluate policies", err)
@@ -207,8 +211,8 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 	}
 
 	for _, c := range p.collectors {
+		log.Debugf("Collector %s registering the results", reflect.TypeOf(c).String())
 		err = c.RegisterResult(evalResults)
-
 		if err != nil {
 			p.out.ErrorPrint("failed to register evaluation results", err)
 			log.Errorf("could not register evaluation results: %s", err)
@@ -223,8 +227,9 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 			log.Errorf("could not finalize registering evaluation results: %s", err)
 			return err
 		}
-		log.Infof("Collector %s processing closed", reflect.TypeOf(c).Name())
+		log.Debugf("Collector %s processing closed", reflect.TypeOf(c).String())
 	}
+	log.Info("Cluster review finished")
 	return nil
 }
 
@@ -396,13 +401,13 @@ func (p *PolicyAutomationApp) getClusters() ([]string, error) {
 //discoverClusters discovers clusters according to the cluster discovery configuration.
 func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 	if p.config.ClusterDiscovery.Organization != "" {
-		log.Infof("discovering clusters for organization %s", p.config.ClusterDiscovery.Organization)
+		log.Infof("Discovering clusters for organization %s", p.config.ClusterDiscovery.Organization)
 		p.out.ColorPrintf("[light_gray][bold]Discovering clusters in for an organization... [%s]\n", p.config.ClusterDiscovery.Organization)
 		return p.discovery.GetClustersInOrg(p.config.ClusterDiscovery.Organization)
 	}
 	clusters := make([]string, 0)
 	for _, folder := range p.config.ClusterDiscovery.Folders {
-		log.Infof("discovering clusters in a folder %s", folder)
+		log.Infof("Discovering clusters in a folder %s", folder)
 		p.out.ColorPrintf("[light_gray][bold]Discovering clusters in a folder... [%s]\n", folder)
 		results, err := p.discovery.GetClustersInFolder(folder)
 		if err != nil {
@@ -411,7 +416,7 @@ func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 		clusters = append(clusters, results...)
 	}
 	for _, project := range p.config.ClusterDiscovery.Projects {
-		log.Infof("discovering clusters in a project %s", project)
+		log.Infof("Discovering clusters in a project %s", project)
 		p.out.ColorPrintf("[light_gray][bold]Discovering clusters in a project... [%s]\n", project)
 		results, err := p.discovery.GetClustersInProject(project)
 		if err != nil {

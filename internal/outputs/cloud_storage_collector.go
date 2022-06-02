@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/policy"
 )
 
@@ -66,6 +67,6 @@ func (p *CloudStorageResultCollector) Close() error {
 	if err := p.client.Write(p.bucketName, p.objectName, res); err != nil {
 		return err
 	}
-
+	log.Infof("Validation results stored in [%s] object in [%s] Cloud Storage bucket", p.objectName, p.bucketName)
 	return p.client.Close()
 }

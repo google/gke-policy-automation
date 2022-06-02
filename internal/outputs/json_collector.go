@@ -19,6 +19,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/policy"
 )
 
@@ -76,6 +77,6 @@ func (p *JSONResultCollector) Close() error {
 	if err != nil {
 		return err
 	}
-
+	log.Infof("Validation results written to the [%s] file", p.filename)
 	return nil
 }
