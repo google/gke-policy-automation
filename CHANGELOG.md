@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.1 (Jun 2, 2022)
+
+BUG FIXES:
+
+* Bumped dependency versions, including yaml.3 [#84](https://github.com/google/gke-policy-automation/pull/84)
+* Bump github.com/open-policy-agent/opa from 0.38.1 to 0.40.0 [#83](https://github.com/google/gke-policy-automation/pull/83)
+
 ## 1.0.0 (May 25, 2022)
 
 FEATURES:
