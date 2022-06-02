@@ -47,7 +47,7 @@ func (mockClusterManagerClient) Close() error {
 
 func TestNewGKEClient(t *testing.T) {
 	testCredsFile := "test-fixtures/test_credentials.json"
-	c, err := NewClientWithCredentialsFile(context.Background(), testCredsFile)
+	c, err := NewClientWithCredentialsFile(context.Background(), true, testCredsFile)
 	if err != nil {
 		t.Fatalf("error when creating client: %v", err)
 	}
@@ -58,15 +58,83 @@ func TestNewGKEClient(t *testing.T) {
 	}
 }
 
+type mockK8Client struct {
+}
+
+func (mockK8Client) GetNamespaces() ([]string, error) {
+	return []string{"namespace-one", "namespace-two"}, nil
+}
+func (mockK8Client) GetFetchableResourceTypes() ([]*ResourceType, error) {
+	return []*ResourceType{
+		{
+			Group:      "autoscaling",
+			Version:    "v1",
+			Name:       "horizontalpodautoscalers",
+			Namespaced: true,
+		},
+		{
+			Group:      "",
+			Version:    "v1",
+			Name:       "replicationcontrollers",
+			Namespaced: true,
+		},
+		{
+			Group:      "",
+			Version:    "v1",
+			Name:       "componentstatuses",
+			Namespaced: false,
+		},
+		{
+			Group:      "authorization.k8s.io",
+			Version:    "v1",
+			Name:       "localsubjectaccessreviews",
+			Namespaced: true,
+		},
+	}, nil
+}
+func (mockK8Client) GetNamespacedResources(resourceType ResourceType, namespace string) ([]*Resource, error) {
+
+	return []*Resource{
+		{
+			Type: resourceType,
+			Data: nil,
+		},
+	}, nil
+}
+
 func TestGetCluster(t *testing.T) {
 	client := GKEClient{
-		ctx:    context.Background(),
-		client: &mockClusterManagerClient{},
+		ctx:      context.Background(),
+		client:   &mockClusterManagerClient{},
+		k8client: &mockK8Client{},
 	}
 	projectID := "test-project"
 	clusterLocation := "europe-central2"
 	clusterName := "warsaw"
-	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName))
+	apiVersions := []string{"v1"}
+	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName), true, apiVersions)
+	if err != nil {
+		t.Fatalf("error when fetching cluster: %v", err)
+	}
+	if cluster.Name != clusterName {
+		t.Errorf("cluster.Name = %s; want %s", cluster.Name, clusterName)
+	}
+	if cluster.Location != clusterLocation {
+		t.Errorf("cluster.Name = %s; want %s", cluster.Location, clusterLocation)
+	}
+}
+
+func TestGetClusterWithoutK8SApiCheckConfigured(t *testing.T) {
+	client := GKEClient{
+		ctx:      context.Background(),
+		client:   &mockClusterManagerClient{},
+		k8client: nil,
+	}
+	projectID := "test-project"
+	clusterLocation := "europe-central2"
+	clusterName := "warsaw"
+	apiVersions := []string{"v1"}
+	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName), false, apiVersions)
 	if err != nil {
 		t.Fatalf("error when fetching cluster: %v", err)
 	}
@@ -106,5 +174,43 @@ func TestGetClusterName(t *testing.T) {
 	}
 	if matches[3] != clusterName {
 		t.Errorf("match[3] = %v; want %v", matches[3], clusterName)
+	}
+}
+
+func TestGetClusterResourcesForEmptyConfig(t *testing.T) {
+	client := GKEClient{
+		ctx:      context.Background(),
+		client:   &mockClusterManagerClient{},
+		k8client: &mockK8Client{},
+	}
+	projectID := "test-project"
+	clusterLocation := "europe-central2"
+	clusterName := "warsaw"
+	apiVersions := []string{}
+	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName), true, apiVersions)
+	if err != nil {
+		t.Fatalf("error when fetching cluster: %v", err)
+	}
+	if len(cluster.Resources) > 0 {
+		t.Errorf("should not return any resources for empty configuration. Returned %d; want 0", len(cluster.Resources))
+	}
+}
+
+func TestGetClusterResourcesForNonEmptyConfig(t *testing.T) {
+	client := GKEClient{
+		ctx:      context.Background(),
+		client:   &mockClusterManagerClient{},
+		k8client: &mockK8Client{},
+	}
+	projectID := "test-project"
+	clusterLocation := "europe-central2"
+	clusterName := "warsaw"
+	apiVersions := []string{"v1"}
+	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName), true, apiVersions)
+	if err != nil {
+		t.Fatalf("error when fetching cluster: %v", err)
+	}
+	if len(cluster.Resources) == 0 {
+		t.Errorf("should return resources for v1 configuration. Returned %d; want 1", len(cluster.Resources))
 	}
 }

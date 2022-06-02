@@ -17,6 +17,7 @@ package gke
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/google/gke-policy-automation/internal/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -118,6 +119,11 @@ func (c *kubernetesClient) GetFetchableResourceTypes() ([]*ResourceType, error) 
 		for i := range resourceGroup.APIResources {
 			if !stringSliceContains(resourceGroup.APIResources[i].Verbs, "get") {
 				log.Debugf("skipping resource type %q with groupVersion %q as it has no \"get\" verb",
+					resourceGroup.APIResources[i].Name, resourceGroup.GroupVersion)
+				continue
+			}
+			if strings.Contains(resourceGroup.APIResources[i].Name, "/") {
+				log.Debugf("skipping resource type %q with groupVersion %q",
 					resourceGroup.APIResources[i].Name, resourceGroup.GroupVersion)
 				continue
 			}
