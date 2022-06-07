@@ -152,8 +152,7 @@ func (pa *PolicyAgent) initPolicyExcludeCache() map[string]bool {
 func (pa *PolicyAgent) initGroupExcludeCache() map[string]bool {
 	cache := make(map[string]bool)
 	for _, g := range pa.excludes.PolicyGroups {
-		group := fmt.Sprint(g)
-		cache[group] = true
+		cache[g] = true
 	}
 	return cache
 }
@@ -177,7 +176,8 @@ module:
 	for f, module := range modules {
 		// Filter out tests
 		if strings.Contains(f, "test.rego") {
-			continue module
+			log.Debugf("Skipped policy file %s", f)
+			continue
 		}
 		var pm *ast.Module
 		var err error
@@ -187,7 +187,7 @@ module:
 
 		// Check if the policy is excluded
 		if _, err := isExcluded(pm.Package.Path.String(), policyExcludeCache); err == nil {
-			continue module
+			continue
 		}
 
 		// Check if the group is excluded
