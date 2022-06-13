@@ -16,7 +16,9 @@ package gke
 
 import (
 	"context"
+	"encoding/base64"
 	b64 "encoding/base64"
+	"errors"
 	"fmt"
 
 	container "cloud.google.com/go/container/apiv1"
@@ -60,13 +62,6 @@ func newGKEClient(ctx context.Context, k8sCheck bool, opts ...option.ClientOptio
 
 	var k8cli KubernetesClient = nil
 
-	if k8sCheck {
-		k8cli, err = NewKubernetesClient(ctx, getKubeConfig())
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return &GKEClient{
 		ctx:      ctx,
 		client:   cli,
@@ -85,6 +80,20 @@ func (c *GKEClient) GetCluster(name string, k8sCheck bool, apiVersions []string)
 	var resources []*Resource = nil
 
 	if k8sCheck {
+		if c.k8client == nil {
+			clusterMasterAuth := cluster.MasterAuth.ClusterCaCertificate
+			clusterEndpoint := cluster.Endpoint
+			kubeConfig, err := clientKubeConfig(clusterMasterAuth, clusterEndpoint, cluster.MasterAuth.ClientKey)
+			if err != nil {
+				return nil, err
+			}
+
+			k8cli, err := NewKubernetesClient(c.ctx, kubeConfig)
+			if err != nil {
+				return nil, err
+			}
+			c.k8client = k8cli
+		}
 		resources, err = c.getResources(c.ctx, apiVersions)
 		if err != nil {
 			return nil, err
@@ -166,4 +175,33 @@ func getKubeConfig() *clientcmdapi.Config {
 		},
 		CurrentContext: "gke_project_europe-central2-a_cluster1",
 	}
+}
+
+func clientKubeConfig(clusterMasterAuth string, clusterEndpoint string, clusterToken string) (*clientcmdapi.Config, error) {
+	config := clientcmdapi.NewConfig()
+	cluster := clientcmdapi.NewCluster()
+
+	caCert, err := base64.StdEncoding.DecodeString(clusterMasterAuth)
+	if err != nil {
+		daniel := errors.New(clusterMasterAuth)
+		panic(daniel)
+	}
+
+	config.APIVersion = "v1"
+	config.Kind = "Config"
+	config.Clusters = map[string]*clientcmdapi.Cluster{
+		"gke_project_europe-central2-a_cluster1": {
+			CertificateAuthority: string(caCert),
+			Server:               clusterEndpoint,
+		},
+	}
+	config.AuthInfos = map[string]*clientcmdapi.AuthInfo{
+		"gke_project_europe-central2-a_cluster1": {Token: clusterToken},
+	}
+	// config.Contexts
+
+	cluster.CertificateAuthorityData = []byte(caCert)
+	cluster.Server = fmt.Sprintf("https://%v", clusterEndpoint)
+
+	return config, nil
 }
