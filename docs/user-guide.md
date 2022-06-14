@@ -257,6 +257,21 @@ Example:
 ./gke-policy policy check --local-policy-dir ./gke-policies
 ```
 
+### Excluding policies
+
+Specific policies or policy groups may be excluded during cluster review. Policy exclusion can only
+be configured using a [configuration file](#configuration-file). The below example skips all rego
+policies in the `Scalability` group as well as the specific policy
+`gke.policy.cluster_binary_authorization`.
+
+```yaml
+policyExclusions:
+  policies:
+    - gke.policy.cluster_binary_authorization
+  policyGroups:
+    - Scalability
+```
+
 ## Outputs
 
 The GKE Policy Automation tool produces cluster validation results to the stderr, local JSON file,
@@ -370,6 +385,11 @@ policies:
     branch: main
     directory: gke-policies
   - local: ./my-policies
+policyExclusions:
+  policies:
+    - gke.policy.enable_ilb_subsetting
+  policyGroups:
+    - Scalability
 outputs:
   - file: output-file.json
   - pubsub:
