@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package app
+package config
 
 import (
 	"fmt"
@@ -239,7 +239,7 @@ func TestValidatePolicyCheckConfig_negative(t *testing.T) {
 
 func TestSetConfigDefaults_policySrc(t *testing.T) {
 	config := Config{}
-	setConfigDefaults(&config)
+	SetConfigDefaults(&config)
 	if len(config.Policies) < 1 {
 		t.Fatalf("len of policy sources is %d; want %d", len(config.Policies), 1)
 	}

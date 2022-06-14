@@ -21,6 +21,7 @@ import (
 	"reflect"
 	"testing"
 
+	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 )
@@ -245,8 +246,12 @@ func TestWithFiles(t *testing.T) {
 		{"test_three.rego", "folder/test_three.rego", contentThree},
 		{"test_one_test.rego", "folder/test_one_test.rego", contentThree},
 	}
+	policyExclusions := &cfg.ConfigPolicyExclusions{
+		Policies:     []string{"gke.policy.enable_ilb_subsetting"},
+		PolicyGroups: []string{"security"},
+	}
 	pa := PolicyAgent{}
-	if err := pa.WithFiles(policyFiles); err != nil {
+	if err := pa.WithFiles(policyFiles, *policyExclusions); err != nil {
 		t.Fatalf("error = %v; want nil", err)
 	}
 	if len(pa.policies) != 2 {
@@ -573,5 +578,64 @@ func TestGetStringListFromInterfaceMap_negative(t *testing.T) {
 		if err == nil {
 			t.Errorf("err = nil; want error")
 		}
+	}
+}
+
+//
+func TestInitPolicyExcludeCache(t *testing.T) {
+	pa := &PolicyAgent{}
+	pa.excludes.Policies = []string{"policy_one", "policy_two"}
+	policyExcludeCache := pa.initPolicyExcludeCache()
+	if len(policyExcludeCache) != len(pa.excludes.Policies) {
+		t.Fatalf("number of policies in exclude cache = %v; want %v", len(policyExcludeCache), len(pa.excludes.Policies))
+	}
+	for _, policy := range pa.excludes.Policies {
+		_, ok := policyExcludeCache["data."+policy]
+		if !ok {
+			t.Fatalf("policy with name %v missing in exclude cache", policy)
+		}
+	}
+}
+
+func TestInitGroupExcludeCache(t *testing.T) {
+	pa := &PolicyAgent{}
+	pa.excludes.PolicyGroups = []string{"group_one", "group_two"}
+	groupExcludeCache := pa.initGroupExcludeCache()
+	if len(groupExcludeCache) != len(pa.excludes.PolicyGroups) {
+		t.Fatalf("number of policy groups in exclude cache = %v; want %v", len(groupExcludeCache), len(pa.excludes.PolicyGroups))
+	}
+	for _, group := range pa.excludes.PolicyGroups {
+		_, ok := groupExcludeCache[group]
+		if !ok {
+			t.Fatalf("group with name %v missing in exclude cache", group)
+		}
+	}
+}
+
+func TestIsExcluded(t *testing.T) {
+	inputName := "test"
+	inputMap := map[string]bool{"test": true}
+	expected := true
+
+	result, err := isExcluded(inputName, inputMap)
+	if err != nil {
+		t.Errorf("err = %q; want nil", err)
+	}
+	if result != expected {
+		t.Errorf("result = %v; want %v", result, expected)
+	}
+}
+
+func TestIsExcluded_negative(t *testing.T) {
+	inputName := "missing"
+	inputMap := map[string]bool{"test": true}
+	expected := false
+
+	result, err := isExcluded(inputName, inputMap)
+	if err == nil {
+		t.Errorf("err = nil; want error")
+	}
+	if result != expected {
+		t.Errorf("result = %v; want %v", result, expected)
 	}
 }

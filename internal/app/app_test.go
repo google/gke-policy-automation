@@ -24,6 +24,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/outputs"
 )
@@ -74,8 +75,8 @@ func TestNewPolicyAutomationApp(t *testing.T) {
 func TestGetClusters_config(t *testing.T) {
 	clusters := []string{"cluster1", "cluster2"}
 	pa := PolicyAutomationApp{
-		config: &Config{
-			Clusters: []ConfigCluster{
+		config: &cfg.Config{
+			Clusters: []cfg.ConfigCluster{
 				{ID: clusters[0]},
 				{ID: clusters[1]},
 			},
@@ -94,9 +95,9 @@ func TestGetClusters_discovery(t *testing.T) {
 	pa := PolicyAutomationApp{
 		out: outputs.NewSilentOutput(),
 		ctx: context.Background(),
-		config: &Config{
+		config: &cfg.Config{
 			CredentialsFile: "test-fixtures/test_credentials.json",
-			ClusterDiscovery: ClusterDiscovery{
+			ClusterDiscovery: cfg.ClusterDiscovery{
 				Enabled: true,
 			},
 		},
@@ -122,7 +123,7 @@ func TestDiscoverClusters_org(t *testing.T) {
 	pa := PolicyAutomationApp{
 		out:       outputs.NewSilentOutput(),
 		discovery: DiscoveryClientMock{GetClustersInOrgFn: clusterInOrgFn},
-		config:    &Config{ClusterDiscovery: ClusterDiscovery{Enabled: true, Organization: orgNumber}},
+		config:    &cfg.Config{ClusterDiscovery: cfg.ClusterDiscovery{Enabled: true, Organization: orgNumber}},
 	}
 	results, err := pa.discoverClusters()
 	if err != nil {
@@ -149,7 +150,7 @@ func TestDiscoverClusters_folders(t *testing.T) {
 	pa := PolicyAutomationApp{
 		out:       outputs.NewSilentOutput(),
 		discovery: DiscoveryClientMock{GetClustersInFolderFn: clusterInFoldersFn},
-		config:    &Config{ClusterDiscovery: ClusterDiscovery{Enabled: true, Folders: folders}},
+		config:    &cfg.Config{ClusterDiscovery: cfg.ClusterDiscovery{Enabled: true, Folders: folders}},
 	}
 	results, err := pa.discoverClusters()
 	if err != nil {
@@ -179,7 +180,7 @@ func TestDiscoverClusters_projects(t *testing.T) {
 	pa := PolicyAutomationApp{
 		out:       outputs.NewSilentOutput(),
 		discovery: DiscoveryClientMock{GetClustersInProjectFn: clusterInProjectsFn},
-		config:    &Config{ClusterDiscovery: ClusterDiscovery{Enabled: true, Projects: projects}},
+		config:    &cfg.Config{ClusterDiscovery: cfg.ClusterDiscovery{Enabled: true, Projects: projects}},
 	}
 	results, err := pa.discoverClusters()
 	if err != nil {
@@ -206,7 +207,7 @@ func TestLoadCliConfig_file(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read test config file err is not nil; want nil; err = %s", err)
 	}
-	config := &Config{}
+	config := &cfg.Config{}
 	err = yaml.Unmarshal(data, config)
 	if err != nil {
 		t.Fatalf("unmarshal test config file err is not nil; want nil; err = %s", err)
@@ -218,7 +219,7 @@ func TestLoadCliConfig_file(t *testing.T) {
 
 func TestLoadCliConfig_with_validation(t *testing.T) {
 	validationErrMsg := "wrong validation"
-	validateFnMock := func(config Config) error {
+	validateFnMock := func(config cfg.Config) error {
 		return fmt.Errorf(validationErrMsg)
 	}
 	cliConfig := &CliConfig{}
@@ -248,10 +249,10 @@ func TestLoadCliConfig_defaults(t *testing.T) {
 		t.Fatalf("len of config policies is %d; want %d", len(pa.config.Policies), 1)
 	}
 	policy := pa.config.Policies[0]
-	defaultPolicy := ConfigPolicy{
-		GitRepository: DefaultGitRepository,
-		GitBranch:     DefaultGitBranch,
-		GitDirectory:  DefaultGitPolicyDir,
+	defaultPolicy := cfg.ConfigPolicy{
+		GitRepository: cfg.DefaultGitRepository,
+		GitBranch:     cfg.DefaultGitBranch,
+		GitDirectory:  cfg.DefaultGitPolicyDir,
 	}
 	if !reflect.DeepEqual(policy, defaultPolicy) {
 		t.Error("config policy is not same as default policy")
@@ -259,7 +260,7 @@ func TestLoadCliConfig_defaults(t *testing.T) {
 }
 
 func TestLoadConfig(t *testing.T) {
-	config := &Config{
+	config := &cfg.Config{
 		CredentialsFile: "./test-fixtures/test_credentials.json",
 	}
 	pa := PolicyAutomationApp{ctx: context.Background()}
@@ -328,7 +329,7 @@ func TestNewConfigFromCli(t *testing.T) {
 }
 
 func TestGetClusterName(t *testing.T) {
-	input := []ConfigCluster{
+	input := []cfg.ConfigCluster{
 		{ID: "projects/myproject/locations/europe-central2/clusters/testCluster"},
 		{Name: "testClusterTwo", Location: "europe-east2", Project: "testProject"},
 	}
@@ -345,7 +346,7 @@ func TestGetClusterName(t *testing.T) {
 }
 
 func TestGetClusterName_negative(t *testing.T) {
-	input := ConfigCluster{Name: "test", Location: "europe-east2"}
+	input := cfg.ConfigCluster{Name: "test", Location: "europe-east2"}
 	_, err := getClusterName(input)
 	if err == nil {
 		t.Errorf("error is nil; want error")
@@ -356,8 +357,8 @@ func TestClusterReviewWithNoPolicies(t *testing.T) {
 
 	pa := PolicyAutomationApp{
 		out: outputs.NewSilentOutput(),
-		config: &Config{
-			Policies: []ConfigPolicy{},
+		config: &cfg.Config{
+			Policies: []cfg.ConfigPolicy{},
 		},
 	}
 
