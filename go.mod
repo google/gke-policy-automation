@@ -11,6 +11,7 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/googleapis/gax-go/v2 v2.4.0
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
+	github.com/natefinch/atomic v1.0.1
 	github.com/open-policy-agent/opa v0.40.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
@@ -20,6 +21,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/apimachinery v0.24.0
 	k8s.io/client-go v0.24.0
+	k8s.io/klog/v2 v2.60.1
 )
 
 require (
@@ -29,7 +31,7 @@ require (
 	github.com/google/uuid v1.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
-	golang.org/x/oauth2 v0.0.0-20220524215830-622c5d57e401 // indirect
+	golang.org/x/oauth2 v0.0.0-20220524215830-622c5d57e401
 	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29 // indirect
 	gopkg.in/yaml.v3 v3.0.0 // indirect
 )
@@ -53,6 +55,7 @@ require (
 	github.com/go-openapi/swag v0.19.14 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
@@ -92,7 +95,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	k8s.io/api v0.24.0 // indirect
-	k8s.io/klog/v2 v2.60.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
 	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
