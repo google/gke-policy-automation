@@ -69,6 +69,8 @@ func newGKEClient(ctx context.Context, k8sCheck bool, opts ...option.ClientOptio
 	}, nil
 }
 
+// GetCluster returns a Cluster object with all the information regarding the cluster,
+// externally through the Containers API and Internally with the K8s APIs
 func (c *GKEClient) GetCluster(name string, k8sCheck bool, apiVersions []string) (*Cluster, error) {
 	req := &containerpb.GetClusterRequest{
 		Name: name}
@@ -107,6 +109,7 @@ func (c *GKEClient) GetCluster(name string, k8sCheck bool, apiVersions []string)
 	return &Cluster{cluster, resources}, err
 }
 
+// getResources returns an array of k8s resources that the tool has been able to fetch after the auth
 func (c *GKEClient) getResources(ctx context.Context, apiVersions []string) ([]*Resource, error) {
 
 	var resources []*Resource
@@ -141,10 +144,12 @@ func (c *GKEClient) getResources(ctx context.Context, apiVersions []string) ([]*
 	return resources, nil
 }
 
+// Close() the client connection
 func (c *GKEClient) Close() error {
 	return c.client.Close()
 }
 
+// GetClusterName returns the cluster's self-link in gcp
 func GetClusterName(project string, location string, name string) string {
 	return fmt.Sprintf("projects/%s/locations/%s/clusters/%s", project, location, name)
 }
@@ -157,6 +162,7 @@ func buildApiVersionString(version string, group string) string {
 	return version
 }
 
+// getKubeConfig() create a kubeconfig configuration file from a given clusterData and a gcp auth token
 func getKubeConfig(clusterData *containerpb.Cluster, clusterToken string) (*clientcmdapi.Config, error) {
 	clusterMasterAuth := clusterData.MasterAuth.ClusterCaCertificate
 	clusterEndpoint := clusterData.Endpoint

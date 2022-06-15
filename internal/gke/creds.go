@@ -53,6 +53,7 @@ type Status struct {
 	Token               string    `json:"token"`
 }
 
+// getClusterToken returns the token needed to authentication to the k8s cluster
 func getClusterToken() (string, error) {
 	cred := newCred()
 	var execCredential *clientauthv1b1.ExecCredential
@@ -89,6 +90,7 @@ func getClusterToken() (string, error) {
 	return creds.Status.Token, nil
 }
 
+// defaultAccessToken retrieves the access token with the application default credentials
 func (c *cred) defaultAccessToken() (string, *metav1.Time, error) {
 	var tok *oauth2.Token
 	var defaultScopes = []string{
