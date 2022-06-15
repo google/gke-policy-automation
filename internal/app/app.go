@@ -23,7 +23,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/google/gke-policy-automation/internal/config"
+	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/outputs"
@@ -36,7 +36,7 @@ import (
 var errNoPolicies = errors.New("no policies to check against")
 
 type PolicyAutomation interface {
-	LoadCliConfig(cliConfig *CliConfig, validateFn ValidateConfig) error
+	LoadCliConfig(cliConfig *CliConfig, validateFn cfg.ValidateConfig) error
 	Close() error
 	ClusterReview() error
 	ClusterOfflineReview() error
@@ -47,7 +47,7 @@ type PolicyAutomation interface {
 
 type PolicyAutomationApp struct {
 	ctx        context.Context
-	config     *Config
+	config     *cfg.Config
 	out        *outputs.Output
 	collectors []outputs.ValidationResultCollector
 	gke        *gke.GKEClient
@@ -59,14 +59,14 @@ func NewPolicyAutomationApp() PolicyAutomation {
 	out := outputs.NewSilentOutput()
 	return &PolicyAutomationApp{
 		ctx:        context.Background(),
-		config:     &Config{},
+		config:     &cfg.Config{},
 		out:        out,
 		collectors: []outputs.ValidationResultCollector{outputs.NewConsoleResultCollector(out)},
 	}
 }
 
-func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, validateFn ValidateConfig) error {
-	var config *Config
+func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, validateFn cfg.ValidateConfig) error {
+	var config *cfg.Config
 	var err error
 	if cliConfig.ConfigFile != "" {
 		if config, err = newConfigFromFile(cliConfig.ConfigFile); err != nil {
@@ -75,7 +75,7 @@ func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, validateFn Val
 	} else {
 		config = newConfigFromCli(cliConfig)
 	}
-	setConfigDefaults(config)
+	cfg.SetConfigDefaults(config)
 	if validateFn != nil {
 		if err := validateFn(*config); err != nil {
 			return err
@@ -84,7 +84,7 @@ func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, validateFn Val
 	return p.LoadConfig(config)
 }
 
-func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
+func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 	p.config = config
 	if !p.config.SilentMode {
 		p.out = outputs.NewStdOutOutput()
@@ -174,8 +174,8 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 	}
 	pa := policy.NewPolicyAgent(p.ctx)
 	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
-	log.Info("Parsing REGO policies")
-	if err := pa.WithFiles(files); err != nil {
+	log.Info("Parsing rego policies")
+	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
 		p.out.ErrorPrint("could not parse policy files", err)
 		log.Errorf("could not parse policy files: %s", err)
 		return err
@@ -191,7 +191,7 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 	for _, clusterId := range clusterIds {
 		log.Infof("Fetching GKE cluster %s", clusterId)
 		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [%s]\n", clusterId)
-		cluster, err := p.gke.GetCluster(clusterId, p.config.K8SCheck, config.APIVERSIONS)
+		cluster, err := p.gke.GetCluster(clusterId, p.config.K8SCheck, cfg.APIVERSIONS)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
@@ -243,7 +243,7 @@ func (p *PolicyAutomationApp) ClusterOfflineReview() error {
 	pa := policy.NewPolicyAgent(p.ctx)
 	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
 	log.Info("Parsing rego policies")
-	if err := pa.WithFiles(files); err != nil {
+	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
 		p.out.ErrorPrint("could not parse policy files", err)
 		log.Errorf("could not parse policy files: %s", err)
 		return err
@@ -304,7 +304,7 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 		log.Errorf("could not get clusters: %s", err)
 	}
 	for _, clusterId := range clusterIds {
-		cluster, err := p.gke.GetCluster(clusterId, p.config.K8SCheck, config.APIVERSIONS)
+		cluster, err := p.gke.GetCluster(clusterId, p.config.K8SCheck, cfg.APIVERSIONS)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
@@ -333,7 +333,7 @@ func (p *PolicyAutomationApp) PolicyCheck() error {
 		return err
 	}
 	pa := policy.NewPolicyAgent(p.ctx)
-	if err := pa.WithFiles(files); err != nil {
+	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
 		p.out.ErrorPrint("could not parse policy files", err)
 		log.Errorf("could not parse policy files: %s", err)
 		return err
@@ -432,18 +432,18 @@ func addDatetimePrefix(value string, time time.Time) string {
 	return fmt.Sprintf("%s_%s", time.Format("20060102_1504"), value)
 }
 
-func newConfigFromFile(path string) (*Config, error) {
-	return ReadConfig(path, os.ReadFile)
+func newConfigFromFile(path string) (*cfg.Config, error) {
+	return cfg.ReadConfig(path, os.ReadFile)
 }
 
-func newConfigFromCli(cliConfig *CliConfig) *Config {
-	config := &Config{}
+func newConfigFromCli(cliConfig *CliConfig) *cfg.Config {
+	config := &cfg.Config{}
 	config.SilentMode = cliConfig.SilentMode
 	config.K8SCheck = cliConfig.K8SCheck
 	config.CredentialsFile = cliConfig.CredentialsFile
 	config.DumpFile = cliConfig.DumpFile
 	if cliConfig.ClusterName != "" || cliConfig.ClusterLocation != "" || cliConfig.ProjectName != "" {
-		config.Clusters = []ConfigCluster{
+		config.Clusters = []cfg.ConfigCluster{
 			{
 				Name:     cliConfig.ClusterName,
 				Location: cliConfig.ClusterLocation,
@@ -451,12 +451,12 @@ func newConfigFromCli(cliConfig *CliConfig) *Config {
 			},
 		}
 	}
-	config.Outputs = append(config.Outputs, ConfigOutput{
+	config.Outputs = append(config.Outputs, cfg.ConfigOutput{
 		FileName: cliConfig.OutputFile,
 	})
 
 	if cliConfig.LocalDirectory != "" || cliConfig.GitRepository != "" {
-		config.Policies = append(config.Policies, ConfigPolicy{
+		config.Policies = append(config.Policies, cfg.ConfigPolicy{
 			LocalDirectory: cliConfig.LocalDirectory,
 			GitRepository:  cliConfig.GitRepository,
 			GitBranch:      cliConfig.GitBranch,
@@ -466,7 +466,7 @@ func newConfigFromCli(cliConfig *CliConfig) *Config {
 	return config
 }
 
-func getClusterName(c ConfigCluster) (string, error) {
+func getClusterName(c cfg.ConfigCluster) (string, error) {
 	if c.ID != "" {
 		return c.ID, nil
 	}

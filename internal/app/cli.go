@@ -14,7 +14,10 @@
 
 package app
 
-import cli "github.com/urfave/cli/v2"
+import (
+	cfg "github.com/google/gke-policy-automation/internal/config"
+	cli "github.com/urfave/cli/v2"
+)
 
 type CliConfig struct {
 	ConfigFile      string
@@ -57,7 +60,7 @@ func CreateClusterCommand(p PolicyAutomation) *cli.Command {
 				Flags: getClusterSourceFlags(config),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config, ValidateClusterJSONDataConfig); err != nil {
+					if err := p.LoadCliConfig(config, cfg.ValidateClusterJSONDataConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
@@ -71,7 +74,7 @@ func CreateClusterCommand(p PolicyAutomation) *cli.Command {
 				Flags: append(getClusterDumpSourceFlags(config), getPolicySourceFlags(config)...),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config, ValidateClusterOfflineReviewConfig); err != nil {
+					if err := p.LoadCliConfig(config, cfg.ValidateClusterOfflineReviewConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
@@ -85,7 +88,7 @@ func CreateClusterCommand(p PolicyAutomation) *cli.Command {
 				Flags: append(getClusterSourceFlags(config), append(getPolicySourceFlags(config), getOutputSourceFlags(config)...)...),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config, ValidateClusterReviewConfig); err != nil {
+					if err := p.LoadCliConfig(config, cfg.ValidateClusterReviewConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
@@ -125,7 +128,7 @@ func CreatePolicyCheckCommand(p PolicyAutomation) *cli.Command {
 				Flags: (getPolicySourceFlags(config)),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config, ValidatePolicyCheckConfig); err != nil {
+					if err := p.LoadCliConfig(config, cfg.ValidatePolicyCheckConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
