@@ -60,7 +60,7 @@ func getClusterToken() (string, error) {
 
 	token, expiry, err := cred.defaultAccessToken()
 	if err != nil {
-		log.Errorf("unable to retrieve default access token: %w", err)
+		log.Debugf("unable to retrieve default access token: %s", err)
 		return "", err
 	}
 
@@ -77,12 +77,12 @@ func getClusterToken() (string, error) {
 
 	execCredentialJSON, err := formatToJSON(execCredential)
 	if err != nil {
-		log.Errorf("unable to convert credentials to json: %w", err)
+		log.Debugf("unable to convert credentials to json: %s", err)
 		return "", err
 	}
 
 	if err := json.Unmarshal([]byte(execCredentialJSON), &creds); err != nil {
-		log.Errorf("unable to retrieve credentials: %w", err)
+		log.Debugf("unable to retrieve credentials: %s", err)
 		return "", fmt.Errorf("unable to retrieve credentials: %w", err)
 	}
 
@@ -98,20 +98,20 @@ func (c *cred) defaultAccessToken() (string, *metav1.Time, error) {
 	err := retry.OnError(retry.DefaultBackoff, func(err error) bool { return true }, func() error {
 		ts, err := c.googleDefaultTokenSource(context.Background(), defaultScopes...)
 		if err != nil {
-			log.Errorf("cannot construct google default token source: %w", err)
+			log.Debugf("cannot construct google default token source: %s", err)
 			return err
 		}
 
 		tok, err = ts.Token()
 		if err != nil {
-			log.Errorf("cannot retrieve default token from google default token source: %w", err)
+			log.Debugf("cannot retrieve default token from google default token source: %s", err)
 			return err
 		}
 
 		return nil
 	})
 	if err != nil {
-		log.Errorf("getting google default token failed after multiple retries: %w", err)
+		log.Debugf("getting google default token failed after multiple retries: %s", err)
 		return "", nil, err
 	}
 
@@ -121,7 +121,7 @@ func (c *cred) defaultAccessToken() (string, *metav1.Time, error) {
 func formatToJSON(i interface{}) (string, error) {
 	s, err := json.MarshalIndent(i, "", "    ")
 	if err != nil {
-		log.Errorf("unable to unmarshal credentials: %w", err)
+		log.Debugf("unable to unmarshal credentials: %s", err)
 		return "", err
 	}
 	return string(s), nil
