@@ -83,7 +83,7 @@ func (c *GKEClient) GetCluster(name string, k8sCheck bool, apiVersions []string)
 
 	if k8sCheck {
 		if c.k8client == nil {
-			clusterToken, err := getClusterToken()
+			clusterToken, err := getClusterToken(c.ctx)
 			if err != nil {
 				log.Debugf("unable to get cluster token: %s", err)
 				return nil, err

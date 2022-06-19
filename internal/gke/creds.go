@@ -16,15 +16,12 @@ package gke
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/google/gke-policy-automation/internal/log"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clientauthv1b1 "k8s.io/client-go/pkg/apis/clientauthentication/v1beta1"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/util/retry"
@@ -54,51 +51,27 @@ type Status struct {
 }
 
 // getClusterToken returns the token needed to authentication to the k8s cluster
-func getClusterToken() (string, error) {
+func getClusterToken(ctx context.Context) (string, error) {
 	cred := newCred()
-	var execCredential *clientauthv1b1.ExecCredential
-	var creds Creds
 
-	token, expiry, err := cred.defaultAccessToken()
+	token, _, err := cred.defaultAccessToken(ctx)
 	if err != nil {
 		log.Debugf("unable to retrieve default access token: %s", err)
 		return "", err
 	}
 
-	execCredential = &clientauthv1b1.ExecCredential{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ExecCredential",
-			APIVersion: "client.authentication.k8s.io/v1beta1",
-		},
-		Status: &clientauthv1b1.ExecCredentialStatus{
-			Token:               token,
-			ExpirationTimestamp: expiry,
-		},
-	}
-
-	execCredentialJSON, err := formatToJSON(execCredential)
-	if err != nil {
-		log.Debugf("unable to convert credentials to json: %s", err)
-		return "", err
-	}
-
-	if err := json.Unmarshal([]byte(execCredentialJSON), &creds); err != nil {
-		log.Debugf("unable to retrieve credentials: %s", err)
-		return "", fmt.Errorf("unable to retrieve credentials: %w", err)
-	}
-
-	return creds.Status.Token, nil
+	return token, nil
 }
 
 // defaultAccessToken retrieves the access token with the application default credentials
-func (c *cred) defaultAccessToken() (string, *metav1.Time, error) {
+func (c *cred) defaultAccessToken(ctx context.Context) (string, *metav1.Time, error) {
 	var tok *oauth2.Token
 	var defaultScopes = []string{
 		"https://www.googleapis.com/auth/cloud-platform",
 		"https://www.googleapis.com/auth/userinfo.email"}
 
 	err := retry.OnError(retry.DefaultBackoff, func(err error) bool { return true }, func() error {
-		ts, err := c.googleDefaultTokenSource(context.Background(), defaultScopes...)
+		ts, err := c.googleDefaultTokenSource(ctx, defaultScopes...)
 		if err != nil {
 			log.Debugf("cannot construct google default token source: %s", err)
 			return err
@@ -118,15 +91,6 @@ func (c *cred) defaultAccessToken() (string, *metav1.Time, error) {
 	}
 
 	return tok.AccessToken, &metav1.Time{Time: tok.Expiry}, nil
-}
-
-func formatToJSON(i interface{}) (string, error) {
-	s, err := json.MarshalIndent(i, "", "    ")
-	if err != nil {
-		log.Debugf("unable to unmarshal credentials: %s", err)
-		return "", err
-	}
-	return string(s), nil
 }
 
 func k8sStartingConfig() (*clientcmdapi.Config, error) {
