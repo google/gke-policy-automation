@@ -171,7 +171,6 @@ func getKubeConfig(clusterData *containerpb.Cluster, clusterToken string) (*clie
 	clusterProject := strings.Split(clusterData.GetSelfLink(), "/")[5]
 	clusterContext := fmt.Sprintf("gke_%v_%v_%v", clusterProject, clusterLocation, clusterName)
 	config := clientcmdapi.NewConfig()
-	cluster := clientcmdapi.NewCluster()
 
 	caCert, err := base64.StdEncoding.DecodeString(clusterMasterAuth)
 	if err != nil {
@@ -199,8 +198,6 @@ func getKubeConfig(clusterData *containerpb.Cluster, clusterToken string) (*clie
 	}
 
 	config.CurrentContext = clusterContext
-	cluster.CertificateAuthorityData = []byte(caCert)
-	cluster.Server = fmt.Sprintf("https://%v", clusterEndpoint)
 	log.Info("Local kubernetes cluster configuration created")
 	return config, nil
 }
