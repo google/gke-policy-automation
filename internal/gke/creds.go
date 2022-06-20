@@ -21,7 +21,6 @@ import (
 	"github.com/google/gke-policy-automation/internal/log"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/util/retry"
@@ -52,10 +51,11 @@ type Status struct {
 
 // getClusterToken returns the token needed to authentication to the k8s cluster
 func getClusterToken(ctx context.Context) (string, error) {
+	var token string
+	var err error
 	cred := newCred()
 
-	token, _, err := cred.defaultAccessToken(ctx)
-	if err != nil {
+	if token, err = cred.defaultAccessToken(ctx); err != nil {
 		log.Debugf("unable to retrieve default access token: %s", err)
 		return "", err
 	}
@@ -64,7 +64,7 @@ func getClusterToken(ctx context.Context) (string, error) {
 }
 
 // defaultAccessToken retrieves the access token with the application default credentials
-func (c *cred) defaultAccessToken(ctx context.Context) (string, *metav1.Time, error) {
+func (c *cred) defaultAccessToken(ctx context.Context) (string, error) {
 	var tok *oauth2.Token
 	var defaultScopes = []string{
 		"https://www.googleapis.com/auth/cloud-platform",
@@ -87,10 +87,10 @@ func (c *cred) defaultAccessToken(ctx context.Context) (string, *metav1.Time, er
 	})
 	if err != nil {
 		log.Debugf("getting google default token failed after multiple retries: %s", err)
-		return "", nil, err
+		return "", err
 	}
 
-	return tok.AccessToken, &metav1.Time{Time: tok.Expiry}, nil
+	return tok.AccessToken, nil
 }
 
 func k8sStartingConfig() (*clientcmdapi.Config, error) {
