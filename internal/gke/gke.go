@@ -16,10 +16,12 @@ package gke
 
 import (
 	"context"
-	b64 "encoding/base64"
+	"encoding/base64"
 	"fmt"
+	"strings"
 
 	container "cloud.google.com/go/container/apiv1"
+	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/version"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/option"
@@ -60,13 +62,6 @@ func newGKEClient(ctx context.Context, k8sCheck bool, opts ...option.ClientOptio
 
 	var k8cli KubernetesClient = nil
 
-	if k8sCheck {
-		k8cli, err = NewKubernetesClient(ctx, getKubeConfig())
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return &GKEClient{
 		ctx:      ctx,
 		client:   cli,
@@ -74,6 +69,8 @@ func newGKEClient(ctx context.Context, k8sCheck bool, opts ...option.ClientOptio
 	}, nil
 }
 
+// GetCluster returns a Cluster object with all the information regarding the cluster,
+// externally through the Containers API and Internally with the K8s APIs
 func (c *GKEClient) GetCluster(name string, k8sCheck bool, apiVersions []string) (*Cluster, error) {
 	req := &containerpb.GetClusterRequest{
 		Name: name}
@@ -85,6 +82,24 @@ func (c *GKEClient) GetCluster(name string, k8sCheck bool, apiVersions []string)
 	var resources []*Resource = nil
 
 	if k8sCheck {
+		if c.k8client == nil {
+			clusterToken, err := getClusterToken(c.ctx)
+			if err != nil {
+				log.Debugf("unable to get cluster token: %s", err)
+				return nil, err
+			}
+			kubeConfig, err := getKubeConfig(cluster, clusterToken)
+			if err != nil {
+				log.Debugf("unable to get kubeconfig: %s", err)
+				return nil, err
+			}
+			k8cli, err := NewKubernetesClient(c.ctx, kubeConfig)
+			if err != nil {
+				log.Debugf("unable to create kube client: %s", err)
+				return nil, err
+			}
+			c.k8client = k8cli
+		}
 		resources, err = c.getResources(c.ctx, apiVersions)
 		if err != nil {
 			return nil, err
@@ -94,6 +109,7 @@ func (c *GKEClient) GetCluster(name string, k8sCheck bool, apiVersions []string)
 	return &Cluster{cluster, resources}, err
 }
 
+// getResources returns an array of k8s resources that the tool has been able to fetch after the auth
 func (c *GKEClient) getResources(ctx context.Context, apiVersions []string) ([]*Resource, error) {
 
 	var resources []*Resource
@@ -128,10 +144,12 @@ func (c *GKEClient) getResources(ctx context.Context, apiVersions []string) ([]*
 	return resources, nil
 }
 
+// Close() the client connection
 func (c *GKEClient) Close() error {
 	return c.client.Close()
 }
 
+// GetClusterName returns the cluster's self-link in gcp
 func GetClusterName(project string, location string, name string) string {
 	return fmt.Sprintf("projects/%s/locations/%s/clusters/%s", project, location, name)
 }
@@ -144,26 +162,42 @@ func buildApiVersionString(version string, group string) string {
 	return version
 }
 
-func getKubeConfig() *clientcmdapi.Config {
-	cert, _ := b64.StdEncoding.DecodeString(`LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVMVENDQXBXZ0F3SUJBZ0lSQU9jQ0t4dVY1bE43R3hjV0FjeWh2Rm93RFFZSktvWklodmNOQVFFTEJRQXcKTHpFdE1Dc0dBMVVFQXhNa04yRXdPVFkxWmpndE5URTROaTAwWVRVMkxUaGpaREF0T1dNNVpXTTNNR0prWW1FdwpNQ0FYRFRJeU1ETXhNekU1TlRFd01sb1lEekl3TlRJd016QTFNakExTVRBeVdqQXZNUzB3S3dZRFZRUURFeVEzCllUQTVOalZtT0MwMU1UZzJMVFJoTlRZdE9HTmtNQzA1WXpsbFl6Y3dZbVJpWVRBd2dnR2lNQTBHQ1NxR1NJYjMKRFFFQkFRVUFBNElCandBd2dnR0tBb0lCZ1FEUFQyNlpDZkZsQ3JWWFV4c2xBdm9DMSs1a3FoeVcrc3ZodGt3MApHSWJBTUNaNDcvRXNYREJneDRsMVNhZnNabkFWWlZiYkZhTGRkSXRDRlFOZXo1WGJDdjNCSU9uRTZxUVB3enZEClZhVHR2YlRpOHhjWlg4Y25iQUhFaHYzZkdnaE5BazNPWTRpcTNwVCtHY3ppa0JNSkFOclVpdENRdDBuQ0NjVm4KZTBIVEtub1RoNS9tVkJybVZkRGlyZ0w2dk0wYkhlcTVsTTRhYUwybGErOUEyeDRrR2c2Q0h2bWtsYVJVS3B1TgpwdC9aTlpaSDNDeVBITS9wdW9wUTJmc1JuN1A0Q245WGhGK084QStTbXB3QlV6RGpyVUVoUDRURXZYS21wcGpHClN1dklZMHhNcnE2Q0g5TTJaaFRVWGx2bENpTVlPbStWaXduMFQwb0lHZTNDZkxWL1NPRTFsMmlaNnBrSzNDOEgKMUtiMFRPdzFhM2I4OTlMWjI0bjM0N0haVXh0Wm9MaTFIbi96N1NzYy8zTlZxMEh2RTdLemkzZ3VoMGZ0c2FoVApZT0kybFJjbXFwWnJCK0hDamhSYWNkQ1RkZUNJWEFNZFJiZThTQkZvMW5MSkpoa0VtYWcyeVZzZGoxU0lCdDhECmprWFJrNUxtdkUxdS9PaDgzYVpiVTNnNHZVVUNBd0VBQWFOQ01FQXdEZ1lEVlIwUEFRSC9CQVFEQWdJRU1BOEcKQTFVZEV3RUIvd1FGTUFNQkFmOHdIUVlEVlIwT0JCWUVGSVZFMERvTjVVaDBBeVFDQldlQW81dmRaZlpkTUEwRwpDU3FHU0liM0RRRUJDd1VBQTRJQmdRREpVeG5ITmFYOVlsRnFNL3NCSXZkZ0M5VXZDMTR4c3hsWDJ0clBkOVhsCm9NeHhWZXg0Q0x4R001VER0dnd1Wmp3VnNTdkQ1Q0pWdmJYR3RzMTlmU3EzQXFuV3JRaWt2UmlaYVJhLzNNdFQKajE1RStKbXQwMGZVRDNXcHBHZmZhcGVjbUJHK1Yzd3dUNGpIeTVxTnoyMWxaN1pnV3A2ZTFjVldTbUUvaUtVRwpscDY3KzByMU0xNldUQ1hneGp5SmpmaUg3TlBEYm8yNVQxbjFVaHMzZ1BYd3Z5VGtsODZteDNZS3JTNXNTdkRDCm9MV1FaME1zVDNQalI4cHV4WXN6NkRWenBsMWxLaHlqOWxDSmFtVVpxQ0hNQWc0QzZLQWpydm9mWksrL1NlU2oKSDdQeW1VbWIxUm1ZZ0JkSCtyTE9CV2hwVU1DSE02VForSW10OG5rTDlxVGk1bDV5SG9zYmxFTldBTVNmODNJUQpvem50NlNvTW0rZmVOWVJiWVE0UDJJMXozOUNXSU1SVUl1aUJJS3ZuR1F1b094QTF5Y0ZHeStvVVV5Q2Z2OUh3CmlyWnVXVWVqVzV5U0pLZFZjUVI0OXlXV20vbE5sQzk0R3E2amM4c3hDeWwvWHVRUlF5RzlSZUExbmZ1TE9UdzEKNHBHZjd6UWhuRnpmYnNYWUtWVHFpUFk9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=`)
+// getKubeConfig() create a kubeconfig configuration file from a given clusterData and a gcp auth token
+func getKubeConfig(clusterData *containerpb.Cluster, clusterToken string) (*clientcmdapi.Config, error) {
+	clusterMasterAuth := clusterData.MasterAuth.ClusterCaCertificate
+	clusterEndpoint := clusterData.Endpoint
+	clusterName := clusterData.Name
+	clusterLocation := clusterData.GetLocation()
+	clusterProject := strings.Split(clusterData.GetSelfLink(), "/")[5]
+	clusterContext := fmt.Sprintf("gke_%v_%v_%v", clusterProject, clusterLocation, clusterName)
+	config := clientcmdapi.NewConfig()
 
-	return &clientcmdapi.Config{
-		APIVersion: "v1",
-		Kind:       "Config",
-		Clusters: map[string]*clientcmdapi.Cluster{
-			"gke_project_europe-central2-a_cluster1": {
-				CertificateAuthorityData: cert,
-				Server:                   `https://1.1.1.1`},
-		},
-		AuthInfos: map[string]*clientcmdapi.AuthInfo{
-			"gke_project_europe-central2-a_cluster1": {Token: "ya29.a0ARrdaM_kNe8CX9_DgCNw1rFPH_ZbtL3niYHw6xjgzjH6xzLIaKdwTxDb6YZaLIOAZRg1CwTmK2RJrSUb4MxcGrrn4FUFk3qaLar-oSlVt1uVVx87xNUqaPinrvpeg38sjj_WBvd1kl6buxoo8tTZKS-tkLAfLwudSkdpXXX"},
-		},
-		Contexts: map[string]*clientcmdapi.Context{
-			"gke_project_europe-central2-a_cluster1": {
-				Cluster:  "gke_project_europe-central2-a_cluster1",
-				AuthInfo: "gke_project_europe-central2-a_cluster1",
-			},
-		},
-		CurrentContext: "gke_project_europe-central2-a_cluster1",
+	caCert, err := base64.StdEncoding.DecodeString(clusterMasterAuth)
+	if err != nil {
+		log.Debugf("Unable to retrieve clusterMasterAuth %s:", err)
+		return nil, err
 	}
+	log.Info("Cluster Master Auth retrieved")
+
+	config.APIVersion = "v1"
+	config.Kind = "Config"
+	config.Clusters = map[string]*clientcmdapi.Cluster{
+		clusterContext: {
+			CertificateAuthorityData: caCert,
+			Server:                   fmt.Sprintf("https://%v", clusterEndpoint),
+		},
+	}
+	config.AuthInfos = map[string]*clientcmdapi.AuthInfo{
+		clusterContext: {Token: clusterToken},
+	}
+	config.Contexts = map[string]*clientcmdapi.Context{
+		clusterContext: {
+			Cluster:  clusterContext,
+			AuthInfo: clusterContext,
+		},
+	}
+
+	config.CurrentContext = clusterContext
+	log.Info("Local kubernetes cluster configuration created")
+	return config, nil
 }

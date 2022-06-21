@@ -172,9 +172,11 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 		log.Errorf("No policies to check against")
 		return errNoPolicies
 	}
+	// create a PolicyAgent client instance
 	pa := policy.NewPolicyAgent(p.ctx)
 	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
 	log.Info("Parsing rego policies")
+	// parsing policies before running checks
 	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
 		p.out.ErrorPrint("could not parse policy files", err)
 		log.Errorf("could not parse policy files: %s", err)
@@ -191,6 +193,7 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 	for _, clusterId := range clusterIds {
 		log.Infof("Fetching GKE cluster %s", clusterId)
 		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [%s]\n", clusterId)
+		// getting Cluster information, from Cluster APIs and from Kubernetes APIs
 		cluster, err := p.gke.GetCluster(clusterId, p.config.K8SCheck, cfg.APIVERSIONS)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
@@ -200,6 +203,7 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 		p.out.ColorPrintf("[light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
 			cluster.Id)
 		log.Infof("Evaluating policies against GKE cluster %s", clusterId)
+		// evaluating Rego Policies
 		evalResult, err := pa.Evaluate(cluster)
 		if err != nil {
 			p.out.ErrorPrint("failed to evaluate policies", err)
