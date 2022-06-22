@@ -13,21 +13,21 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE ConfigMaps Limit
-# description: GKE ConfigMap Limit
+# title: GKE HPAs Limit
+# description: GKE HPAs Limit
 # custom:
 #   group: Scalability
-package gke.limits.configmaps
+package gke.limits.hpas
 
 default allow = false
 
-default configmaps_limit = 30 #value is ONLY for demo purpose, does not reflect a real limit
+default hpas_limit = 200 #value is ONLY for demo purpose, does not reflect a real limit
 
 #TODO: need to exclude events type
 #TODO: change loop type
 
 allow {
-	p := {keep | keep := input.Resources[_]; keep.Data.kind == "ConfigMap"}
-	print("configmaps found: ", count(p))
-	count(p) <= configmaps_limit
+	p := {keep | keep := input.Resources[_]; keep.Data.kind == "HorizontalPodAutoscaler"}
+	print("HPAs found: ", count(p))
+	count(p) <= hpas_limit
 }
