@@ -21,13 +21,13 @@ package gke.limits.configmaps
 
 default allow = false
 
-default configmaps_limit = 30
+default configmaps_limit = 30 #value is ONLY for demo purpose, does not reflect a real limit
 
 #TODO: need to exclude events type
 #TODO: change loop type
 
 allow {
-	p := {keep | keep := input.Resources[_]; keep.Data.kind == "ConfigMap"}
-	print("configmaps found: ", count(p))
-	count(p) <= configmaps_limit
+	objects := {keep | keep := input.Resources[_]; keep.Data.kind == "ConfigMap"}
+	print("configmaps found: ", count(objects))
+	count(objects) <= configmaps_limit
 }

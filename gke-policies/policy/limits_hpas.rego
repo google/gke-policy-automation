@@ -21,13 +21,10 @@ package gke.limits.hpas
 
 default allow = false
 
-default hpas_limit = 500
-
-#TODO: need to exclude events type
-#TODO: change loop type
+default hpas_limit = 200 #value is ONLY for demo purpose, does not reflect a real limit
 
 allow {
-	p := {keep | keep := input.Resources[_]; keep.Data.kind == "HorizontalPodAutoscaler"}
-	print("HPAs found: ", count(p))
-	count(p) <= hpas_limit
+	objects := {keep | keep := input.Resources[_]; keep.Data.kind == "HorizontalPodAutoscaler"}
+	print("HPAs found: ", count(objects))
+	count(objects) <= hpas_limit
 }
