@@ -134,7 +134,7 @@ func ValidateClusterOfflineReviewConfig(config Config) error {
 	return nil
 }
 
-func ValidateClusterReviewConfig(config Config) error {
+func ValidateClusterCheckConfig(config Config) error {
 	var errors = make([]error, 0)
 	errors = append(errors, validateClustersConfig(config)...)
 	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
@@ -162,6 +162,9 @@ func ValidatePolicyCheckConfig(config Config) error {
 func validateClustersConfig(config Config) []error {
 	if config.ClusterDiscovery.Enabled {
 		discovery := config.ClusterDiscovery
+		if config.DumpFile != "" {
+			return []error{fmt.Errorf("cluster discovery is enabled along with a dump file")}
+		}
 		if len(config.Clusters) > 0 {
 			return []error{fmt.Errorf("cluster discovery is enabled along with a defined cluster list")}
 		}
@@ -169,7 +172,7 @@ func validateClustersConfig(config Config) []error {
 			return []error{fmt.Errorf("cluster discovery is enabled but none of organization, folder list or project list are defined")}
 		}
 	} else {
-		if len(config.Clusters) < 1 {
+		if config.DumpFile == "" && len(config.Clusters) < 1 {
 			return []error{fmt.Errorf("cluster discovery is disabled and there are no clusters defined")}
 		}
 		var errors = make([]error, 0)

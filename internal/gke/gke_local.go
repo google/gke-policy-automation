@@ -19,21 +19,20 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
-
-	containerpb "google.golang.org/genproto/googleapis/container/v1"
 )
 
-type GKELocalClient struct {
+type gkeLocalClient struct {
 	ctx      context.Context
 	dumpFile string
 }
 
-func NewGKELocalClient(ctx context.Context, dumpFile string) (*GKELocalClient, error) {
-	return &GKELocalClient{ctx: ctx, dumpFile: dumpFile}, nil
+func NewGKELocalClient(ctx context.Context, dumpFile string) GKEClient {
+	return &gkeLocalClient{ctx: ctx, dumpFile: dumpFile}
 }
 
 // GetClusterName() returns ClusterName from the file
-func (c *GKELocalClient) GetClusterName() (string, error) {
+/*
+func (c *gkeLocalClient) GetClusterName() (string, error) {
 	var err error
 	var cluster containerpb.Cluster
 
@@ -48,15 +47,16 @@ func (c *GKELocalClient) GetClusterName() (string, error) {
 	}
 	return cluster.Name, err
 }
+*/
 
 // GetCluster() returns cluster data gathered from file
-func (c *GKELocalClient) GetCluster() (*Cluster, error) {
+func (c *gkeLocalClient) GetCluster(name string) (*Cluster, error) {
 	var err error
 	var cluster Cluster
 
 	clusterData, err := openData(c.dumpFile)
 	if err != nil {
-		return &cluster, err
+		return nil, err
 	}
 
 	err = json.Unmarshal(clusterData, &cluster)
@@ -64,6 +64,10 @@ func (c *GKELocalClient) GetCluster() (*Cluster, error) {
 		return &cluster, err
 	}
 	return &cluster, err
+}
+
+func (c *gkeLocalClient) Close() error {
+	return nil
 }
 
 func openData(fileName string) ([]byte, error) {

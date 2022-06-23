@@ -33,13 +33,19 @@ import (
 	"github.com/google/gke-policy-automation/internal/version"
 )
 
+const (
+	regoPackageBaseBestPractices = "gke.policy"
+	regoPackageBaseScalability   = "gke.scalability"
+)
+
 var errNoPolicies = errors.New("no policies to check against")
 
 type PolicyAutomation interface {
 	LoadCliConfig(cliConfig *CliConfig, validateFn cfg.ValidateConfig) error
 	Close() error
-	ClusterReview() error
-	ClusterOfflineReview() error
+	Check() error
+	CheckBestPractices() error
+	CheckScalability() error
 	ClusterJSONData() error
 	Version() error
 	PolicyCheck() error
@@ -50,8 +56,7 @@ type PolicyAutomationApp struct {
 	config     *cfg.Config
 	out        *outputs.Output
 	collectors []outputs.ValidationResultCollector
-	gke        *gke.GKEClient
-	gkeLocal   *gke.GKELocalClient
+	gke        gke.GKEClient
 	discovery  gke.DiscoveryClient
 }
 
@@ -91,15 +96,21 @@ func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 		p.collectors = []outputs.ValidationResultCollector{outputs.NewConsoleResultCollector(p.out)}
 	}
 	if p.config.DumpFile != "" {
-		// read file and instantiate the configuration
-		p.gkeLocal, err = gke.NewGKELocalClient(p.ctx, p.config.DumpFile)
-		return
-	}
-	if p.config.CredentialsFile != "" {
-		p.gke, err = gke.NewClientWithCredentialsFile(p.ctx, p.config.K8SCheck, p.config.CredentialsFile)
+		p.gke = gke.NewGKELocalClient(p.ctx, p.config.DumpFile)
 	} else {
-		p.gke, err = gke.NewClient(p.ctx, p.config.K8SCheck)
+		builder := gke.NewGKEApiClientBuilder(p.ctx)
+		if p.config.CredentialsFile != "" {
+			builder = builder.WithCredentialsFile(p.config.CredentialsFile)
+		}
+		if p.config.K8SCheck {
+			builder = builder.WithK8SClient(cfg.APIVERSIONS)
+		}
+		p.gke, err = builder.Build()
+		if err != nil {
+			return
+		}
 	}
+
 	for _, o := range p.config.Outputs {
 		if o.FileName != "" {
 			p.collectors = append(p.collectors, outputs.NewJSONResultToFileCollector(o.FileName))
@@ -161,7 +172,19 @@ func (p *PolicyAutomationApp) Close() error {
 	return nil
 }
 
-func (p *PolicyAutomationApp) ClusterReview() error {
+func (p *PolicyAutomationApp) Check() error {
+	return p.evaluateClusters([]string{regoPackageBaseBestPractices, regoPackageBaseScalability})
+}
+
+func (p *PolicyAutomationApp) CheckBestPractices() error {
+	return p.evaluateClusters([]string{regoPackageBaseBestPractices})
+}
+
+func (p *PolicyAutomationApp) CheckScalability() error {
+	return p.evaluateClusters([]string{regoPackageBaseScalability})
+}
+
+func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error {
 	log.Info("Cluster review starting")
 	files, err := p.loadPolicyFiles()
 	if err != nil {
@@ -193,111 +216,44 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 	for _, clusterId := range clusterIds {
 		log.Infof("Fetching GKE cluster %s", clusterId)
 		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [%s]\n", clusterId)
-		// getting Cluster information, from Cluster APIs and from Kubernetes APIs
-		cluster, err := p.gke.GetCluster(clusterId, p.config.K8SCheck, cfg.APIVERSIONS)
+		cluster, err := p.gke.GetCluster(clusterId)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
 			return err
 		}
 		p.out.ColorPrintf("[light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
-			cluster.Id)
+			clusterId)
+
 		log.Infof("Evaluating policies against GKE cluster %s", clusterId)
-		// evaluating Rego Policies
-		evalResult, err := pa.Evaluate(cluster)
-		if err != nil {
-			p.out.ErrorPrint("failed to evaluate policies", err)
-			log.Errorf("could not evaluate rego policies on cluster %s: %s", cluster.Id, err)
-			return err
+		for _, pkgBase := range regoPackageBases {
+			evalResult, err := pa.Evaluate(cluster, pkgBase)
+			if err != nil {
+				p.out.ErrorPrint("failed to evaluate policies", err)
+				log.Errorf("could not evaluate rego policies on cluster %s: %s", cluster.Id, err)
+				return err
+			}
+			evalResult.ClusterName = clusterId
+			evalResults = append(evalResults, evalResult)
 		}
-		evalResult.ClusterName = clusterId
-		evalResults = append(evalResults, evalResult)
 	}
 
 	for _, c := range p.collectors {
-		log.Debugf("Collector %s registering the results", reflect.TypeOf(c).String())
-		err = c.RegisterResult(evalResults)
-		if err != nil {
+		collectorType := reflect.TypeOf(c).String()
+		log.Debugf("Collector %s registering the results", collectorType)
+		if err = c.RegisterResult(evalResults); err != nil {
 			p.out.ErrorPrint("failed to register evaluation results", err)
 			log.Errorf("could not register evaluation results: %s", err)
 			return err
 		}
-	}
-
-	for _, c := range p.collectors {
-		err = c.Close()
-		if err != nil {
+		if err = c.Close(); err != nil {
 			p.out.ErrorPrint("failed to close results registration", err)
 			log.Errorf("could not finalize registering evaluation results: %s", err)
 			return err
 		}
-		log.Debugf("Collector %s processing closed", reflect.TypeOf(c).String())
+		log.Debugf("Collector %s processing closed", collectorType)
 	}
 	log.Info("Cluster review finished")
-	return nil
-}
-
-func (p *PolicyAutomationApp) ClusterOfflineReview() error {
-	// Loading the policies
-	files, err := p.loadPolicyFiles()
-	if err != nil {
-		return err
-	}
-	// Creating the Policy Agent instance and check the policies
-	pa := policy.NewPolicyAgent(p.ctx)
-	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
-	log.Info("Parsing rego policies")
-	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
-		p.out.ErrorPrint("could not parse policy files", err)
-		log.Errorf("could not parse policy files: %s", err)
-		return err
-	}
-
-	clusterName, err := p.gkeLocal.GetClusterName()
-	if err != nil {
-		p.out.ErrorPrint("could not create cluster path", err)
-		log.Errorf("could not create cluster path: %s", err)
-		return err
-	}
-	p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [Name: %s]\n",
-		clusterName)
-
-	evalResults := make([]*policy.PolicyEvaluationResult, 0)
-	cluster, err := p.gkeLocal.GetCluster()
-	if err != nil {
-		p.out.ErrorPrint("could not fetch the cluster details", err)
-		log.Errorf("could not fetch cluster details: %s", err)
-		return err
-	}
-	p.out.ColorPrintf("[light_gray][bold]Evaluating policies against GKE cluster... [ID: %s]\n",
-		cluster.Id)
-	evalResult, err := pa.Evaluate(cluster)
-	if err != nil {
-		p.out.ErrorPrint("failed to evalute policies", err)
-		return err
-	}
-	evalResult.ClusterName = clusterName
-	evalResults = append(evalResults, evalResult)
-
-	for _, c := range p.collectors {
-		err = c.RegisterResult(evalResults)
-
-		if err != nil {
-			p.out.ErrorPrint("failed to register evaluation results", err)
-			log.Errorf("could not register evaluation results: %s", err)
-			return err
-		}
-	}
-
-	for _, c := range p.collectors {
-		err = c.Close()
-		if err != nil {
-			p.out.ErrorPrint("failed to close results registration", err)
-			log.Errorf("could not finalize registering evaluation results: %s", err)
-			return err
-		}
-		log.Infof("Collector %s processing closed", reflect.TypeOf(c).Name())
-	}
 	return nil
 }
 
@@ -308,7 +264,7 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 		log.Errorf("could not get clusters: %s", err)
 	}
 	for _, clusterId := range clusterIds {
-		cluster, err := p.gke.GetCluster(clusterId, p.config.K8SCheck, cfg.APIVERSIONS)
+		cluster, err := p.gke.GetCluster(clusterId)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
@@ -375,6 +331,9 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 //getClusters retrieves lists of a clusters for further processing
 //from the sources that are defined in a configuration.
 func (p *PolicyAutomationApp) getClusters() ([]string, error) {
+	if p.config.DumpFile != "" {
+		return []string{p.config.DumpFile}, nil
+	}
 	if p.config.ClusterDiscovery.Enabled {
 		var dc gke.DiscoveryClient
 		var err error

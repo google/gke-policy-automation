@@ -19,33 +19,18 @@ import (
 	"testing"
 )
 
-// TestLocalGetClusterName() to test GetClusterName()
-func TestLocalGetClusterName(t *testing.T) {
-	var clusterName string
-	client, err := NewGKELocalClient(context.TODO(), "../app/test-fixtures/backup.json")
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-	if clusterName, err = client.GetClusterName(); err != nil {
-		t.Fatalf(err.Error())
-	}
-	if clusterName == "" {
-		t.Errorf("unable to get cluster name")
-	}
-}
-
 // TestLocalGetCluster() to test GetCluster()
 func TestLocalGetCluster(t *testing.T) {
 	var cluster *Cluster
-	client, err := NewGKELocalClient(context.TODO(), "../app/test-fixtures/backup.json")
+	client := NewGKELocalClient(context.TODO(), "../app/test-fixtures/backup.json")
+	cluster, err := client.GetCluster("test")
 	if err != nil {
-		t.Fatalf(err.Error())
-	}
-	if cluster, err = client.GetCluster(); err != nil {
 		t.Fatalf(err.Error())
 	}
 	if cluster == nil || cluster.Network != "default" {
 		t.Errorf("unable to read cluster data")
 	}
-
+	if cluster.Name == "" {
+		t.Errorf("unable to get cluster name")
+	}
 }

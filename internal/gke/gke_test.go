@@ -22,8 +22,10 @@ import (
 	"testing"
 
 	container "cloud.google.com/go/container/apiv1"
+	"github.com/google/gke-policy-automation/internal/config"
 	gax "github.com/googleapis/gax-go/v2"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 type mockClusterManagerClient struct {
@@ -38,6 +40,11 @@ func (mockClusterManagerClient) GetCluster(ctx context.Context, req *containerpb
 	return &containerpb.Cluster{
 		Name:     matches[3],
 		Location: matches[2],
+		MasterAuth: &containerpb.MasterAuth{
+			ClusterCaCertificate: "dGVzdCBjZXJ0IGRhdGE=",
+		},
+		Endpoint: "1.1.1.1",
+		SelfLink: fmt.Sprintf("https://container.googleapis.com/v1/projects/%s/locations/%s/clusters/%s", matches[1], matches[2], matches[3]),
 	}, nil
 }
 
@@ -47,11 +54,15 @@ func (mockClusterManagerClient) Close() error {
 
 func TestNewGKEClient(t *testing.T) {
 	testCredsFile := "test-fixtures/test_credentials.json"
-	c, err := NewClientWithCredentialsFile(context.Background(), true, testCredsFile)
+	c, err := NewGKEApiClientBuilder(context.Background()).WithCredentialsFile(testCredsFile).WithK8SClient(config.APIVERSIONS).Build()
 	if err != nil {
 		t.Fatalf("error when creating client: %v", err)
 	}
-	typeA := reflect.TypeOf(c.client)
+	apiClient, ok := c.(*GKEApiClient)
+	if !ok {
+		t.Fatalf("can't cast GKE client to GKEApiClient")
+	}
+	typeA := reflect.TypeOf(apiClient.client)
 	typeB := reflect.TypeOf(&container.ClusterManagerClient{})
 	if typeA != typeB {
 		t.Errorf("ClusterManagerClient type = %s; want %s", typeA, typeB)
@@ -64,6 +75,7 @@ type mockK8Client struct {
 func (mockK8Client) GetNamespaces() ([]string, error) {
 	return []string{"namespace-one", "namespace-two"}, nil
 }
+
 func (mockK8Client) GetFetchableResourceTypes() ([]*ResourceType, error) {
 	return []*ResourceType{
 		{
@@ -92,8 +104,8 @@ func (mockK8Client) GetFetchableResourceTypes() ([]*ResourceType, error) {
 		},
 	}, nil
 }
-func (mockK8Client) GetNamespacedResources(resourceType ResourceType, namespace string) ([]*Resource, error) {
 
+func (mockK8Client) GetNamespacedResources(resourceType ResourceType, namespace string) ([]*Resource, error) {
 	return []*Resource{
 		{
 			Type: resourceType,
@@ -103,16 +115,21 @@ func (mockK8Client) GetNamespacedResources(resourceType ResourceType, namespace 
 }
 
 func TestGetCluster(t *testing.T) {
-	client := GKEClient{
-		ctx:      context.Background(),
-		client:   &mockClusterManagerClient{},
-		k8client: &mockK8Client{},
+	client := GKEApiClient{
+		ctx:    context.Background(),
+		client: &mockClusterManagerClient{},
+		k8sClientFunc: func(ctx context.Context, kubeConfig *clientcmdapi.Config) (KubernetesClient, error) {
+			return &mockK8Client{}, nil
+
+		},
+		authTokenFunc: func(ctx context.Context) (string, error) {
+			return "fake-token", nil
+		},
 	}
 	projectID := "test-project"
 	clusterLocation := "europe-central2"
 	clusterName := "warsaw"
-	apiVersions := []string{"v1"}
-	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName), true, apiVersions)
+	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName))
 	if err != nil {
 		t.Fatalf("error when fetching cluster: %v", err)
 	}
@@ -125,16 +142,14 @@ func TestGetCluster(t *testing.T) {
 }
 
 func TestGetClusterWithoutK8SApiCheckConfigured(t *testing.T) {
-	client := GKEClient{
-		ctx:      context.Background(),
-		client:   &mockClusterManagerClient{},
-		k8client: nil,
+	client := GKEApiClient{
+		ctx:    context.Background(),
+		client: &mockClusterManagerClient{},
 	}
 	projectID := "test-project"
 	clusterLocation := "europe-central2"
 	clusterName := "warsaw"
-	apiVersions := []string{"v1"}
-	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName), false, apiVersions)
+	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName))
 	if err != nil {
 		t.Fatalf("error when fetching cluster: %v", err)
 	}
@@ -147,7 +162,7 @@ func TestGetClusterWithoutK8SApiCheckConfigured(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	client := GKEClient{
+	client := GKEApiClient{
 		ctx:    nil,
 		client: &mockClusterManagerClient{}}
 	err := client.Close()
@@ -178,16 +193,22 @@ func TestGetClusterName(t *testing.T) {
 }
 
 func TestGetClusterResourcesForEmptyConfig(t *testing.T) {
-	client := GKEClient{
-		ctx:      context.Background(),
-		client:   &mockClusterManagerClient{},
-		k8client: &mockK8Client{},
+	client := GKEApiClient{
+		ctx:    context.Background(),
+		client: &mockClusterManagerClient{},
+		k8sClientFunc: func(ctx context.Context, kubeConfig *clientcmdapi.Config) (KubernetesClient, error) {
+			return &mockK8Client{}, nil
+
+		},
+		authTokenFunc: func(ctx context.Context) (string, error) {
+			return "fake-token", nil
+		},
+		k8sApiVersions: []string{},
 	}
 	projectID := "test-project"
 	clusterLocation := "europe-central2"
 	clusterName := "warsaw"
-	apiVersions := []string{}
-	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName), true, apiVersions)
+	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName))
 	if err != nil {
 		t.Fatalf("error when fetching cluster: %v", err)
 	}
@@ -197,16 +218,22 @@ func TestGetClusterResourcesForEmptyConfig(t *testing.T) {
 }
 
 func TestGetClusterResourcesForNonEmptyConfig(t *testing.T) {
-	client := GKEClient{
-		ctx:      context.Background(),
-		client:   &mockClusterManagerClient{},
-		k8client: &mockK8Client{},
+	client := GKEApiClient{
+		ctx:    context.Background(),
+		client: &mockClusterManagerClient{},
+		k8sClientFunc: func(ctx context.Context, kubeConfig *clientcmdapi.Config) (KubernetesClient, error) {
+			return &mockK8Client{}, nil
+
+		},
+		authTokenFunc: func(ctx context.Context) (string, error) {
+			return "fake-token", nil
+		},
+		k8sApiVersions: []string{"v1"},
 	}
 	projectID := "test-project"
 	clusterLocation := "europe-central2"
 	clusterName := "warsaw"
-	apiVersions := []string{"v1"}
-	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName), true, apiVersions)
+	cluster, err := client.GetCluster(GetClusterName(projectID, clusterLocation, clusterName))
 	if err != nil {
 		t.Fatalf("error when fetching cluster: %v", err)
 	}

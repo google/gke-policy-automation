@@ -26,16 +26,15 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 )
 
-const regoPolicyPackage = "gke.policy"
-const regoQuery = "data." + regoPolicyPackage + "[name]"
 const regoTestFileSuffix = "_test.rego"
 
 type PolicyAgent struct {
-	ctx       context.Context
-	compiler  *ast.Compiler
-	policies  []*Policy
-	evalCache map[string]*Policy
-	excludes  cfg.ConfigPolicyExclusions
+	ctx               context.Context
+	compiler          *ast.Compiler
+	policies          []*Policy
+	evalCache         map[string]*Policy
+	excludes          cfg.ConfigPolicyExclusions
+	parserIgnoredPkgs []string
 }
 
 type Policy struct {
@@ -64,9 +63,10 @@ type RegoEvaluationResult struct {
 
 func NewPolicyAgent(ctx context.Context) *PolicyAgent {
 	return &PolicyAgent{
-		ctx:       ctx,
-		policies:  make([]*Policy, 0),
-		evalCache: make(map[string]*Policy),
+		ctx:               ctx,
+		policies:          make([]*Policy, 0),
+		evalCache:         make(map[string]*Policy),
+		parserIgnoredPkgs: []string{"gke.rule"},
 	}
 }
 
@@ -175,8 +175,8 @@ func (pa *PolicyAgent) compileModulesWithOpt(modules map[string]string, opts ast
 module:
 	for f, module := range modules {
 		// Filter out tests
-		if strings.Contains(f, "test.rego") {
-			log.Debugf("Skipped policy file %s", f)
+		if strings.HasSuffix(f, regoTestFileSuffix) {
+			log.Debugf("Skipped policy test file %s", f)
 			continue
 		}
 		var pm *ast.Module
@@ -216,11 +216,17 @@ func (pa *PolicyAgent) ParseCompiled() []error {
 		return []error{fmt.Errorf("compiler is nil")}
 	}
 	errors := make([]error, 0)
+module:
 	for _, m := range pa.compiler.Modules {
 		policy := Policy{}
-		policy.MapModule(m)
-		if !strings.HasPrefix(policy.Name, regoPolicyPackage) || strings.HasSuffix(policy.File, regoTestFileSuffix) {
+		policy.mapModule(m)
+		if strings.HasSuffix(policy.File, regoTestFileSuffix) {
 			continue
+		}
+		for _, ignored := range pa.parserIgnoredPkgs {
+			if strings.HasPrefix(policy.Name, ignored) {
+				continue module
+			}
 		}
 		metaErrs := policy.MetadataErrors()
 		if len(metaErrs) > 0 {
@@ -247,26 +253,27 @@ func (pa *PolicyAgent) WithFiles(files []*PolicyFile, excludes cfg.ConfigPolicyE
 	return nil
 }
 
-func (pa *PolicyAgent) Evaluate(input interface{}) (*PolicyEvaluationResult, error) {
+func (pa *PolicyAgent) Evaluate(input interface{}, packageBase string) (*PolicyEvaluationResult, error) {
+	query := getRegoQueryForPackageBase(packageBase)
 	var rgo *rego.Rego
 	if pa.compiler == nil {
 		rgo = rego.New(
 			rego.Input(input),
-			rego.Query(regoQuery))
+			rego.Query(query))
 	} else {
 		rgo = rego.New(
 			rego.Compiler(pa.compiler),
 			rego.Input(input),
-			rego.Query(regoQuery))
+			rego.Query(query))
 	}
 	results, err := rgo.Eval(pa.ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to evaluate rego: %s", err)
 	}
-	return pa.processRegoResultSet(results)
+	return pa.processRegoResultSet(packageBase, results)
 }
 
-func (pa *PolicyAgent) processRegoResultSet(results rego.ResultSet) (*PolicyEvaluationResult, error) {
+func (pa *PolicyAgent) processRegoResultSet(packageBase string, results rego.ResultSet) (*PolicyEvaluationResult, error) {
 	pa.initEvalCache()
 	evalResults := NewPolicyEvaluationResult()
 	for _, result := range results {
@@ -284,7 +291,7 @@ func (pa *PolicyAgent) processRegoResultSet(results rego.ResultSet) (*PolicyEval
 			regoEvalResultErrors = append(regoEvalResultErrors, err)
 		}
 		policy := NewPolicyFromEvalResult(&regoEvalResult, regoEvalResultErrors)
-		policyName := regoPolicyPackage + "." + regoEvalResult.Name
+		policyName := packageBase + "." + regoEvalResult.Name
 		if compiledPolicy, ok := pa.evalCache[policyName]; ok {
 			compiledPolicy.Valid = policy.Valid
 			compiledPolicy.Violations = policy.Violations
@@ -374,7 +381,7 @@ func NewPolicyFromEvalResult(result *RegoEvaluationResult, errors []error) *Poli
 	return policy
 }
 
-func (p *Policy) MapModule(module *ast.Module) {
+func (p *Policy) mapModule(module *ast.Module) {
 	p.Name = module.Package.String()[8:]
 	p.File = module.Package.Location.File
 	for _, annot := range module.Annotations {
@@ -435,4 +442,8 @@ func getStringListFromInterfaceMap(name string, m map[string]interface{}) ([]str
 		vStringList[i] = vStringListItem
 	}
 	return vStringList, nil
+}
+
+func getRegoQueryForPackageBase(packageBase string) string {
+	return "data." + packageBase + "[name]"
 }

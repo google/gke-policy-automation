@@ -362,7 +362,7 @@ func TestClusterReviewWithNoPolicies(t *testing.T) {
 		},
 	}
 
-	err := pa.ClusterReview()
+	err := pa.Check()
 
 	if err != errNoPolicies {
 		t.Fatalf("need noPoliciesError but err = %s", err)
