@@ -30,25 +30,6 @@ func NewGKELocalClient(ctx context.Context, dumpFile string) GKEClient {
 	return &gkeLocalClient{ctx: ctx, dumpFile: dumpFile}
 }
 
-// GetClusterName() returns ClusterName from the file
-/*
-func (c *gkeLocalClient) GetClusterName() (string, error) {
-	var err error
-	var cluster containerpb.Cluster
-
-	clusterData, err := openData(c.dumpFile)
-	if err != nil {
-		return "", err
-	}
-
-	err = json.Unmarshal(clusterData, &cluster)
-	if err != nil {
-		return "", err
-	}
-	return cluster.Name, err
-}
-*/
-
 // GetCluster() returns cluster data gathered from file
 func (c *gkeLocalClient) GetCluster(name string) (*Cluster, error) {
 	var err error

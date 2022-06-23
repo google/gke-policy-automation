@@ -114,6 +114,28 @@ func (mockK8Client) GetNamespacedResources(resourceType ResourceType, namespace 
 	}, nil
 }
 
+func TestGKEApiClientBuilder(t *testing.T) {
+	credFile := "test-fixtures/test_credentials.json"
+	apiVersions := []string{"policy/v1", "networking.k8s.io/v1"}
+	b := NewGKEApiClientBuilder(context.TODO()).
+		WithCredentialsFile(credFile).
+		WithK8SClient(apiVersions)
+	client, err := b.Build()
+	if err != nil {
+		t.Fatalf("err = %v, want nil", err)
+	}
+	apiClient, ok := client.(*GKEApiClient)
+	if !ok {
+		t.Fatalf("client is not *GKEApiClient")
+	}
+	if !reflect.DeepEqual(apiClient.k8sApiVersions, apiVersions) {
+		t.Errorf("apiClient k8sApiVersions = %v; want %v", apiClient.k8sApiVersions, apiVersions)
+	}
+	if b.credentialsFile != credFile {
+		t.Errorf("builder credentialsFile = %v; want %v", b.credentialsFile, credFile)
+	}
+}
+
 func TestGetCluster(t *testing.T) {
 	client := GKEApiClient{
 		ctx:    context.Background(),

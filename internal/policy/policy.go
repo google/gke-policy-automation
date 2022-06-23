@@ -20,6 +20,8 @@ import (
 	"reflect"
 	"strings"
 
+	"golang.org/x/exp/maps"
+
 	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/open-policy-agent/opa/ast"
@@ -121,6 +123,13 @@ func (r *PolicyEvaluationResult) ViolatedCount() int {
 		cnt += len(v)
 	}
 	return cnt
+}
+
+func (r *PolicyEvaluationResult) Merge(other *PolicyEvaluationResult) *PolicyEvaluationResult {
+	r.Errored = append(r.Errored, other.Errored...)
+	maps.Copy(r.Valid, other.Valid)
+	maps.Copy(r.Violated, other.Violated)
+	return r
 }
 
 func (r *PolicyEvaluationResult) ErroredCount() int {

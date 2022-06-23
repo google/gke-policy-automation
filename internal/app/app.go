@@ -31,6 +31,7 @@ import (
 	"github.com/google/gke-policy-automation/internal/outputs/storage"
 	"github.com/google/gke-policy-automation/internal/policy"
 	"github.com/google/gke-policy-automation/internal/version"
+	"golang.org/x/exp/maps"
 )
 
 const (
@@ -49,6 +50,27 @@ type PolicyAutomation interface {
 	ClusterJSONData() error
 	Version() error
 	PolicyCheck() error
+}
+
+type evaluationResults struct {
+	m map[string]*policy.PolicyEvaluationResult
+}
+
+func (r *evaluationResults) Add(result *policy.PolicyEvaluationResult) *evaluationResults {
+	if r.m == nil {
+		r.m = make(map[string]*policy.PolicyEvaluationResult)
+	}
+	currentResult, ok := r.m[result.ClusterName]
+	if !ok {
+		r.m[result.ClusterName] = result
+		return r
+	}
+	currentResult.Merge(result)
+	return r
+}
+
+func (r *evaluationResults) List() []*policy.PolicyEvaluationResult {
+	return maps.Values(r.m)
 }
 
 type PolicyAutomationApp struct {
@@ -212,7 +234,7 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 		log.Errorf("could not get clusters: %s", err)
 		return nil
 	}
-	evalResults := make([]*policy.PolicyEvaluationResult, 0)
+	evalResults := &evaluationResults{}
 	for _, clusterId := range clusterIds {
 		log.Infof("Fetching GKE cluster %s", clusterId)
 		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [%s]\n", clusterId)
@@ -234,14 +256,14 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 				return err
 			}
 			evalResult.ClusterName = clusterId
-			evalResults = append(evalResults, evalResult)
+			evalResults.Add(evalResult)
 		}
 	}
 
 	for _, c := range p.collectors {
 		collectorType := reflect.TypeOf(c).String()
 		log.Debugf("Collector %s registering the results", collectorType)
-		if err = c.RegisterResult(evalResults); err != nil {
+		if err = c.RegisterResult(evalResults.List()); err != nil {
 			p.out.ErrorPrint("failed to register evaluation results", err)
 			log.Errorf("could not register evaluation results: %s", err)
 			return err
