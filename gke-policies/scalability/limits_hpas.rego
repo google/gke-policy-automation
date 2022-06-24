@@ -17,7 +17,7 @@
 # description: GKE HPAs Limit
 # custom:
 #   group: Scalability
-package gke.limits.hpas
+package gke.scalability.hpas
 
 default allow = false
 

@@ -17,7 +17,7 @@
 # description: GKE unused HPAs 
 # custom:
 #   group: Scalability
-package gke.limits.unused_hpas
+package gke.scalability.unused_hpas
 
 valid[msg] {
 	hpas := {object | object := input.Resources[_]; object.Data.kind == "HorizontalPodAutoscaler"}
