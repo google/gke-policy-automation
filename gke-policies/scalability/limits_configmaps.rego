@@ -19,8 +19,6 @@
 #   group: Scalability
 package gke.scalability.configmaps
 
-default valid = false
-
 default configmaps_limit = 30 #value is ONLY for demo purpose, does not reflect a real limit
 
 valid {
