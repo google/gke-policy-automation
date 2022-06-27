@@ -17,18 +17,19 @@
 # description: GKE ConfigMap Limit
 # custom:
 #   group: Scalability
-package gke.scalability.configmaps
-
-default configmaps_limit = 30 #value is ONLY for demo purpose, does not reflect a real limit
+package gke.limits.configmaps
 
 default valid = false
 
+default configmaps_limit = 30 #value is ONLY for demo purpose, does not reflect a real limit
+
 valid {
-	violation
+	count(violation) == 0
 }
 
-violation {
-	objects := {keep | keep := input.Resources[_]; keep.Data.kind == "ConfigMap"}
-	print("configmaps found: ", count(objects))
-	count(objects) <= configmaps_limit
+violation[msg] {
+	configmaps := {object | object := input.Resources[_]; keep.Data.kind == "ConfigMap"}
+	count(configmaps) > configmaps_limit
+	msg := "Configmaps more than the set limit"
+	print(msg)
 }

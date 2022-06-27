@@ -13,22 +13,22 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE unused HPAs 
-# description: GKE unused HPAs 
+# title: GKE HPAs Limit
+# description: GKE HPAs Limit
 # custom:
 #   group: Scalability
-package gke.scalability.unused_hpas
+package gke.limits.unused_hpas
 
 default valid = false
 
 valid {
-	violation
+	print(violation)
 }
 
 violation[msg] {
 	hpas := {object | object := input.Resources[_]; object.Data.kind == "HorizontalPodAutoscaler"}
-
 	some i
 	not hpas[i].Data.status.lastScaleTime
-	msg := sprintf("HPA never executed %s namespace %s", [hpas[i].Data.metadata.name, hpas[i].Data.metadata.namespace])
+	msg := sprintf("HPA %s in namespace %s never executed since %s", [hpas[i].Data.metadata.name, hpas[i].Data.metadata.namespace, hpas[i].Data.metadata.creationTimestamp])
+	# print(msg)
 }

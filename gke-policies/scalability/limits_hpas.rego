@@ -17,18 +17,19 @@
 # description: GKE HPAs Limit
 # custom:
 #   group: Scalability
-package gke.scalability.hpas
-
-default hpas_limit = 200 #value is ONLY for demo purpose, does not reflect a real limit
+package gke.limits.hpas
 
 default valid = false
 
+default hpas_limit = 200 #value is ONLY for demo purpose, does not reflect a real limit
+
 valid {
-	violation
+	count(violation) == 0
 }
 
-violation {
-	objects := {keep | keep := input.Resources[_]; keep.Data.kind == "HorizontalPodAutoscaler"}
-	print("HPAs found: ", count(objects))
-	count(objects) <= hpas_limit
+violation[msg] {
+	hpas := {object | object := input.Resources[_]; object.Data.kind == "HorizontalPodAutoscaler"}
+	count(hpas) > hpas_limit
+	msg := "HPAs more than the set limit"
+	print(msg)
 }
