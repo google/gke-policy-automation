@@ -13,8 +13,8 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE HPAs Limit
-# description: GKE HPAs Limit
+# title: GKE Unused HPAs Limit
+# description: GKE Unused HPAs Limit
 # custom:
 #   group: Scalability
 package gke.scalability.unused_hpas

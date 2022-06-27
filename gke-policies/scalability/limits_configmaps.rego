@@ -14,7 +14,7 @@
 
 # METADATA
 # title: GKE ConfigMaps Limit
-# description: GKE ConfigMap Limit
+# description: GKE ConfigMaps Limit
 # custom:
 #   group: Scalability
 package gke.scalability.configmaps
