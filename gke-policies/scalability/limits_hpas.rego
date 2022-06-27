@@ -30,6 +30,6 @@ valid {
 violation[msg] {
 	hpas := {object | object := input.Resources[_]; object.Data.kind == "HorizontalPodAutoscaler"}
 	count(hpas) > hpas_limit
-	msg := "HPAs more than the set limit"
+	msg := sprintf("HPAs found: %s higher than the limit: %s", count(hpas), hpas_limit)
 	print(msg)
 }

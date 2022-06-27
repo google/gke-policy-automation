@@ -23,6 +23,7 @@ default valid = false
 
 valid {
 	print(violation)
+	count(violation) == 0
 }
 
 violation[msg] {
@@ -30,5 +31,4 @@ violation[msg] {
 	some i
 	not hpas[i].Data.status.lastScaleTime
 	msg := sprintf("HPA %s in namespace %s never executed since %s", [hpas[i].Data.metadata.name, hpas[i].Data.metadata.namespace, hpas[i].Data.metadata.creationTimestamp])
-	# print(msg)
 }
