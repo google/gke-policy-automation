@@ -21,7 +21,13 @@ package gke.scalability.configmaps
 
 default configmaps_limit = 30 #value is ONLY for demo purpose, does not reflect a real limit
 
+default valid = false
+
 valid {
+	violation
+}
+
+violation {
 	objects := {keep | keep := input.Resources[_]; keep.Data.kind == "ConfigMap"}
 	print("configmaps found: ", count(objects))
 	count(objects) <= configmaps_limit

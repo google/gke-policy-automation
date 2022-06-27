@@ -21,7 +21,13 @@ package gke.scalability.hpas
 
 default hpas_limit = 200 #value is ONLY for demo purpose, does not reflect a real limit
 
+default valid = false
+
 valid {
+	violation
+}
+
+violation {
 	objects := {keep | keep := input.Resources[_]; keep.Data.kind == "HorizontalPodAutoscaler"}
 	print("HPAs found: ", count(objects))
 	count(objects) <= hpas_limit
