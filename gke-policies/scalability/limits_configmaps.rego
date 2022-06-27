@@ -28,7 +28,7 @@ valid {
 }
 
 violation[msg] {
-	configmaps := {object | object := input.Resources[_]; keep.Data.kind == "ConfigMap"}
+	configmaps := {object | object := input.Resources[_]; object.Data.kind == "ConfigMap"}
 	count(configmaps) > configmaps_limit
 	msg := "Configmaps more than the set limit"
 	print(msg)
