@@ -19,7 +19,13 @@
 #   group: Scalability
 package gke.scalability.unused_hpas
 
-valid[msg] {
+default valid = false
+
+valid {
+	violation
+}
+
+violation[msg] {
 	hpas := {object | object := input.Resources[_]; object.Data.kind == "HorizontalPodAutoscaler"}
 
 	some i
