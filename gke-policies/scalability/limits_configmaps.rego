@@ -30,6 +30,6 @@ valid {
 violation[msg] {
 	configmaps := {object | object := input.Resources[_]; object.Data.kind == "ConfigMap"}
 	count(configmaps) > configmaps_limit
-	msg := sprintf("Configmaps found: %s higher than the limit: %s", count(configmaps), configmaps_limit)
+	msg := sprintf("Configmaps found: %d higher than the limit: %d", [count(configmaps), configmaps_limit])
 	print(msg)
 }
