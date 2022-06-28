@@ -19,18 +19,31 @@ import (
 	"testing"
 )
 
+func TestNewGKELocalClient(t *testing.T) {
+	filename := "test.json"
+	client := NewGKELocalClient(context.TODO(), filename)
+
+	localClient, ok := client.(*gkeLocalClient)
+	if !ok {
+		t.Fatalf("client type is not *gkeLocalClient")
+	}
+	if localClient.dumpFile != filename {
+		t.Errorf("client dumpFile = %v; want %v", localClient.dumpFile, filename)
+	}
+}
+
 // TestLocalGetCluster() to test GetCluster()
 func TestLocalGetCluster(t *testing.T) {
-	var cluster *Cluster
-	client := NewGKELocalClient(context.TODO(), "../app/test-fixtures/backup.json")
-	cluster, err := client.GetCluster("test")
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-	if cluster == nil || cluster.Network != "default" {
-		t.Errorf("unable to read cluster data")
-	}
-	if cluster.Name == "" {
-		t.Errorf("unable to get cluster name")
+	clusterNames := []string{"cluster-1", "cluster-2"}
+	client := NewGKELocalClient(context.TODO(), "test-fixtures/clusters_data.json")
+
+	for _, clusterName := range clusterNames {
+		cluster, err := client.GetCluster(clusterName)
+		if err != nil {
+			t.Fatalf("err = %v; want nil", err)
+		}
+		if cluster.Name != clusterName {
+			t.Errorf("cluster name = %v; want %v", cluster.Name, clusterName)
+		}
 	}
 }

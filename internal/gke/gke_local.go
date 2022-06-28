@@ -17,50 +17,42 @@ package gke
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
 	"os"
 )
 
 type gkeLocalClient struct {
-	ctx      context.Context
-	dumpFile string
+	readFileFunc func(name string) ([]byte, error)
+	dumpFile     string
 }
 
 func NewGKELocalClient(ctx context.Context, dumpFile string) GKEClient {
-	return &gkeLocalClient{ctx: ctx, dumpFile: dumpFile}
+	return &gkeLocalClient{
+		readFileFunc: os.ReadFile,
+		dumpFile:     dumpFile,
+	}
 }
 
 // GetCluster() returns cluster data gathered from file
 func (c *gkeLocalClient) GetCluster(name string) (*Cluster, error) {
-	var err error
-	var cluster Cluster
-
-	clusterData, err := openData(c.dumpFile)
+	var clusters []*Cluster
+	clusterData, err := c.readFileFunc(c.dumpFile)
 	if err != nil {
 		return nil, err
 	}
 
-	err = json.Unmarshal(clusterData, &cluster)
+	err = json.Unmarshal(clusterData, &clusters)
 	if err != nil {
-		return &cluster, err
+		return nil, err
 	}
-	return &cluster, err
+	for _, cluster := range clusters {
+		if cluster.Name == name {
+			return cluster, nil
+		}
+	}
+	return nil, fmt.Errorf("cluster %s not found in a dump file", name)
 }
 
 func (c *gkeLocalClient) Close() error {
 	return nil
-}
-
-func openData(fileName string) ([]byte, error) {
-	clusterDumpFile, err := os.Open(fileName)
-	if err != nil {
-		return nil, err
-	}
-	defer clusterDumpFile.Close()
-
-	byteValue, err := ioutil.ReadAll(clusterDumpFile)
-	if err != nil {
-		return nil, err
-	}
-	return byteValue, nil
 }

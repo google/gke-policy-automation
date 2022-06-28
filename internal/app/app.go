@@ -16,7 +16,6 @@ package app
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -74,12 +73,13 @@ func (r *evaluationResults) List() []*policy.PolicyEvaluationResult {
 }
 
 type PolicyAutomationApp struct {
-	ctx        context.Context
-	config     *cfg.Config
-	out        *outputs.Output
-	collectors []outputs.ValidationResultCollector
-	gke        gke.GKEClient
-	discovery  gke.DiscoveryClient
+	ctx                   context.Context
+	config                *cfg.Config
+	out                   *outputs.Output
+	collectors            []outputs.ValidationResultCollector
+	clusterDumpCollectors []outputs.ClusterDumpCollector
+	gke                   gke.GKEClient
+	discovery             gke.DiscoveryClient
 }
 
 func NewPolicyAutomationApp() PolicyAutomation {
@@ -116,6 +116,7 @@ func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 	if !p.config.SilentMode {
 		p.out = outputs.NewStdOutOutput()
 		p.collectors = []outputs.ValidationResultCollector{outputs.NewConsoleResultCollector(p.out)}
+		p.clusterDumpCollectors = append(p.clusterDumpCollectors, outputs.NewOutputClusterDumpCollector(p.out))
 	}
 	if p.config.DumpFile != "" {
 		p.gke = gke.NewGKELocalClient(p.ctx, p.config.DumpFile)
@@ -136,6 +137,7 @@ func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 	for _, o := range p.config.Outputs {
 		if o.FileName != "" {
 			p.collectors = append(p.collectors, outputs.NewJSONResultToFileCollector(o.FileName))
+			p.clusterDumpCollectors = append(p.clusterDumpCollectors, outputs.NewFileClusterDumpCollector(o.FileName))
 		}
 		if o.CloudStorage.Bucket != "" && o.CloudStorage.Path != "" {
 
@@ -292,12 +294,18 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 			log.Errorf("could not fetch cluster details: %s", err)
 			return err
 		}
-		data, error := prettyJson(cluster)
-		if error != nil {
-			log.Errorf("could not print cluster data: %s", err)
+		for _, dumpCollector := range p.clusterDumpCollectors {
+			log.Debugf("registering cluster data with cluster dump collector %s", reflect.TypeOf(dumpCollector).String())
+			dumpCollector.RegisterCluster(cluster)
+		}
+	}
+	for _, dumpCollector := range p.clusterDumpCollectors {
+		colType := reflect.TypeOf(dumpCollector).String()
+		log.Debugf("closing cluster dump collector %s", colType)
+		if err := dumpCollector.Close(); err != nil {
+			log.Errorf("failed to close cluster dump collector %s due to %s", colType, err)
 			return err
 		}
-		p.out.Printf("%s\n", (data))
 	}
 	return nil
 }
@@ -354,7 +362,9 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 //from the sources that are defined in a configuration.
 func (p *PolicyAutomationApp) getClusters() ([]string, error) {
 	if p.config.DumpFile != "" {
-		return []string{p.config.DumpFile}, nil
+		log.Debugf("using local cluster discovery client on a file %s", p.config.DumpFile)
+		dc := gke.NewLocalDiscoveryClient(p.config.DumpFile)
+		return dc.GetClustersInOrg("doesn't-matter-for-local-discovery")
 	}
 	if p.config.ClusterDiscovery.Enabled {
 		var dc gke.DiscoveryClient
@@ -459,12 +469,4 @@ func getClusterName(c cfg.ConfigCluster) (string, error) {
 		return gke.GetClusterName(c.Project, c.Location, c.Name), nil
 	}
 	return "", fmt.Errorf("cluster mandatory parameters not set (project, name, location)")
-}
-
-func prettyJson(data interface{}) (string, error) {
-	val, err := json.MarshalIndent(data, "", "    ")
-	if err != nil {
-		return "", err
-	}
-	return string(val), nil
 }

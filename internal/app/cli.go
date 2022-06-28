@@ -173,25 +173,25 @@ func getClusterSourceFlags(config *CliConfig) []cli.Flag {
 		&cli.StringFlag{
 			Name:        "dump",
 			Aliases:     []string{"d"},
-			Usage:       "Path to the cluster data dump file",
+			Usage:       "Path to the JSON file with cluster data dump for local checks",
 			Destination: &config.DumpFile,
 		},
 		&cli.StringFlag{
 			Name:        "project",
 			Aliases:     []string{"p"},
-			Usage:       "Name of a GCP project",
+			Usage:       "Name of a GCP project with a GKE cluster to check",
 			Destination: &config.ProjectName,
 		},
 		&cli.StringFlag{
 			Name:        "name",
 			Aliases:     []string{"n"},
-			Usage:       "Name of a GKE cluster to review",
+			Usage:       "Name of a GKE cluster to check",
 			Destination: &config.ClusterName,
 		},
 		&cli.StringFlag{
 			Name:        "location",
 			Aliases:     []string{"l"},
-			Usage:       "GKE cluster location (region or zone)",
+			Usage:       "Location (region or zone) of a GKE cluster to check",
 			Destination: &config.ClusterLocation,
 		},
 	}
@@ -202,7 +202,7 @@ func getOutputFlags(config *CliConfig) []cli.Flag {
 		&cli.StringFlag{
 			Name:        "out-file",
 			Aliases:     []string{"f"},
-			Usage:       "Output file for validation results",
+			Usage:       "Path to the file for storing results",
 			Destination: &config.OutputFile,
 		},
 	}
