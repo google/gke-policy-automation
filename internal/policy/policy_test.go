@@ -179,14 +179,18 @@ p = 2`}}
 	if err != nil {
 		t.Fatalf("err = %q; want nil", err)
 	}
-	if pa.compiler == nil {
+	gkePa, ok := pa.(*GKEPolicyAgent)
+	if !ok {
+		t.Fatalf("policy agent type is not *GKEPolicyAgent")
+	}
+	if gkePa.compiler == nil {
 		t.Fatalf("compiler = nil; want compiler")
 	}
-	if len(pa.compiler.Modules) != len(policyFiles) {
-		t.Errorf("number of compiled policies = %d; want %d", len(pa.compiler.Modules), len(policyFiles))
+	if len(gkePa.compiler.Modules) != len(policyFiles) {
+		t.Errorf("number of compiled policies = %d; want %d", len(gkePa.compiler.Modules), len(policyFiles))
 	}
 	for _, file := range policyFiles {
-		if _, ok := pa.compiler.Modules[file.FullName]; !ok {
+		if _, ok := gkePa.compiler.Modules[file.FullName]; !ok {
 			t.Errorf("compiler has no module for file %s", file)
 		}
 	}
@@ -196,7 +200,7 @@ func TestCompile_parseError(t *testing.T) {
 	policyFiles := []*PolicyFile{
 		{"test_one.rego", "folder/test_one.rego", `
 bla bla`}}
-	pa := PolicyAgent{}
+	pa := GKEPolicyAgent{}
 	err := pa.Compile(policyFiles)
 	if err == nil {
 		t.Errorf("err is nil; want error")
@@ -227,7 +231,7 @@ p = 1`
 		{"test_two.rego", "folder/test_two.rego", policyContentBadMeta},
 		{"test_three.rego", "folder/test_three.rego", policyContentBadMetaTwo},
 	}
-	pa := PolicyAgent{}
+	pa := GKEPolicyAgent{}
 	if err := pa.Compile(policyFiles); err != nil {
 		t.Fatalf("err is %s; expected nil", err)
 	}
@@ -244,7 +248,7 @@ p = 1`
 }
 
 func TestParseCompiled_noCompiler(t *testing.T) {
-	pa := PolicyAgent{}
+	pa := GKEPolicyAgent{}
 	if err := pa.ParseCompiled(); err == nil {
 		t.Fatalf("err is nil; want error")
 	}
@@ -287,7 +291,7 @@ func TestWithFiles(t *testing.T) {
 		Policies:     []string{"gke.policy.enable_ilb_subsetting"},
 		PolicyGroups: []string{"security"},
 	}
-	pa := PolicyAgent{parserIgnoredPkgs: []string{ignoredPkg}}
+	pa := GKEPolicyAgent{parserIgnoredPkgs: []string{ignoredPkg}}
 	if err := pa.WithFiles(policyFiles, *policyExclusions); err != nil {
 		t.Fatalf("error = %v; want nil", err)
 	}
@@ -351,7 +355,7 @@ func TestProcessRegoResultSet(t *testing.T) {
 		},
 	}
 	resultSet := []rego.Result{policyOneResult, policyTwoResult, policyThreeResult}
-	pa := PolicyAgent{}
+	pa := GKEPolicyAgent{}
 	pa.policies = []*Policy{policyOneCompiled, policyTwoCompiled, policyThreeCompiled}
 
 	result, err := pa.processRegoResultSet(regoPackageBase, resultSet)
@@ -373,7 +377,7 @@ func TestProcessRegoResultSet(t *testing.T) {
 }
 
 func TestInitEvalCache(t *testing.T) {
-	pa := &PolicyAgent{}
+	pa := &GKEPolicyAgent{}
 	pa.policies = []*Policy{
 		{
 			Name:  "gke.scalability.policy_one",
@@ -621,7 +625,7 @@ func TestGetStringListFromInterfaceMap_negative(t *testing.T) {
 
 //
 func TestInitPolicyExcludeCache(t *testing.T) {
-	pa := &PolicyAgent{}
+	pa := &GKEPolicyAgent{}
 	pa.excludes.Policies = []string{"policy_one", "policy_two"}
 	policyExcludeCache := pa.initPolicyExcludeCache()
 	if len(policyExcludeCache) != len(pa.excludes.Policies) {
@@ -636,7 +640,7 @@ func TestInitPolicyExcludeCache(t *testing.T) {
 }
 
 func TestInitGroupExcludeCache(t *testing.T) {
-	pa := &PolicyAgent{}
+	pa := &GKEPolicyAgent{}
 	pa.excludes.PolicyGroups = []string{"group_one", "group_two"}
 	groupExcludeCache := pa.initGroupExcludeCache()
 	if len(groupExcludeCache) != len(pa.excludes.PolicyGroups) {
