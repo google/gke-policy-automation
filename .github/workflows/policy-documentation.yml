@@ -17,6 +17,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '**.rego'
 
 env:
   GKE_POLICY_DIRECTORY: ./gke-policies/policy
