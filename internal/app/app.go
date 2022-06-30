@@ -197,7 +197,7 @@ func (p *PolicyAutomationApp) Close() error {
 }
 
 func (p *PolicyAutomationApp) Check() error {
-	return p.evaluateClusters([]string{regoPackageBaseBestPractices, regoPackageBaseScalability})
+	return p.evaluateClusters([]string{regoPackageBaseBestPractices})
 }
 
 func (p *PolicyAutomationApp) CheckBestPractices() error {

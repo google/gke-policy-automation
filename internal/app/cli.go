@@ -52,7 +52,7 @@ func createCheckCommand(p PolicyAutomation) *cli.Command {
 	config := &CliConfig{}
 	return &cli.Command{
 		Name:  "check",
-		Usage: "Check GKE clusters and Rego policies",
+		Usage: "Check GKE clusters against best practices",
 		Flags: getCheckFlags(config),
 		Action: func(c *cli.Context) error {
 			defer p.Close()
