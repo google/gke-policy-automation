@@ -19,37 +19,44 @@ import (
 )
 
 type ConsoleResultCollector struct {
-	out *Output
+	out          *Output
+	reportMapper *validationReportMapper
 }
 
 func NewConsoleResultCollector(output *Output) ValidationResultCollector {
 	return &ConsoleResultCollector{
-		out: output,
+		out:          output,
+		reportMapper: NewValidationReportMapper(),
 	}
 }
 
 func (p *ConsoleResultCollector) RegisterResult(results []*policy.PolicyEvaluationResult) error {
-	for _, result := range results {
-		p.out.ColorPrintf("[yellow][bold]GKE Cluster [%s]:", result.ClusterName)
-		for _, group := range result.Groups() {
-			p.out.ColorPrintf("\n[light_gray][bold]Group %q:\n\n", group)
-			for _, policy := range result.Valid[group] {
-				p.out.ColorPrintf("[bold][green][\u2713] %s: [reset][green]%s\n", policy.Title, policy.Description)
-			}
-			for _, policy := range result.Violated[group] {
-				p.out.ColorPrintf("[bold][red][x] %s: [reset][red]%s. [bold]Violations:[reset][red] %s\n", policy.Title, policy.Description, policy.Violations[0])
-			}
-		}
-		p.out.ColorPrintf("\n[bold][green]GKE cluster [%s]: Policies: %d valid, %d violated, %d errored.\n",
-			result.ClusterName,
-			result.ValidCount(),
-			result.ViolatedCount(),
-			result.ErroredCount())
-	}
-
+	p.reportMapper.AddResults(results)
 	return nil
 }
 
 func (p *ConsoleResultCollector) Close() error {
+	report := p.reportMapper.GetReport()
+	p.out.Printf("\n")
+	for _, policy := range report.Policies {
+		p.out.ColorPrintf("\U0001f50e [bold][white][%s][yellow] %s[reset]: %s\n", policy.PolicyGroup, policy.PolicyName, policy.PolicyTitle)
+		for _, evaluation := range policy.ClusterEvaluations {
+			statusString := "[reset][ [bold][green]OK[reset] ]\n"
+			if !evaluation.Valid {
+				statusString = "[reset][[bold][red]FAIL[reset]]\n"
+			}
+			p.out.ColorPrintf("\t- %s\t\t\t"+statusString, evaluation.ClusterID)
+			if !evaluation.Valid {
+				for _, violation := range evaluation.Violations {
+					p.out.ColorPrintf("\t  [bold][red]%s\n", violation)
+				}
+			}
+		}
+		p.out.Printf("\n")
+	}
+	p.out.ColorPrintf("\u2139 [white][bold]Evaluated %d policies on %d clusters\n", len(report.Policies), len(report.ClusterStats))
+	for _, stat := range report.ClusterStats {
+		p.out.ColorPrintf(" - %s: [green]%d valid, [red]%d violated, [yellow]%d errored\n", stat.ClusterID, stat.ValidPoliciesCount, stat.ViolatedPoliciesCount, stat.ErroredPoliciesCount)
+	}
 	return nil
 }

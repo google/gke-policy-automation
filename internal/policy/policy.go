@@ -20,8 +20,6 @@ import (
 	"reflect"
 	"strings"
 
-	"golang.org/x/exp/maps"
-
 	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/open-policy-agent/opa/ast"
@@ -58,9 +56,7 @@ type Policy struct {
 
 type PolicyEvaluationResult struct {
 	ClusterName string
-	Valid       map[string][]*Policy
-	Violated    map[string][]*Policy
-	Errored     []*Policy
+	Policies    []*Policy
 }
 
 type RegoEvaluationResult struct {
@@ -78,14 +74,7 @@ func NewPolicyAgent(ctx context.Context) PolicyAgent {
 	}
 }
 
-func NewPolicyEvaluationResult() *PolicyEvaluationResult {
-	return &PolicyEvaluationResult{
-		Valid:    make(map[string][]*Policy),
-		Violated: make(map[string][]*Policy),
-		Errored:  make([]*Policy, 0),
-	}
-}
-
+/*
 func (r *PolicyEvaluationResult) Groups() []string {
 	groupMap := make(map[string]bool)
 	for k := range r.Valid {
@@ -102,7 +91,9 @@ func (r *PolicyEvaluationResult) Groups() []string {
 	}
 	return groups
 }
+*/
 
+/*
 func (r *PolicyEvaluationResult) AddPolicy(policy *Policy) {
 	if len(policy.ProcessingErrors) > 0 {
 		r.Errored = append(r.Errored, policy)
@@ -141,6 +132,7 @@ func (r *PolicyEvaluationResult) Merge(other *PolicyEvaluationResult) *PolicyEva
 func (r *PolicyEvaluationResult) ErroredCount() int {
 	return len(r.Errored)
 }
+*/
 
 func (pa *GKEPolicyAgent) Compile(files []*PolicyFile) error {
 	modules := make(map[string]string)
@@ -290,11 +282,12 @@ func (pa *GKEPolicyAgent) Evaluate(input interface{}, packageBase string) (*Poli
 
 func (pa *GKEPolicyAgent) processRegoResultSet(packageBase string, results rego.ResultSet) (*PolicyEvaluationResult, error) {
 	pa.initEvalCache()
-	evalResults := NewPolicyEvaluationResult()
-	for _, result := range results {
+	evalResults := &PolicyEvaluationResult{}
+	for i, result := range results {
 		value, bindings, err := getResultDataForEval(result)
 		if err != nil {
-			evalResults.AddPolicy(NewPolicyFromEvalResult(&RegoEvaluationResult{}, []error{err}))
+			log.Debugf("failed to get data from Rego result at index %d: %s", i, err)
+			evalResults.Policies = append(evalResults.Policies, NewPolicyFromEvalResult(&RegoEvaluationResult{}, []error{err}))
 			continue
 		}
 		regoEvalResult := RegoEvaluationResult{}
@@ -315,7 +308,7 @@ func (pa *GKEPolicyAgent) processRegoResultSet(packageBase string, results rego.
 		} else {
 			log.Warnf("rego policy %q has no match with any compiled policy", policyName)
 		}
-		evalResults.AddPolicy(policy)
+		evalResults.Policies = append(evalResults.Policies, policy)
 	}
 	return evalResults, nil
 }

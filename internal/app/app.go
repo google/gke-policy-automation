@@ -64,7 +64,7 @@ func (r *evaluationResults) Add(result *policy.PolicyEvaluationResult) *evaluati
 		r.m[result.ClusterName] = result
 		return r
 	}
-	currentResult.Merge(result)
+	currentResult.Policies = append(currentResult.Policies, result.Policies...)
 	return r
 }
 
@@ -154,7 +154,7 @@ func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 				storagePath = addDatetimePrefix(storagePath, time.Now())
 			}
 
-			storageCollector, err := outputs.NewCloudStorageResultCollector(storageClient, outputs.MapEvaluationResultsToJsonWithTime, o.CloudStorage.Bucket, storagePath)
+			storageCollector, err := outputs.NewCloudStorageResultCollector(storageClient, o.CloudStorage.Bucket, storagePath)
 			if err != nil {
 				return err
 			}
@@ -221,7 +221,7 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 	}
 	// create a PolicyAgent client instance
 	pa := policy.NewPolicyAgent(p.ctx)
-	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
+	p.out.ColorPrintf("\u2139 [light_gray][bold]Parsing REGO policies...\n")
 	log.Info("Parsing rego policies")
 	// parsing policies before running checks
 	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
@@ -239,16 +239,15 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 	evalResults := &evaluationResults{}
 	for _, clusterId := range clusterIds {
 		log.Infof("Fetching GKE cluster %s", clusterId)
-		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [%s]\n", clusterId)
+		p.out.ColorPrintf("\u2139 [light_gray][bold]Fetching GKE cluster details... [%s]\n", clusterId)
 		cluster, err := p.gke.GetCluster(clusterId)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
 			return err
 		}
-		p.out.ColorPrintf("[light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
+		p.out.ColorPrintf("\u2139 [light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
 			clusterId)
-
 		log.Infof("Evaluating policies against GKE cluster %s", clusterId)
 		for _, pkgBase := range regoPackageBases {
 			evalResult, err := pa.Evaluate(cluster, pkgBase)
@@ -345,7 +344,7 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 				policyConfig.GitBranch,
 				policyConfig.GitDirectory)
 		}
-		p.out.ColorPrintf("[light_gray][bold]Reading policy files... [%s]\n", policySrc)
+		p.out.ColorPrintf("\u2139 [light_gray][bold]Reading policy files... [%s]\n", policySrc)
 		log.Infof("Reading policy files from %s", policySrc)
 		files, err := policySrc.GetPolicyFiles()
 		if err != nil {

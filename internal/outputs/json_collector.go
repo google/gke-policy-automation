@@ -15,18 +15,16 @@
 package outputs
 
 import (
-	"encoding/json"
 	"os"
-	"time"
 
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/policy"
 )
 
 type JSONResultCollector struct {
-	fileWriter        FileWriter
-	filename          string
-	validationResults ValidationResults
+	fileWriter   FileWriter
+	filename     string
+	reportMapper *validationReportMapper
 }
 
 type FileWriter interface {
@@ -43,38 +41,31 @@ func (w OSFileWriter) WriteFile(filename string, data []byte, perm os.FileMode) 
 
 func NewJSONResultToFileCollector(filename string) ValidationResultCollector {
 	return &JSONResultCollector{
-		filename:   filename,
-		fileWriter: OSFileWriter{},
+		filename:     filename,
+		fileWriter:   OSFileWriter{},
+		reportMapper: NewValidationReportMapper(),
 	}
 }
 
 func NewJSONResultToCustomWriterCollector(filename string, writer FileWriter) ValidationResultCollector {
 	return &JSONResultCollector{
-		filename:   filename,
-		fileWriter: writer,
+		filename:     filename,
+		fileWriter:   writer,
+		reportMapper: NewValidationReportMapper(),
 	}
 }
 
 func (p *JSONResultCollector) RegisterResult(results []*policy.PolicyEvaluationResult) error {
-
-	for _, r := range results {
-		p.validationResults.ClusterValidationResults = append(p.validationResults.ClusterValidationResults, MapClusterToJson(r))
-	}
+	p.reportMapper.AddResults(results)
 	return nil
 }
 
 func (p *JSONResultCollector) Close() error {
-
-	p.validationResults.ValidationDate = time.Now()
-
-	res, err := json.Marshal(p.validationResults)
+	reportData, err := p.reportMapper.GetJsonReport()
 	if err != nil {
 		return err
 	}
-
-	d1 := []byte(res)
-	err = p.fileWriter.WriteFile(p.filename, d1, 0644)
-	if err != nil {
+	if err = p.fileWriter.WriteFile(p.filename, reportData, 0644); err != nil {
 		return err
 	}
 	log.Infof("Validation results written to the [%s] file", p.filename)

@@ -36,9 +36,8 @@ func (m *PubSubMock) Close() error {
 }
 
 func TestPublishingToPubSub(t *testing.T) {
-
-	policyResult := policy.NewPolicyEvaluationResult()
-	policyResult.AddPolicy(&policy.Policy{
+	policyResult := &policy.PolicyEvaluationResult{}
+	policyResult.Policies = append(policyResult.Policies, &policy.Policy{
 		Title:            "title",
 		Description:      "description",
 		Group:            "group",
@@ -64,5 +63,4 @@ func TestPublishingToPubSub(t *testing.T) {
 	collector.Close()
 
 	mockPubSub.AssertExpectations(t)
-
 }
