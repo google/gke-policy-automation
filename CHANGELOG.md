@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0 (Jul 1, 2022)
+
+FEATURES:
+
+* Introduced check commands and multiple packages handling [#89](https://github.com/google/gke-policy-automation/pull/89)
+* Use of K8S resources data in REGO policies [#61](https://github.com/google/gke-policy-automation/issues/61)
+* Policy filtering logic with policy names and groups [#69](https://github.com/google/gke-policy-automation/issues/69)
+
 ## 1.0.1 (Jun 2, 2022)
 
 BUG FIXES:
