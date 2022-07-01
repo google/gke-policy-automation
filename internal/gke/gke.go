@@ -29,15 +29,70 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
+type GKEClient interface {
+	GetCluster(name string) (*Cluster, error)
+	Close() error
+}
+
 type ClusterManagerClient interface {
 	GetCluster(ctx context.Context, req *containerpb.GetClusterRequest, opts ...gax.CallOption) (*containerpb.Cluster, error)
 	Close() error
 }
 
-type GKEClient struct {
-	ctx      context.Context
-	client   ClusterManagerClient
-	k8client KubernetesClient
+type gkeApiClientBuilder struct {
+	ctx             context.Context
+	credentialsFile string
+	k8sApiVersions  []string
+}
+
+func NewGKEApiClientBuilder(ctx context.Context) *gkeApiClientBuilder {
+	return &gkeApiClientBuilder{ctx: ctx}
+}
+
+func (b *gkeApiClientBuilder) WithCredentialsFile(credentialsFile string) *gkeApiClientBuilder {
+	b.credentialsFile = credentialsFile
+	return b
+}
+
+func (b *gkeApiClientBuilder) WithK8SClient(apiVersions []string) *gkeApiClientBuilder {
+	b.k8sApiVersions = apiVersions
+	return b
+}
+
+func (b *gkeApiClientBuilder) Build() (GKEClient, error) {
+	opts := []option.ClientOption{option.WithUserAgent(version.UserAgent)}
+	if b.credentialsFile != "" {
+		opts = append(opts, option.WithCredentialsFile(b.credentialsFile))
+	}
+
+	cli, err := container.NewClusterManagerClient(b.ctx, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	var k8sApiVersions []string
+	if len(b.k8sApiVersions) > 0 {
+		k8sApiVersions = b.k8sApiVersions
+	}
+
+	return &GKEApiClient{
+		ctx:            b.ctx,
+		client:         cli,
+		authTokenFunc:  getClusterToken,
+		k8sClientFunc:  NewKubernetesClient,
+		k8sApiVersions: k8sApiVersions,
+	}, nil
+}
+
+type authTokenFunc func(ctx context.Context) (string, error)
+type k8sClientFunc func(ctx context.Context, kubeConfig *clientcmdapi.Config) (KubernetesClient, error)
+
+type GKEApiClient struct {
+	ctx            context.Context
+	client         ClusterManagerClient
+	k8sClientFunc  k8sClientFunc
+	authTokenFunc  authTokenFunc
+	k8sApiVersions []string
 }
 
 type Cluster struct {
@@ -45,33 +100,9 @@ type Cluster struct {
 	Resources []*Resource
 }
 
-func NewClient(ctx context.Context, k8sCheck bool) (*GKEClient, error) {
-	return newGKEClient(ctx, k8sCheck)
-}
-
-func NewClientWithCredentialsFile(ctx context.Context, k8sCheck bool, credentialsFile string) (*GKEClient, error) {
-	return newGKEClient(ctx, k8sCheck, option.WithCredentialsFile(credentialsFile))
-}
-
-func newGKEClient(ctx context.Context, k8sCheck bool, opts ...option.ClientOption) (*GKEClient, error) {
-	opts = append(opts, option.WithUserAgent(version.UserAgent))
-	cli, err := container.NewClusterManagerClient(ctx, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	var k8cli KubernetesClient = nil
-
-	return &GKEClient{
-		ctx:      ctx,
-		client:   cli,
-		k8client: k8cli,
-	}, nil
-}
-
-// GetCluster returns a Cluster object with all the information regarding the cluster,
-// externally through the Containers API and Internally with the K8s APIs
-func (c *GKEClient) GetCluster(name string, k8sCheck bool, apiVersions []string) (*Cluster, error) {
+//GetCluster returns a Cluster object with all the information regarding the cluster,
+//externally through the Containers API and Internally with the K8s APIs
+func (c *GKEApiClient) GetCluster(name string) (*Cluster, error) {
 	req := &containerpb.GetClusterRequest{
 		Name: name}
 	cluster, err := c.client.GetCluster(c.ctx, req)
@@ -81,44 +112,43 @@ func (c *GKEClient) GetCluster(name string, k8sCheck bool, apiVersions []string)
 
 	var resources []*Resource = nil
 
-	if k8sCheck {
-		if c.k8client == nil {
-			clusterToken, err := getClusterToken(c.ctx)
-			if err != nil {
-				log.Debugf("unable to get cluster token: %s", err)
-				return nil, err
-			}
-			kubeConfig, err := getKubeConfig(cluster, clusterToken)
-			if err != nil {
-				log.Debugf("unable to get kubeconfig: %s", err)
-				return nil, err
-			}
-			k8cli, err := NewKubernetesClient(c.ctx, kubeConfig)
-			if err != nil {
-				log.Debugf("unable to create kube client: %s", err)
-				return nil, err
-			}
-			c.k8client = k8cli
+	if len(c.k8sApiVersions) > 0 {
+		clusterToken, err := c.authTokenFunc(c.ctx)
+		if err != nil {
+			log.Debugf("unable to get cluster token: %s", err)
+			return nil, err
 		}
-		resources, err = c.getResources(c.ctx, apiVersions)
+		kubeConfig, err := getKubeConfig(cluster, clusterToken)
+		if err != nil {
+			log.Debugf("unable to get kubeconfig: %s", err)
+			return nil, err
+		}
+		k8cli, err := c.k8sClientFunc(c.ctx, kubeConfig)
+		if err != nil {
+			return nil, err
+		}
+		resources, err = getResources(k8cli, c.k8sApiVersions)
 		if err != nil {
 			return nil, err
 		}
 	}
-
 	return &Cluster{cluster, resources}, err
 }
 
-// getResources returns an array of k8s resources that the tool has been able to fetch after the auth
-func (c *GKEClient) getResources(ctx context.Context, apiVersions []string) ([]*Resource, error) {
+//Close closes the client connection
+func (c *GKEApiClient) Close() error {
+	return c.client.Close()
+}
 
+//getResources returns an array of k8s resources that the tool has been able to fetch after the auth
+func getResources(client KubernetesClient, apiVersions []string) ([]*Resource, error) {
 	var resources []*Resource
-	namespaces, err := c.k8client.GetNamespaces()
+	namespaces, err := client.GetNamespaces()
 	if err != nil {
 		return nil, err
 	}
 
-	resourceTypes, err := c.k8client.GetFetchableResourceTypes()
+	resourceTypes, err := client.GetFetchableResourceTypes()
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +164,7 @@ func (c *GKEClient) getResources(ctx context.Context, apiVersions []string) ([]*
 
 	for ns := range namespaces {
 		for rt := range toBeFetched {
-			res, err := c.k8client.GetNamespacedResources(*toBeFetched[rt], namespaces[ns])
+			res, err := client.GetNamespacedResources(*toBeFetched[rt], namespaces[ns])
 			resources = append(resources, res...)
 			if err != nil {
 				return nil, err
@@ -144,25 +174,19 @@ func (c *GKEClient) getResources(ctx context.Context, apiVersions []string) ([]*
 	return resources, nil
 }
 
-// Close() the client connection
-func (c *GKEClient) Close() error {
-	return c.client.Close()
-}
-
-// GetClusterName returns the cluster's self-link in gcp
+//GetClusterName returns the cluster's self-link in gcp
 func GetClusterName(project string, location string, name string) string {
 	return fmt.Sprintf("projects/%s/locations/%s/clusters/%s", project, location, name)
 }
 
 func buildApiVersionString(version string, group string) string {
-
 	if group != "" {
 		return group + "/" + version
 	}
 	return version
 }
 
-// getKubeConfig() create a kubeconfig configuration file from a given clusterData and a gcp auth token
+//getKubeConfig create a kubeconfig configuration file from a given clusterData and a gcp auth token
 func getKubeConfig(clusterData *containerpb.Cluster, clusterToken string) (*clientcmdapi.Config, error) {
 	clusterMasterAuth := clusterData.MasterAuth.ClusterCaCertificate
 	clusterEndpoint := clusterData.Endpoint

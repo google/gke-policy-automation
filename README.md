@@ -30,7 +30,7 @@ for a list of all tags and versions.
 
 ```sh
 docker pull ghcr.io/google/gke-policy-automation:latest
-docker run --rm ghcr.io/google/gke-policy-automation cluster review \
+docker run --rm ghcr.io/google/gke-policy-automation check \
 -project my-project -location europe-west2 -name my-cluster
 ```
 
@@ -48,7 +48,7 @@ for more details.
 git clone https://github.com/google/gke-policy-automation.git
 cd gke-policy-automation
 make build
-./gke-policy cluster review \
+./gke-policy check \
 --project my-project --location europe-west2 --name my-cluster
 ```
 
@@ -61,7 +61,7 @@ make build
 Check the GKE cluster against the default set of best practices with command line flags.
 
 ```sh
-./gke-policy cluster review \
+./gke-policy check \
 --project my-project --location europe-west2 --name my-cluster
 ```
 
@@ -70,7 +70,7 @@ Check the GKE cluster against the default set of best practices with command lin
 Check multiple GKE clusters against the default set of best practices with a config file.
 
 ```sh
-./gke-policy cluster review -c config.yaml
+./gke-policy check -c config.yaml
 ```
 
 The `config.yaml` file:
@@ -90,7 +90,7 @@ Discover clusters in a selected GCP projects, folders or in the entire organizat
 set of best practices.
 
 ```sh
-./gke-policy cluster review -c config.yaml
+./gke-policy check -c config.yaml
 ```
 
 The `config.yaml` file:
@@ -108,7 +108,7 @@ Specify the desired outputs for validation results.
 * JSON file output with command line flags
 
   ```sh
-  ./gke-policy cluster review \
+  ./gke-policy check \
   --project my-project --location europe-west2 --name my-cluster \
   --out-file output.json
   ```
@@ -137,7 +137,7 @@ Specify custom repository with the GKE cluster best practices and check the clus
 * Custom policies source with command line flags
 
   ```sh
-  ./gke-policy cluster review \
+  ./gke-policy check \
   --project my-project --location europe-west2 --name my-cluster \
   --git-policy-repo "https://github.com/google/gke-policy-automation" \
   --git-policy-branch "main" \
@@ -147,7 +147,7 @@ Specify custom repository with the GKE cluster best practices and check the clus
 * Custom policies source with configuration file
 
   ```sh
-  ./gke-policy cluster review -c config.yaml
+  ./gke-policy check -c config.yaml
   ```
 
   The `config.yaml` file:

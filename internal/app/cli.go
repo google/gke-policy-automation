@@ -40,67 +40,98 @@ func NewPolicyAutomationCli(p PolicyAutomation) *cli.App {
 		Name:  "gke-policy",
 		Usage: "Manage GKE policies",
 		Commands: []*cli.Command{
-			CreateClusterCommand(p),
-			CreateVersionCommand(p),
-			CreatePolicyCheckCommand(p),
+			createCheckCommand(p),
+			createDumpCommand(p),
+			createVersionCommand(p),
 		},
 	}
 	return app
 }
 
-func CreateClusterCommand(p PolicyAutomation) *cli.Command {
+func createCheckCommand(p PolicyAutomation) *cli.Command {
 	config := &CliConfig{}
 	return &cli.Command{
-		Name:  "cluster",
-		Usage: "Perform GKE cluster related operations",
+		Name:  "check",
+		Usage: "Check GKE clusters against best practices",
+		Flags: getCheckFlags(config),
+		Action: func(c *cli.Context) error {
+			defer p.Close()
+			config.K8SCheck = true
+			if err := p.LoadCliConfig(config, cfg.ValidateClusterCheckConfig); err != nil {
+				cli.ShowSubcommandHelp(c)
+				return err
+			}
+			return p.Check()
+		},
 		Subcommands: []*cli.Command{
 			{
-				Name:  "print",
-				Usage: "Print cluster api raw json data",
-				Flags: getClusterSourceFlags(config),
+				Name:  "best-practices",
+				Usage: "Check GKE clusters against best practices",
+				Flags: getCheckFlags(config),
+				Action: func(c *cli.Context) error {
+					defer p.Close()
+					if err := p.LoadCliConfig(config, cfg.ValidateClusterCheckConfig); err != nil {
+						cli.ShowSubcommandHelp(c)
+						return err
+					}
+					return p.CheckBestPractices()
+				},
+			},
+			{
+				Name:  "scalability",
+				Usage: "Check GKE clusters against scalability limits",
+				Flags: getCheckFlags(config),
+				Action: func(c *cli.Context) error {
+					defer p.Close()
+					config.K8SCheck = true
+					if err := p.LoadCliConfig(config, cfg.ValidateClusterCheckConfig); err != nil {
+						cli.ShowSubcommandHelp(c)
+						return err
+					}
+					return p.CheckScalability()
+				},
+			},
+			{
+				Name:  "policies",
+				Usage: "Validates policy files from the defined source",
+				Flags: getCheckFlags(config),
+				Action: func(c *cli.Context) error {
+					defer p.Close()
+					if err := p.LoadCliConfig(config, cfg.ValidatePolicyCheckConfig); err != nil {
+						cli.ShowSubcommandHelp(c)
+						return err
+					}
+					return p.PolicyCheck()
+				},
+			},
+		},
+	}
+}
+
+func createDumpCommand(p PolicyAutomation) *cli.Command {
+	config := &CliConfig{}
+	return &cli.Command{
+		Name:  "dump",
+		Usage: "Download and dump data",
+		Subcommands: []*cli.Command{
+			{
+				Name:  "cluster",
+				Usage: "Download and dump GKE cluster configuration",
+				Flags: getDumpFlags(config),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
 					if err := p.LoadCliConfig(config, cfg.ValidateClusterJSONDataConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
-					p.ClusterJSONData()
-					return nil
-				},
-			},
-			{
-				Name:  "offline-review",
-				Usage: "Evaluate policies against given GKE cluster",
-				Flags: append(getClusterDumpSourceFlags(config), getPolicySourceFlags(config)...),
-				Action: func(c *cli.Context) error {
-					defer p.Close()
-					if err := p.LoadCliConfig(config, cfg.ValidateClusterOfflineReviewConfig); err != nil {
-						cli.ShowSubcommandHelp(c)
-						return err
-					}
-					p.ClusterOfflineReview()
-					return nil
-				},
-			},
-			{
-				Name:  "review",
-				Usage: "Evaluate policies against given GKE cluster",
-				Flags: append(getClusterSourceFlags(config), append(getPolicySourceFlags(config), getOutputSourceFlags(config)...)...),
-				Action: func(c *cli.Context) error {
-					defer p.Close()
-					if err := p.LoadCliConfig(config, cfg.ValidateClusterReviewConfig); err != nil {
-						cli.ShowSubcommandHelp(c)
-						return err
-					}
-					p.ClusterReview()
-					return nil
+					return p.ClusterJSONData()
 				},
 			},
 		},
 	}
 }
 
-func CreateVersionCommand(p PolicyAutomation) *cli.Command {
+func createVersionCommand(p PolicyAutomation) *cli.Command {
 	return &cli.Command{
 		Name:  "version",
 		Usage: "Shows application version",
@@ -110,37 +141,12 @@ func CreateVersionCommand(p PolicyAutomation) *cli.Command {
 				cli.ShowSubcommandHelp(c)
 				return err
 			}
-			p.Version()
-			return nil
+			return p.Version()
 		},
 	}
 }
 
-func CreatePolicyCheckCommand(p PolicyAutomation) *cli.Command {
-	config := &CliConfig{}
-	return &cli.Command{
-		Name:  "policy",
-		Usage: "Perform REGO policy related operations",
-		Subcommands: []*cli.Command{
-			{
-				Name:  "check",
-				Usage: "Validates policy files from defined source",
-				Flags: (getPolicySourceFlags(config)),
-				Action: func(c *cli.Context) error {
-					defer p.Close()
-					if err := p.LoadCliConfig(config, cfg.ValidatePolicyCheckConfig); err != nil {
-						cli.ShowSubcommandHelp(c)
-						return err
-					}
-					p.PolicyCheck()
-					return nil
-				},
-			},
-		},
-	}
-}
-
-func getClusterSourceFlags(config *CliConfig) []cli.Flag {
+func getCommonFlags(config *CliConfig) []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
 			Name:        "config",
@@ -148,40 +154,6 @@ func getClusterSourceFlags(config *CliConfig) []cli.Flag {
 			Usage:       "Path to the configuration file",
 			Destination: &config.ConfigFile,
 		},
-		&cli.StringFlag{
-			Name:        "creds",
-			Usage:       "Path to GCP JSON credentials file",
-			Destination: &config.CredentialsFile,
-		},
-		&cli.StringFlag{
-			Name:        "project",
-			Aliases:     []string{"p"},
-			Usage:       "Name of a GCP project",
-			Destination: &config.ProjectName,
-		},
-		&cli.StringFlag{
-			Name:        "name",
-			Aliases:     []string{"n"},
-			Usage:       "Name of a GKE cluster to review",
-			Destination: &config.ClusterName,
-		},
-		&cli.StringFlag{
-			Name:        "location",
-			Aliases:     []string{"l"},
-			Usage:       "GKE cluster location (region or zone)",
-			Destination: &config.ClusterLocation,
-		},
-		&cli.BoolFlag{
-			Name:        "k8s-api",
-			Aliases:     []string{"k"},
-			Usage:       "Enables k8s api check",
-			Destination: &config.K8SCheck,
-		},
-	}
-}
-
-func getOutputSourceFlags(config *CliConfig) []cli.Flag {
-	return []cli.Flag{
 		&cli.BoolFlag{
 			Name:        "silent",
 			Aliases:     []string{"s"},
@@ -189,27 +161,49 @@ func getOutputSourceFlags(config *CliConfig) []cli.Flag {
 			Destination: &config.SilentMode,
 		},
 		&cli.StringFlag{
-			Name:        "out-file",
-			Aliases:     []string{"f"},
-			Usage:       "Output file for validation results",
-			Destination: &config.OutputFile,
+			Name:        "creds",
+			Usage:       "Path to GCP JSON credentials file",
+			Destination: &config.CredentialsFile,
 		},
 	}
 }
 
-func getClusterDumpSourceFlags(config *CliConfig) []cli.Flag {
+func getClusterSourceFlags(config *CliConfig) []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
 			Name:        "dump",
 			Aliases:     []string{"d"},
-			Usage:       "Path to the configuration file",
+			Usage:       "Path to the JSON file with cluster data dump for local checks",
 			Destination: &config.DumpFile,
+		},
+		&cli.StringFlag{
+			Name:        "project",
+			Aliases:     []string{"p"},
+			Usage:       "Name of a GCP project with a GKE cluster to check",
+			Destination: &config.ProjectName,
 		},
 		&cli.StringFlag{
 			Name:        "name",
 			Aliases:     []string{"n"},
-			Usage:       "Name of a GKE cluster to review",
+			Usage:       "Name of a GKE cluster to check",
 			Destination: &config.ClusterName,
+		},
+		&cli.StringFlag{
+			Name:        "location",
+			Aliases:     []string{"l"},
+			Usage:       "Location (region or zone) of a GKE cluster to check",
+			Destination: &config.ClusterLocation,
+		},
+	}
+}
+
+func getOutputFlags(config *CliConfig) []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:        "out-file",
+			Aliases:     []string{"f"},
+			Usage:       "Path to the file for storing results",
+			Destination: &config.OutputFile,
 		},
 	}
 }
@@ -237,4 +231,19 @@ func getPolicySourceFlags(config *CliConfig) []cli.Flag {
 			Destination: &config.GitDirectory,
 		},
 	}
+}
+
+func getCheckFlags(config *CliConfig) []cli.Flag {
+	flags := getCommonFlags(config)
+	flags = append(flags, getClusterSourceFlags(config)...)
+	flags = append(flags, getPolicySourceFlags(config)...)
+	flags = append(flags, getOutputFlags(config)...)
+	return flags
+}
+
+func getDumpFlags(config *CliConfig) []cli.Flag {
+	flags := getCommonFlags(config)
+	flags = append(flags, getClusterSourceFlags(config)...)
+	flags = append(flags, getOutputFlags(config)...)
+	return flags
 }

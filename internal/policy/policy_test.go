@@ -129,6 +129,42 @@ func TestErroredCount(t *testing.T) {
 	}
 }
 
+func TestMerge(t *testing.T) {
+	a := &PolicyEvaluationResult{
+		Errored: []*Policy{{Group: "groupOne", ProcessingErrors: []error{errors.New("error")}}},
+		Valid: map[string][]*Policy{
+			"groupOne": {{Group: "groupOne", Valid: true}, {Group: "groupOne", Valid: true}},
+			"groupTwo": {{Group: "groupTwo", Valid: true}},
+		},
+		Violated: map[string][]*Policy{
+			"groupOne":   {{Group: "groupOne", Valid: true}},
+			"groupTwo":   {{Group: "groupTwo", Valid: true}},
+			"groupThree": {{Group: "groupThree", Valid: true}},
+		},
+	}
+	b := &PolicyEvaluationResult{
+		Errored: []*Policy{{Group: "groupOne", ProcessingErrors: []error{errors.New("error")}}, {Group: "groupTwo", ProcessingErrors: []error{errors.New("error")}}},
+		Valid: map[string][]*Policy{
+			"groupOne": {{Group: "groupOne", Valid: true}, {Group: "groupOne", Valid: true}},
+		},
+		Violated: map[string][]*Policy{
+			"groupTwo":   {{Group: "groupTwo", Valid: false}},
+			"groupThree": {{Group: "groupThree", Valid: false}},
+			"groupFour":  {{Group: "groupFour", Valid: false}},
+		},
+	}
+	a.Merge(b)
+	if len(a.Errored) != 3 {
+		t.Fatalf("len of errored = %v; want %v", len(a.Errored), 3)
+	}
+	if len(a.Valid) != 2 {
+		t.Errorf("len of valid = %v; want %v", len(a.Valid), 2)
+	}
+	if len(a.Violated) != 4 {
+		t.Errorf("len of violated = %v; want %v", len(a.Violated), 4)
+	}
+}
+
 func TestCompile(t *testing.T) {
 	policyFiles := []*PolicyFile{
 		{"test_one.rego", "folder/test_one.rego", `
@@ -215,7 +251,8 @@ func TestParseCompiled_noCompiler(t *testing.T) {
 }
 
 func TestWithFiles(t *testing.T) {
-	packageOne := regoPolicyPackage + ".package_one"
+	ignoredPkg := "gke.invalid"
+	packageOne := "gke.policy.package_one"
 	titleOne := "TitleOne"
 	contentOne := fmt.Sprintf("# METADATA\n"+
 		"# title: %s\n"+
@@ -224,7 +261,7 @@ func TestWithFiles(t *testing.T) {
 		"#   group: Test\n"+
 		"package %s\n"+
 		"p = 1", titleOne, packageOne)
-	packageTwo := regoPolicyPackage + ".package_three"
+	packageTwo := "gke.scalability.package_two"
 	titleTwo := "TitleTwo"
 	contentTwo := fmt.Sprintf("# METADATA\n"+
 		"# title: %s\n"+
@@ -233,13 +270,13 @@ func TestWithFiles(t *testing.T) {
 		"#   group: Test\n"+
 		"package %s\n"+
 		"p = 1", titleTwo, packageTwo)
-	contentThree := fmt.Sprintf("# METADATA\n" +
-		"# title: TitleThree\n" +
-		"# description: Test\n" +
-		"# custom:\n" +
-		"#   group: Test\n" +
-		"package gke.something.invalid\n" +
-		"p = 1")
+	contentThree := fmt.Sprintf("# METADATA\n"+
+		"# title: TitleThree\n"+
+		"# description: Test\n"+
+		"# custom:\n"+
+		"#   group: Test\n"+
+		"package %s\n"+
+		"p = 1", ignoredPkg+".test")
 	policyFiles := []*PolicyFile{
 		{"test_one.rego", "folder/test_one.rego", contentOne},
 		{"test_two.rego", "folder/test_two.rego", contentTwo},
@@ -250,7 +287,7 @@ func TestWithFiles(t *testing.T) {
 		Policies:     []string{"gke.policy.enable_ilb_subsetting"},
 		PolicyGroups: []string{"security"},
 	}
-	pa := PolicyAgent{}
+	pa := PolicyAgent{parserIgnoredPkgs: []string{ignoredPkg}}
 	if err := pa.WithFiles(policyFiles, *policyExclusions); err != nil {
 		t.Fatalf("error = %v; want nil", err)
 	}
@@ -260,8 +297,9 @@ func TestWithFiles(t *testing.T) {
 }
 
 func TestProcessRegoResultSet(t *testing.T) {
+	regoPackageBase := "gke.policy"
 	policyOneCompiled := &Policy{
-		Name:        regoPolicyPackage + ".policy_one",
+		Name:        regoPackageBase + ".policy_one",
 		File:        "rego/policy_one.rego",
 		Title:       "Policy One test",
 		Description: "This is just for test",
@@ -279,7 +317,7 @@ func TestProcessRegoResultSet(t *testing.T) {
 		},
 	}
 	policyTwoCompiled := &Policy{
-		Name:        regoPolicyPackage + ".policy_two",
+		Name:        regoPackageBase + ".policy_two",
 		File:        "rego/policy_two.rego",
 		Title:       "Policy Two test",
 		Description: "This is just for test",
@@ -297,7 +335,7 @@ func TestProcessRegoResultSet(t *testing.T) {
 		},
 	}
 	policyThreeCompiled := &Policy{
-		Name:        regoPolicyPackage + ".policy_three",
+		Name:        regoPackageBase + ".policy_three",
 		File:        "rego/policy_three.rego",
 		Title:       "Policy Three test",
 		Description: "This is just for test",
@@ -316,7 +354,7 @@ func TestProcessRegoResultSet(t *testing.T) {
 	pa := PolicyAgent{}
 	pa.policies = []*Policy{policyOneCompiled, policyTwoCompiled, policyThreeCompiled}
 
-	result, err := pa.processRegoResultSet(resultSet)
+	result, err := pa.processRegoResultSet(regoPackageBase, resultSet)
 	if err != nil {
 		t.Fatalf("got error; expected nil")
 	}
@@ -338,15 +376,15 @@ func TestInitEvalCache(t *testing.T) {
 	pa := &PolicyAgent{}
 	pa.policies = []*Policy{
 		{
-			Name:  regoPolicyPackage + ".policy_one",
+			Name:  "gke.scalability.policy_one",
 			Title: "policy one",
 		},
 		{
-			Name:  regoPolicyPackage + ".policy_twp",
+			Name:  "gke.scalability.policy_twp",
 			Title: "policy two",
 		},
 		{
-			Name:  regoPolicyPackage + ".policy_three",
+			Name:  "gke.scalability.policy_three",
 			Title: "policy two",
 		},
 	}
@@ -488,7 +526,7 @@ func TestMapModule(t *testing.T) {
 		ast.CompileOpts{ParserOptions: ast.ParserOptions{ProcessAnnotation: true}})
 	module := compiler.Modules[file]
 	policy := Policy{}
-	policy.MapModule(module)
+	policy.mapModule(module)
 
 	if policy.Name != pkg {
 		t.Errorf("name = %v; want %v", policy.Name, pkg)
@@ -637,5 +675,14 @@ func TestIsExcluded_negative(t *testing.T) {
 	}
 	if result != expected {
 		t.Errorf("result = %v; want %v", result, expected)
+	}
+}
+
+func TestGetRegoQueryForPackageBase(t *testing.T) {
+	base := "gke.scalability"
+	query := getRegoQueryForPackageBase(base)
+	expected := "data." + base + "[name]"
+	if query != expected {
+		t.Fatalf("query = %v; want %v", query, expected)
 	}
 }

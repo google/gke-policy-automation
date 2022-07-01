@@ -120,7 +120,7 @@ func TestReadConfig(t *testing.T) {
 	}
 }
 
-func TestValidateClusterReviewConfig(t *testing.T) {
+func TestValidateCheckConfig(t *testing.T) {
 	config := Config{
 		Clusters: []ConfigCluster{
 			{ID: "some/cluster/id"},
@@ -131,7 +131,7 @@ func TestValidateClusterReviewConfig(t *testing.T) {
 			{GitRepository: "repo", GitBranch: "main", GitDirectory: "./dir"},
 		},
 	}
-	if err := ValidateClusterReviewConfig(config); err != nil {
+	if err := ValidateClusterCheckConfig(config); err != nil {
 		t.Errorf("expected no error, got: %v", err)
 	}
 }
@@ -160,7 +160,7 @@ func TestValidateClusterReviewConfig_negative(t *testing.T) {
 	}
 
 	for i, config := range badConfigs {
-		if err := ValidateClusterReviewConfig(config); err == nil {
+		if err := ValidateClusterCheckConfig(config); err == nil {
 			t.Errorf("expected error on invalid cluster config [%d]", i)
 		}
 	}
