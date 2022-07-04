@@ -74,66 +74,6 @@ func NewPolicyAgent(ctx context.Context) PolicyAgent {
 	}
 }
 
-/*
-func (r *PolicyEvaluationResult) Groups() []string {
-	groupMap := make(map[string]bool)
-	for k := range r.Valid {
-		groupMap[k] = true
-	}
-	for k := range r.Violated {
-		groupMap[k] = true
-	}
-	groups := make([]string, len(groupMap))
-	i := 0
-	for k := range groupMap {
-		groups[i] = k
-		i++
-	}
-	return groups
-}
-*/
-
-/*
-func (r *PolicyEvaluationResult) AddPolicy(policy *Policy) {
-	if len(policy.ProcessingErrors) > 0 {
-		r.Errored = append(r.Errored, policy)
-		return
-	}
-	if policy.Valid {
-		r.Valid[policy.Group] = append(r.Valid[policy.Group], policy)
-	} else {
-		r.Violated[policy.Group] = append(r.Violated[policy.Group], policy)
-	}
-}
-
-func (r *PolicyEvaluationResult) ValidCount() int {
-	cnt := 0
-	for _, v := range r.Valid {
-		cnt += len(v)
-	}
-	return cnt
-}
-
-func (r *PolicyEvaluationResult) ViolatedCount() int {
-	cnt := 0
-	for _, v := range r.Violated {
-		cnt += len(v)
-	}
-	return cnt
-}
-
-func (r *PolicyEvaluationResult) Merge(other *PolicyEvaluationResult) *PolicyEvaluationResult {
-	r.Errored = append(r.Errored, other.Errored...)
-	maps.Copy(r.Valid, other.Valid)
-	maps.Copy(r.Violated, other.Violated)
-	return r
-}
-
-func (r *PolicyEvaluationResult) ErroredCount() int {
-	return len(r.Errored)
-}
-*/
-
 func (pa *GKEPolicyAgent) Compile(files []*PolicyFile) error {
 	modules := make(map[string]string)
 	for _, file := range files {
