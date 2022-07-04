@@ -439,7 +439,9 @@ func newConfigFromCli(cliConfig *CliConfig) *cfg.Config {
 	config.DumpFile = cliConfig.DumpFile
 	if cliConfig.DiscoveryEnabled {
 		config.ClusterDiscovery.Enabled = true
-		config.ClusterDiscovery.Projects = []string{cliConfig.ProjectName}
+		if cliConfig.ProjectName != "" {
+			config.ClusterDiscovery.Projects = []string{cliConfig.ProjectName}
+		}
 	} else {
 		if cliConfig.ClusterName != "" || cliConfig.ClusterLocation != "" || cliConfig.ProjectName != "" {
 			config.Clusters = []cfg.ConfigCluster{
