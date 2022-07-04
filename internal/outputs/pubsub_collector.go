@@ -28,7 +28,7 @@ type pubSubResultCollector struct {
 	client       PubSubClient
 	project      string
 	topic        string
-	reportMapper *validationReportMapper
+	reportMapper ValidationReportMapper
 }
 
 func NewPubSubResultCollector(client PubSubClient, project string, topic string) ValidationResultCollector {

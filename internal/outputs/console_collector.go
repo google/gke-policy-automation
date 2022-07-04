@@ -18,24 +18,24 @@ import (
 	"github.com/google/gke-policy-automation/internal/policy"
 )
 
-type ConsoleResultCollector struct {
+type consoleResultCollector struct {
 	out          *Output
-	reportMapper *validationReportMapper
+	reportMapper ValidationReportMapper
 }
 
 func NewConsoleResultCollector(output *Output) ValidationResultCollector {
-	return &ConsoleResultCollector{
+	return &consoleResultCollector{
 		out:          output,
 		reportMapper: NewValidationReportMapper(),
 	}
 }
 
-func (p *ConsoleResultCollector) RegisterResult(results []*policy.PolicyEvaluationResult) error {
+func (p *consoleResultCollector) RegisterResult(results []*policy.PolicyEvaluationResult) error {
 	p.reportMapper.AddResults(results)
 	return nil
 }
 
-func (p *ConsoleResultCollector) Close() error {
+func (p *consoleResultCollector) Close() error {
 	report := p.reportMapper.GetReport()
 	p.out.Printf("\n")
 	for _, policy := range report.Policies {

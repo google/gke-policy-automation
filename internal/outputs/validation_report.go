@@ -51,22 +51,29 @@ type ValidationReportClusterStats struct {
 	ErroredPoliciesCount  int    `json:"erroredPoliciesCount"`
 }
 
-type validationReportMapper struct {
+type ValidationReportMapper interface {
+	AddResult(result *policy.PolicyEvaluationResult)
+	AddResults(results []*policy.PolicyEvaluationResult)
+	GetReport() *ValidationReport
+	GetJsonReport() ([]byte, error)
+}
+
+type validationReportMapperImpl struct {
 	validationTime  time.Time
 	policies        map[string]*ValidationReportPolicy
 	clusterStats    map[string]*ValidationReportClusterStats
 	jsonMarshalFunc func(v any) ([]byte, error)
 }
 
-func NewValidationReportMapper() *validationReportMapper {
-	return &validationReportMapper{
+func NewValidationReportMapper() ValidationReportMapper {
+	return &validationReportMapperImpl{
 		policies:        make(map[string]*ValidationReportPolicy),
 		clusterStats:    make(map[string]*ValidationReportClusterStats),
 		jsonMarshalFunc: json.Marshal,
 	}
 }
 
-func (m *validationReportMapper) AddResult(result *policy.PolicyEvaluationResult) {
+func (m *validationReportMapperImpl) AddResult(result *policy.PolicyEvaluationResult) {
 	clusterStat, ok := m.clusterStats[result.ClusterName]
 	if !ok {
 		clusterStat = &ValidationReportClusterStats{ClusterID: result.ClusterName}
@@ -92,13 +99,13 @@ func (m *validationReportMapper) AddResult(result *policy.PolicyEvaluationResult
 	}
 }
 
-func (m *validationReportMapper) AddResults(results []*policy.PolicyEvaluationResult) {
+func (m *validationReportMapperImpl) AddResults(results []*policy.PolicyEvaluationResult) {
 	for _, result := range results {
 		m.AddResult(result)
 	}
 }
 
-func (m *validationReportMapper) GetReport() *ValidationReport {
+func (m *validationReportMapperImpl) GetReport() *ValidationReport {
 	policies := make([]*ValidationReportPolicy, 0, len(m.policies))
 	for _, policy := range m.policies {
 		policies = append(policies, policy)
@@ -117,7 +124,7 @@ func (m *validationReportMapper) GetReport() *ValidationReport {
 	}
 }
 
-func (m *validationReportMapper) GetJsonReport() ([]byte, error) {
+func (m *validationReportMapperImpl) GetJsonReport() ([]byte, error) {
 	report := m.GetReport()
 	return m.jsonMarshalFunc(report)
 }

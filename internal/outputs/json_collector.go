@@ -24,7 +24,7 @@ import (
 type JSONResultCollector struct {
 	fileWriter   FileWriter
 	filename     string
-	reportMapper *validationReportMapper
+	reportMapper ValidationReportMapper
 }
 
 type FileWriter interface {
