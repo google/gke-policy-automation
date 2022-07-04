@@ -20,19 +20,20 @@ import (
 )
 
 type CliConfig struct {
-	ConfigFile      string
-	SilentMode      bool
-	K8SCheck        bool
-	CredentialsFile string
-	DumpFile        string
-	ClusterName     string
-	ClusterLocation string
-	ProjectName     string
-	GitRepository   string
-	GitBranch       string
-	GitDirectory    string
-	LocalDirectory  string
-	OutputFile      string
+	ConfigFile       string
+	SilentMode       bool
+	K8SCheck         bool
+	CredentialsFile  string
+	DumpFile         string
+	ClusterName      string
+	ClusterLocation  string
+	ProjectName      string
+	GitRepository    string
+	GitBranch        string
+	GitDirectory     string
+	LocalDirectory   string
+	OutputFile       string
+	DiscoveryEnabled bool
 }
 
 func NewPolicyAutomationCli(p PolicyAutomation) *cli.App {
@@ -169,6 +170,11 @@ func getCommonFlags(config *CliConfig) []cli.Flag {
 
 func getClusterSourceFlags(config *CliConfig) []cli.Flag {
 	return []cli.Flag{
+		&cli.BoolFlag{
+			Name:        "discovery",
+			Usage:       "Enables cluster discovery on a given project",
+			Destination: &config.DiscoveryEnabled,
+		},
 		&cli.StringFlag{
 			Name:        "dump",
 			Aliases:     []string{"d"},
