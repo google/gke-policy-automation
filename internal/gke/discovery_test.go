@@ -180,14 +180,18 @@ func TestFilterMapSeachResults(t *testing.T) {
 }
 
 func TestGetIDFromName(t *testing.T) {
-	id := "projects/my-project/locations/europe-west2/clusters/my-cluster"
-	name := fmt.Sprintf("//container.googleapis.com/%s", id)
-	result, err := getIDFromName(name)
-	if err != nil {
-		t.Fatalf("err is not nil; want nil; err = %s", err)
+	ids := []string{
+		"projects/my-project/locations/europe-west2/clusters/my-cluster",
+		"projects/my-project/zones/europe-west2-b/clusters/other-cluster",
 	}
-	if result != id {
-		t.Errorf("result is %s; want %s", result, id)
+	for i := range ids {
+		result, err := getIDFromName(fmt.Sprintf("//container.googleapis.com/%s", ids[i]))
+		if err != nil {
+			t.Fatalf("err is not nil; want nil; err = %s", err)
+		}
+		if result != ids[i] {
+			t.Errorf("result is %s; want %s", result, ids[i])
+		}
 	}
 }
 
