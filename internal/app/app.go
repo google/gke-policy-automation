@@ -437,19 +437,23 @@ func newConfigFromCli(cliConfig *CliConfig) *cfg.Config {
 	config.K8SCheck = cliConfig.K8SCheck
 	config.CredentialsFile = cliConfig.CredentialsFile
 	config.DumpFile = cliConfig.DumpFile
-	if cliConfig.ClusterName != "" || cliConfig.ClusterLocation != "" || cliConfig.ProjectName != "" {
-		config.Clusters = []cfg.ConfigCluster{
-			{
-				Name:     cliConfig.ClusterName,
-				Location: cliConfig.ClusterLocation,
-				Project:  cliConfig.ProjectName,
-			},
+	if cliConfig.DiscoveryEnabled {
+		config.ClusterDiscovery.Enabled = true
+		config.ClusterDiscovery.Projects = []string{cliConfig.ProjectName}
+	} else {
+		if cliConfig.ClusterName != "" || cliConfig.ClusterLocation != "" || cliConfig.ProjectName != "" {
+			config.Clusters = []cfg.ConfigCluster{
+				{
+					Name:     cliConfig.ClusterName,
+					Location: cliConfig.ClusterLocation,
+					Project:  cliConfig.ProjectName,
+				},
+			}
 		}
 	}
 	config.Outputs = append(config.Outputs, cfg.ConfigOutput{
 		FileName: cliConfig.OutputFile,
 	})
-
 	if cliConfig.LocalDirectory != "" || cliConfig.GitRepository != "" {
 		config.Policies = append(config.Policies, cfg.ConfigPolicy{
 			LocalDirectory: cliConfig.LocalDirectory,
