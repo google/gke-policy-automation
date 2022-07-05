@@ -38,25 +38,29 @@ func (p *consoleResultCollector) RegisterResult(results []*policy.PolicyEvaluati
 func (p *consoleResultCollector) Close() error {
 	report := p.reportMapper.GetReport()
 	p.out.Printf("\n")
+	p.out.InitTabs(95)
 	for _, policy := range report.Policies {
 		p.out.ColorPrintf("\U0001f50e [bold][white][%s][yellow] %s[reset]: %s\n", policy.PolicyGroup, policy.PolicyName, policy.PolicyTitle)
 		for _, evaluation := range policy.ClusterEvaluations {
-			statusString := "[reset][ [bold][green]OK[reset] ]\n"
+			statusString := "[ \033[1m\033[32mOK\033[0m ]"
 			if !evaluation.Valid {
-				statusString = "[reset][[bold][red]FAIL[reset]]\n"
+				statusString = "[\033[1m\033[31mFAIL\033[0m]"
 			}
-			p.out.ColorPrintf("\t- %s\t\t\t"+statusString, evaluation.ClusterID)
+			p.out.TabPrintf("  - %s\t"+statusString+"\n", evaluation.ClusterID)
 			if !evaluation.Valid {
 				for _, violation := range evaluation.Violations {
-					p.out.ColorPrintf("\t  [bold][red]%s\n", violation)
+					p.out.TabPrintf("    \033[1m\033[31m%s\033[0m\t\n", violation)
 				}
 			}
 		}
+		p.out.TabFlush()
 		p.out.Printf("\n")
 	}
 	p.out.ColorPrintf("\u2139 [white][bold]Evaluated %d policies on %d clusters\n", len(report.Policies), len(report.ClusterStats))
+	p.out.InitTabs(0)
 	for _, stat := range report.ClusterStats {
-		p.out.ColorPrintf(" - %s: [green]%d valid, [red]%d violated, [yellow]%d errored\n", stat.ClusterID, stat.ValidPoliciesCount, stat.ViolatedPoliciesCount, stat.ErroredPoliciesCount)
+		p.out.TabPrintf("  - %s:\t\033[32m%d valid, \033[31m%d violated, \033[33m%d errored\033[0m\n", stat.ClusterID, stat.ValidPoliciesCount, stat.ViolatedPoliciesCount, stat.ErroredPoliciesCount)
 	}
+	p.out.TabFlush()
 	return nil
 }

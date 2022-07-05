@@ -17,13 +17,14 @@ package outputs
 import (
 	"bytes"
 	"testing"
+	"text/tabwriter"
 
 	"github.com/google/gke-policy-automation/internal/policy"
 )
 
 func TestConsoleResultCollector(t *testing.T) {
 	var buff bytes.Buffer
-	out := &Output{w: &buff}
+	out := &Output{w: &buff, tabWriter: tabwriter.NewWriter(&buff, 0, 0, 0, '\t', tabwriter.AlignRight)}
 	reportMapperMock := &validationReportMapperMock{
 		addResultsFn: func(results []*policy.PolicyEvaluationResult) {},
 		getReportFn: func() *ValidationReport {
