@@ -12,6 +12,8 @@ clusters against configuration best practices.
 [![GoDoc](https://godoc.org/github.com/google/gke-policy-automation?status.svg)](https://godoc.org/github.com/google/gke-policy-automation)
 ![GitHub](https://img.shields.io/github/license/google/gke-policy-automation)
 
+![GKE Policy Automation Demo](./assets/gke-policy-automation-demo.gif)
+
 ---
 
 ## Table of Contents
