@@ -21,7 +21,7 @@ package gke.scalability.hpas
 
 default valid = false
 
-default hpas_limit = 200 #value is ONLY for demo purpose, does not reflect a real limit
+default hpas_limit = 2 #value is ONLY for demo purpose, does not reflect a real limit
 
 valid {
 	count(violation) == 0
