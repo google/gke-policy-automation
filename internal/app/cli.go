@@ -43,6 +43,7 @@ func NewPolicyAutomationCli(p PolicyAutomation) *cli.App {
 		Commands: []*cli.Command{
 			createCheckCommand(p),
 			createDumpCommand(p),
+			createConfigureCommand(p),
 			createVersionCommand(p),
 		},
 	}
@@ -125,6 +126,29 @@ func createDumpCommand(p PolicyAutomation) *cli.Command {
 						return err
 					}
 					return p.ClusterJSONData()
+				},
+			},
+		},
+	}
+}
+
+func createConfigureCommand(p PolicyAutomation) *cli.Command {
+	config := &CliConfig{}
+	return &cli.Command{
+		Name:  "configure",
+		Usage: "Configure GKE Policy Automation environment",
+		Subcommands: []*cli.Command{
+			{
+				Name:  "scc",
+				Usage: "Configure GKE Policy Automation in Security Command Center",
+				Flags: []cli.Flag{},
+				Action: func(c *cli.Context) error {
+					defer p.Close()
+					if err := p.LoadCliConfig(config, nil); err != nil {
+						cli.ShowSubcommandHelp(c)
+						return err
+					}
+					return p.ConfigureSCC()
 				},
 			},
 		},

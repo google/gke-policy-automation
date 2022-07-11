@@ -49,6 +49,7 @@ type PolicyAutomation interface {
 	ClusterJSONData() error
 	Version() error
 	PolicyCheck() error
+	ConfigureSCC() error
 }
 
 type evaluationResults struct {
