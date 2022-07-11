@@ -401,13 +401,13 @@ func (p *PolicyAutomationApp) getClusters() ([]string, error) {
 //discoverClusters discovers clusters according to the cluster discovery configuration.
 func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 	if p.config.ClusterDiscovery.Organization != "" {
-		log.Infof("Discovering clusters for organization %s", p.config.ClusterDiscovery.Organization)
+		log.Infof("Discovering clusters in organization %s", p.config.ClusterDiscovery.Organization)
 		p.out.ColorPrintf("\u2139 [light_gray][bold]Discovering clusters in for an organization... [%s]\n", p.config.ClusterDiscovery.Organization)
 		return p.discovery.GetClustersInOrg(p.config.ClusterDiscovery.Organization)
 	}
 	clusters := make([]string, 0)
 	for _, folder := range p.config.ClusterDiscovery.Folders {
-		log.Infof("Discovering clusters in a folder %s", folder)
+		log.Infof("Discovering clusters in folder %s", folder)
 		p.out.ColorPrintf("\u2139 [light_gray][bold]Discovering clusters in a folder... [%s]\n", folder)
 		results, err := p.discovery.GetClustersInFolder(folder)
 		if err != nil {
@@ -416,7 +416,7 @@ func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 		clusters = append(clusters, results...)
 	}
 	for _, project := range p.config.ClusterDiscovery.Projects {
-		log.Infof("Discovering clusters in a project %s", project)
+		log.Infof("Discovering clusters in project %s", project)
 		p.out.ColorPrintf("\u2139 [light_gray][bold]Discovering clusters in a project... [%s]\n", project)
 		results, err := p.discovery.GetClustersInProject(project)
 		if err != nil {
