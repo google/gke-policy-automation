@@ -45,17 +45,33 @@ func (c *sccCollector) Close() error {
 
 // RegisterResult implements ValidationResultCollector
 func (c *sccCollector) RegisterResult(results []*policy.PolicyEvaluationResult) error {
+	eventTime := time.Now()
+	for _, result := range results {
+		for _, policy := range result.Policies {
+			finding := mapPolicyToFinding(result.ClusterName, eventTime, policy)
+			c.cli.UpsertFinding("source", finding)
+		}
+	}
 	return nil
 }
 
-func mapResultToFinding(result *policy.PolicyEvaluationResult) *scc.Finding {
+func mapPolicyToFinding(resourceName string, eventTime time.Time, policy *policy.Policy) *scc.Finding {
 	return &scc.Finding{
-		Time:         time.Now(),
-		SourceName:   "TODO",
-		ResourceName: "TODO",
+		Time:         eventTime,
+		ResourceName: resourceName,
 		Category:     "TODO",
-		Description:  "TODO",
-		State:        "TODO",
+		Description:  policy.Description,
+		State:        mapPolicyEvaluationToFindingState(policy),
 		Severity:     "TODO",
 	}
+}
+
+func mapPolicyEvaluationToFindingState(policy *policy.Policy) string {
+	if policy.Valid {
+		return scc.FINDING_STATE_STRING_INACTIVE
+	}
+	if len(policy.Violations) > 0 {
+		return scc.FINDING_STATE_STRING_ACTIVE
+	}
+	return scc.FINDING_STATE_STRING_UNSPECIFIED
 }

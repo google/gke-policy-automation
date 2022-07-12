@@ -83,7 +83,6 @@ func (m MultipleErrors) Error() error {
 
 type Finding struct {
 	Time         time.Time
-	SourceName   string
 	ResourceName string
 	Category     string
 	Description  string
