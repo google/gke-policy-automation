@@ -70,6 +70,7 @@ func NewValidationReportMapper() ValidationReportMapper {
 		policies:        make(map[string]*ValidationReportPolicy),
 		clusterStats:    make(map[string]*ValidationReportClusterStats),
 		jsonMarshalFunc: json.Marshal,
+		validationTime:  time.Now(),
 	}
 }
 
