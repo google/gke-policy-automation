@@ -1,0 +1,162 @@
+// Copyright 2022 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package outputs
+
+import (
+	"encoding/json"
+	"sort"
+	"time"
+
+	"github.com/google/gke-policy-automation/internal/policy"
+)
+
+type ValidationReport struct {
+	ValidationTime time.Time                       `json:"validationDate"`
+	Policies       []*ValidationReportPolicy       `json:"policies"`
+	ClusterStats   []*ValidationReportClusterStats `json:"statistics"`
+}
+
+type ValidationReportPolicy struct {
+	PolicyName         string                               `json:"name"`
+	PolicyGroup        string                               `json:"group"`
+	PolicyTitle        string                               `json:"title"`
+	PolicyDescription  string                               `json:"description"`
+	ClusterEvaluations []*ValidationReportClusterEvaluation `json:"clusters"`
+}
+
+type ValidationReportClusterEvaluation struct {
+	ClusterID        string   `json:"cluster"`
+	Valid            bool     `json:"isValid"`
+	Errored          bool     `json:"isErrored"`
+	Violations       []string `json:"violations,omitempty"`
+	ProcessingErrors []string `json:"errors,omitempty"`
+}
+
+type ValidationReportClusterStats struct {
+	ClusterID             string `json:"cluster"`
+	ValidPoliciesCount    int    `json:"validPoliciesCount"`
+	ViolatedPoliciesCount int    `json:"violatedPoliciesCount"`
+	ErroredPoliciesCount  int    `json:"erroredPoliciesCount"`
+}
+
+type ValidationReportMapper interface {
+	AddResult(result *policy.PolicyEvaluationResult)
+	AddResults(results []*policy.PolicyEvaluationResult)
+	GetReport() *ValidationReport
+	GetJsonReport() ([]byte, error)
+}
+
+type validationReportMapperImpl struct {
+	validationTime  time.Time
+	policies        map[string]*ValidationReportPolicy
+	clusterStats    map[string]*ValidationReportClusterStats
+	jsonMarshalFunc func(v any) ([]byte, error)
+}
+
+func NewValidationReportMapper() ValidationReportMapper {
+	return &validationReportMapperImpl{
+		policies:        make(map[string]*ValidationReportPolicy),
+		clusterStats:    make(map[string]*ValidationReportClusterStats),
+		jsonMarshalFunc: json.Marshal,
+	}
+}
+
+func (m *validationReportMapperImpl) AddResult(result *policy.PolicyEvaluationResult) {
+	clusterStat, ok := m.clusterStats[result.ClusterName]
+	if !ok {
+		clusterStat = &ValidationReportClusterStats{ClusterID: result.ClusterName}
+		m.clusterStats[result.ClusterName] = clusterStat
+	}
+	for _, resultPolicy := range result.Policies {
+		reportPolicy, ok := m.policies[resultPolicy.Name]
+		if !ok {
+			reportPolicy = mapResultPolicyToReportPolicy(resultPolicy)
+			m.policies[resultPolicy.Name] = reportPolicy
+		}
+		clusterEvaluation := mapResultPolicyToReportClusterEvaluation(resultPolicy, result.ClusterName)
+		reportPolicy.ClusterEvaluations = append(reportPolicy.ClusterEvaluations, clusterEvaluation)
+		if clusterEvaluation.Errored {
+			clusterStat.ErroredPoliciesCount++
+		} else {
+			if clusterEvaluation.Valid {
+				clusterStat.ValidPoliciesCount++
+			} else {
+				clusterStat.ViolatedPoliciesCount++
+			}
+		}
+	}
+}
+
+func (m *validationReportMapperImpl) AddResults(results []*policy.PolicyEvaluationResult) {
+	for _, result := range results {
+		m.AddResult(result)
+	}
+}
+
+func (m *validationReportMapperImpl) GetReport() *ValidationReport {
+	policies := make([]*ValidationReportPolicy, 0, len(m.policies))
+	for _, policy := range m.policies {
+		policies = append(policies, policy)
+	}
+	sort.SliceStable(policies, func(i, j int) bool {
+		return policies[i].PolicyGroup < policies[j].PolicyGroup
+	})
+	stats := make([]*ValidationReportClusterStats, 0, len(m.clusterStats))
+	for _, stat := range m.clusterStats {
+		stats = append(stats, stat)
+	}
+	return &ValidationReport{
+		ValidationTime: m.validationTime,
+		Policies:       policies,
+		ClusterStats:   stats,
+	}
+}
+
+func (m *validationReportMapperImpl) GetJsonReport() ([]byte, error) {
+	report := m.GetReport()
+	return m.jsonMarshalFunc(report)
+}
+
+func mapResultPolicyToReportPolicy(policy *policy.Policy) *ValidationReportPolicy {
+	reportPolicy := &ValidationReportPolicy{
+		PolicyName:        policy.Name,
+		PolicyTitle:       policy.Title,
+		PolicyDescription: policy.Description,
+		PolicyGroup:       policy.Group,
+	}
+	return reportPolicy
+}
+
+func mapResultPolicyToReportClusterEvaluation(policy *policy.Policy, clusterName string) *ValidationReportClusterEvaluation {
+	clusterEvaluation := &ValidationReportClusterEvaluation{
+		ClusterID:        clusterName,
+		Valid:            policy.Valid,
+		Violations:       policy.Violations,
+		ProcessingErrors: mapErrorSliceToStringSlice(policy.ProcessingErrors),
+	}
+
+	if len(clusterEvaluation.ProcessingErrors) > 0 {
+		clusterEvaluation.Errored = true
+	}
+	return clusterEvaluation
+}
+
+func mapErrorSliceToStringSlice(errors []error) []string {
+	strings := make([]string, len(errors))
+	for i := range errors {
+		strings[i] = errors[i].Error()
+	}
+	return strings
+}

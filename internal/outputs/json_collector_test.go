@@ -31,14 +31,14 @@ func (f MockFileWriter) WriteFile(filename string, data []byte, perm os.FileMode
 func TestCollectingToJson(t *testing.T) {
 
 	evalResults := make([]*policy.PolicyEvaluationResult, 0)
-	r := policy.NewPolicyEvaluationResult()
+	r := &policy.PolicyEvaluationResult{}
 
 	policyTitle := "title"
 	policyDescription := "description"
 	policyGroup := "group"
 	policyValid := true
 
-	r.AddPolicy(&policy.Policy{
+	r.Policies = append(r.Policies, &policy.Policy{
 		Title:            policyTitle,
 		Description:      policyDescription,
 		Group:            policyGroup,

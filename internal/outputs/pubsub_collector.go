@@ -15,9 +15,6 @@
 package outputs
 
 import (
-	"encoding/json"
-	"time"
-
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/policy"
 )
@@ -27,35 +24,33 @@ type PubSubClient interface {
 	Close() error
 }
 
-type PubSubResultCollector struct {
-	client            PubSubClient
-	project           string
-	topic             string
-	validationResults ValidationResults
+type pubSubResultCollector struct {
+	client       PubSubClient
+	project      string
+	topic        string
+	reportMapper ValidationReportMapper
 }
 
 func NewPubSubResultCollector(client PubSubClient, project string, topic string) ValidationResultCollector {
-	return &PubSubResultCollector{
-		client:  client,
-		project: project,
-		topic:   topic,
+	return &pubSubResultCollector{
+		client:       client,
+		project:      project,
+		topic:        topic,
+		reportMapper: NewValidationReportMapper(),
 	}
 }
 
-func (p *PubSubResultCollector) RegisterResult(results []*policy.PolicyEvaluationResult) error {
-	for _, r := range results {
-		p.validationResults.ClusterValidationResults = append(p.validationResults.ClusterValidationResults, MapClusterToJson(r))
-	}
+func (p *pubSubResultCollector) RegisterResult(results []*policy.PolicyEvaluationResult) error {
+	p.reportMapper.AddResults(results)
 	return nil
 }
 
-func (p *PubSubResultCollector) Close() error {
-	p.validationResults.ValidationDate = time.Now()
-	res, err := json.Marshal(p.validationResults)
+func (p *pubSubResultCollector) Close() error {
+	reportData, err := p.reportMapper.GetJsonReport()
 	if err != nil {
 		return err
 	}
-	id, err := p.client.Publish(p.topic, res)
+	id, err := p.client.Publish(p.topic, reportData)
 	if err != nil {
 		return err
 	}

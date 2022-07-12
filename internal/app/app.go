@@ -65,7 +65,7 @@ func (r *evaluationResults) Add(result *policy.PolicyEvaluationResult) *evaluati
 		r.m[result.ClusterName] = result
 		return r
 	}
-	currentResult.Merge(result)
+	currentResult.Policies = append(currentResult.Policies, result.Policies...)
 	return r
 }
 
@@ -155,7 +155,7 @@ func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 				storagePath = addDatetimePrefix(storagePath, time.Now())
 			}
 
-			storageCollector, err := outputs.NewCloudStorageResultCollector(storageClient, outputs.MapEvaluationResultsToJsonWithTime, o.CloudStorage.Bucket, storagePath)
+			storageCollector, err := outputs.NewCloudStorageResultCollector(storageClient, o.CloudStorage.Bucket, storagePath)
 			if err != nil {
 				return err
 			}
@@ -222,7 +222,7 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 	}
 	// create a PolicyAgent client instance
 	pa := policy.NewPolicyAgent(p.ctx)
-	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
+	p.out.ColorPrintf("\u2139 [light_gray][bold]Parsing REGO policies...\n")
 	log.Info("Parsing rego policies")
 	// parsing policies before running checks
 	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
@@ -240,16 +240,15 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 	evalResults := &evaluationResults{}
 	for _, clusterId := range clusterIds {
 		log.Infof("Fetching GKE cluster %s", clusterId)
-		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [%s]\n", clusterId)
+		p.out.ColorPrintf("\u2139 [light_gray][bold]Fetching GKE cluster details... [%s]\n", clusterId)
 		cluster, err := p.gke.GetCluster(clusterId)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
 			return err
 		}
-		p.out.ColorPrintf("[light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
+		p.out.ColorPrintf("\u2139 [light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
 			clusterId)
-
 		log.Infof("Evaluating policies against GKE cluster %s", clusterId)
 		for _, pkgBase := range regoPackageBases {
 			evalResult, err := pa.Evaluate(cluster, pkgBase)
@@ -266,6 +265,9 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 	for _, c := range p.collectors {
 		collectorType := reflect.TypeOf(c).String()
 		log.Debugf("Collector %s registering the results", collectorType)
+		if collectorType == "*outputs.JSONResultCollector" {
+			p.out.ColorPrintf("\u2139 [light_gray][bold]Writing evaluation results to the JSON file...\n")
+		}
 		if err = c.RegisterResult(evalResults.List()); err != nil {
 			p.out.ErrorPrint("failed to register evaluation results", err)
 			log.Errorf("could not register evaluation results: %s", err)
@@ -303,6 +305,9 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 	for _, dumpCollector := range p.clusterDumpCollectors {
 		colType := reflect.TypeOf(dumpCollector).String()
 		log.Debugf("closing cluster dump collector %s", colType)
+		if colType == "*outputs.JSONResultCollector" {
+			p.out.ColorPrintf("\u2139 [light_gray][bold]Writing evaluation results to a JSON file...\n")
+		}
 		if err := dumpCollector.Close(); err != nil {
 			log.Errorf("failed to close cluster dump collector %s due to %s", colType, err)
 			return err
@@ -329,7 +334,7 @@ func (p *PolicyAutomationApp) PolicyCheck() error {
 		log.Errorf("could not parse policy files: %s", err)
 		return err
 	}
-	p.out.ColorPrintf("[bold][green] All policies validated correctly \n")
+	p.out.ColorPrintf("\u2139 [bold][green] All policies validated correctly\n")
 	log.Info("All policies validated correctly")
 	return nil
 }
@@ -346,7 +351,7 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 				policyConfig.GitBranch,
 				policyConfig.GitDirectory)
 		}
-		p.out.ColorPrintf("[light_gray][bold]Reading policy files... [%s]\n", policySrc)
+		p.out.ColorPrintf("\u2139 [light_gray][bold]Reading policy files... [%s]\n", policySrc)
 		log.Infof("Reading policy files from %s", policySrc)
 		files, err := policySrc.GetPolicyFiles()
 		if err != nil {
@@ -397,14 +402,14 @@ func (p *PolicyAutomationApp) getClusters() ([]string, error) {
 //discoverClusters discovers clusters according to the cluster discovery configuration.
 func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 	if p.config.ClusterDiscovery.Organization != "" {
-		log.Infof("Discovering clusters for organization %s", p.config.ClusterDiscovery.Organization)
-		p.out.ColorPrintf("[light_gray][bold]Discovering clusters in for an organization... [%s]\n", p.config.ClusterDiscovery.Organization)
+		log.Infof("Discovering clusters in organization %s", p.config.ClusterDiscovery.Organization)
+		p.out.ColorPrintf("\u2139 [light_gray][bold]Discovering clusters in for an organization... [%s]\n", p.config.ClusterDiscovery.Organization)
 		return p.discovery.GetClustersInOrg(p.config.ClusterDiscovery.Organization)
 	}
 	clusters := make([]string, 0)
 	for _, folder := range p.config.ClusterDiscovery.Folders {
-		log.Infof("Discovering clusters in a folder %s", folder)
-		p.out.ColorPrintf("[light_gray][bold]Discovering clusters in a folder... [%s]\n", folder)
+		log.Infof("Discovering clusters in folder %s", folder)
+		p.out.ColorPrintf("\u2139 [light_gray][bold]Discovering clusters in a folder... [%s]\n", folder)
 		results, err := p.discovery.GetClustersInFolder(folder)
 		if err != nil {
 			return nil, err
@@ -412,8 +417,8 @@ func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 		clusters = append(clusters, results...)
 	}
 	for _, project := range p.config.ClusterDiscovery.Projects {
-		log.Infof("Discovering clusters in a project %s", project)
-		p.out.ColorPrintf("[light_gray][bold]Discovering clusters in a project... [%s]\n", project)
+		log.Infof("Discovering clusters in project %s", project)
+		p.out.ColorPrintf("\u2139 [light_gray][bold]Discovering clusters in a project... [%s]\n", project)
 		results, err := p.discovery.GetClustersInProject(project)
 		if err != nil {
 			return nil, err

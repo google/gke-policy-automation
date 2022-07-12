@@ -16,44 +16,51 @@ package outputs
 
 import (
 	"testing"
-	"time"
 
 	"github.com/google/gke-policy-automation/internal/policy"
 	"github.com/stretchr/testify/mock"
 )
 
-type Mock struct {
+type MockStorage struct {
 	mock.Mock
 }
 
-func (m *Mock) BucketExists(bucketName string) bool {
+func (m *MockStorage) BucketExists(bucketName string) bool {
 	args := m.Called(bucketName)
 	return args.Bool(0)
 }
 
-func (m *Mock) Write(bucketName, objectName string, content []byte) error {
+func (m *MockStorage) Write(bucketName, objectName string, content []byte) error {
 	args := m.Called(bucketName, objectName, content)
 	return args.Error(0)
 }
 
-func (m *Mock) Close() error {
+func (m *MockStorage) Close() error {
 	args := m.Called()
 	return args.Error(0)
 }
 
-func (m *Mock) MockMapper(evaluationResult []*policy.PolicyEvaluationResult, time time.Time) ([]byte, error) {
-	args := m.Called(evaluationResult, time)
+type MockMapper struct {
+	mock.Mock
+}
+
+func (m *MockMapper) AddResults(results []*policy.PolicyEvaluationResult) {
+	m.Called()
+}
+
+func (m *MockMapper) GetJsonReport() ([]byte, error) {
+	args := m.Called()
 	return args.Get(0).([]byte), args.Error(1)
 }
 
 func TestCloudStorageCollector(t *testing.T) {
-
 	bucket := "mybucket"
 	object := "myobject"
 	mappedResult := []byte("result")
 
-	policyResult := policy.NewPolicyEvaluationResult()
-	policyResult.AddPolicy(&policy.Policy{
+	policyResult := &policy.PolicyEvaluationResult{ClusterName: "cluster-one"}
+	policyResult.Policies = append(policyResult.Policies, &policy.Policy{
+		Name:             "policy-one",
 		Title:            "title",
 		Description:      "description",
 		Group:            "group",
@@ -63,37 +70,37 @@ func TestCloudStorageCollector(t *testing.T) {
 	})
 
 	t.Run("happy path", func(t *testing.T) {
+		evalResults := []*policy.PolicyEvaluationResult{policyResult}
 
-		evalResults := make([]*policy.PolicyEvaluationResult, 0)
-		evalResults = append(evalResults, policyResult)
-
-		mockStorage := &Mock{}
+		mockStorage := &MockStorage{}
 		mockStorage.On("BucketExists", bucket).Return(true)
-		mockStorage.On("MockMapper", evalResults, mock.Anything).Return(mappedResult, nil)
 		mockStorage.On("Write", bucket, object, mappedResult).Return(nil)
 		mockStorage.On("Close").Return(nil)
 
-		var collector, _ = NewCloudStorageResultCollector(
-			mockStorage,
-			mockStorage.MockMapper,
-			bucket,
-			object,
-		)
+		mockMapper := &MockMapper{}
+		mockMapper.On("AddResults").Return()
+		mockMapper.On("GetJsonReport").Return(mappedResult, nil)
+
+		collector, err := NewCloudStorageResultCollector(mockStorage, bucket, object)
+		if err != nil {
+			t.Fatalf("error = %v; want nil", err)
+		}
+		csCollector := collector.(*cloudStorageResultCollector)
+		csCollector.reportMapper = mockMapper
 
 		collector.RegisterResult(evalResults)
 		collector.Close()
 
 		mockStorage.AssertExpectations(t)
+		mockMapper.AssertExpectations(t)
 	})
 
 	t.Run("bucket does not exist", func(t *testing.T) {
-
-		mockStorage := &Mock{}
+		mockStorage := &MockStorage{}
 		mockStorage.On("BucketExists", bucket).Return(false)
 
 		var _, err = NewCloudStorageResultCollector(
 			mockStorage,
-			mockStorage.MockMapper,
 			bucket,
 			object,
 		)
@@ -104,29 +111,29 @@ func TestCloudStorageCollector(t *testing.T) {
 	})
 
 	t.Run("collect multiple results", func(t *testing.T) {
+		evalResults := []*policy.PolicyEvaluationResult{policyResult}
 
-		evalResults := make([]*policy.PolicyEvaluationResult, 0)
-		evalResults = append(evalResults, policyResult)
-
-		expectedResultsCollected := []*policy.PolicyEvaluationResult{policyResult, policyResult}
-
-		mockStorage := &Mock{}
+		mockStorage := &MockStorage{}
 		mockStorage.On("BucketExists", bucket).Return(true)
-		mockStorage.On("MockMapper", expectedResultsCollected, mock.Anything).Return(mappedResult, nil)
 		mockStorage.On("Write", bucket, object, mappedResult).Return(nil)
 		mockStorage.On("Close").Return(nil)
 
-		var collector, _ = NewCloudStorageResultCollector(
-			mockStorage,
-			mockStorage.MockMapper,
-			bucket,
-			object,
-		)
+		mockMapper := &MockMapper{}
+		mockMapper.On("AddResults").Return()
+		mockMapper.On("GetJsonReport").Return(mappedResult, nil)
+
+		collector, err := NewCloudStorageResultCollector(mockStorage, bucket, object)
+		if err != nil {
+			t.Fatalf("error = %v; want nil", err)
+		}
+		csCollector := collector.(*cloudStorageResultCollector)
+		csCollector.reportMapper = mockMapper
 
 		collector.RegisterResult(evalResults)
 		collector.RegisterResult(evalResults)
 		collector.Close()
 
 		mockStorage.AssertExpectations(t)
+		mockMapper.AssertExpectations(t)
 	})
 }

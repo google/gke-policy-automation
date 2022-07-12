@@ -20,8 +20,6 @@ import (
 	"reflect"
 	"strings"
 
-	"golang.org/x/exp/maps"
-
 	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/open-policy-agent/opa/ast"
@@ -30,7 +28,13 @@ import (
 
 const regoTestFileSuffix = "_test.rego"
 
-type PolicyAgent struct {
+type PolicyAgent interface {
+	Compile(files []*PolicyFile) error
+	WithFiles(files []*PolicyFile, excludes cfg.ConfigPolicyExclusions) error
+	Evaluate(input interface{}, packageBase string) (*PolicyEvaluationResult, error)
+}
+
+type GKEPolicyAgent struct {
 	ctx               context.Context
 	compiler          *ast.Compiler
 	policies          []*Policy
@@ -52,9 +56,7 @@ type Policy struct {
 
 type PolicyEvaluationResult struct {
 	ClusterName string
-	Valid       map[string][]*Policy
-	Violated    map[string][]*Policy
-	Errored     []*Policy
+	Policies    []*Policy
 }
 
 type RegoEvaluationResult struct {
@@ -63,8 +65,8 @@ type RegoEvaluationResult struct {
 	Violations []string
 }
 
-func NewPolicyAgent(ctx context.Context) *PolicyAgent {
-	return &PolicyAgent{
+func NewPolicyAgent(ctx context.Context) PolicyAgent {
+	return &GKEPolicyAgent{
 		ctx:               ctx,
 		policies:          make([]*Policy, 0),
 		evalCache:         make(map[string]*Policy),
@@ -72,71 +74,7 @@ func NewPolicyAgent(ctx context.Context) *PolicyAgent {
 	}
 }
 
-func NewPolicyEvaluationResult() *PolicyEvaluationResult {
-	return &PolicyEvaluationResult{
-		Valid:    make(map[string][]*Policy),
-		Violated: make(map[string][]*Policy),
-		Errored:  make([]*Policy, 0),
-	}
-}
-
-func (r *PolicyEvaluationResult) Groups() []string {
-	groupMap := make(map[string]bool)
-	for k := range r.Valid {
-		groupMap[k] = true
-	}
-	for k := range r.Violated {
-		groupMap[k] = true
-	}
-	groups := make([]string, len(groupMap))
-	i := 0
-	for k := range groupMap {
-		groups[i] = k
-		i++
-	}
-	return groups
-}
-
-func (r *PolicyEvaluationResult) AddPolicy(policy *Policy) {
-	if len(policy.ProcessingErrors) > 0 {
-		r.Errored = append(r.Errored, policy)
-		return
-	}
-	if policy.Valid {
-		r.Valid[policy.Group] = append(r.Valid[policy.Group], policy)
-	} else {
-		r.Violated[policy.Group] = append(r.Violated[policy.Group], policy)
-	}
-}
-
-func (r *PolicyEvaluationResult) ValidCount() int {
-	cnt := 0
-	for _, v := range r.Valid {
-		cnt += len(v)
-	}
-	return cnt
-}
-
-func (r *PolicyEvaluationResult) ViolatedCount() int {
-	cnt := 0
-	for _, v := range r.Violated {
-		cnt += len(v)
-	}
-	return cnt
-}
-
-func (r *PolicyEvaluationResult) Merge(other *PolicyEvaluationResult) *PolicyEvaluationResult {
-	r.Errored = append(r.Errored, other.Errored...)
-	maps.Copy(r.Valid, other.Valid)
-	maps.Copy(r.Violated, other.Violated)
-	return r
-}
-
-func (r *PolicyEvaluationResult) ErroredCount() int {
-	return len(r.Errored)
-}
-
-func (pa *PolicyAgent) Compile(files []*PolicyFile) error {
+func (pa *GKEPolicyAgent) Compile(files []*PolicyFile) error {
 	modules := make(map[string]string)
 	for _, file := range files {
 		modules[file.FullName] = file.Content
@@ -150,7 +88,7 @@ func (pa *PolicyAgent) Compile(files []*PolicyFile) error {
 	return nil
 }
 
-func (pa *PolicyAgent) initPolicyExcludeCache() map[string]bool {
+func (pa *GKEPolicyAgent) initPolicyExcludeCache() map[string]bool {
 	cache := make(map[string]bool)
 	for _, policy := range pa.excludes.Policies {
 		cache["data."+policy] = true
@@ -158,7 +96,7 @@ func (pa *PolicyAgent) initPolicyExcludeCache() map[string]bool {
 	return cache
 }
 
-func (pa *PolicyAgent) initGroupExcludeCache() map[string]bool {
+func (pa *GKEPolicyAgent) initGroupExcludeCache() map[string]bool {
 	cache := make(map[string]bool)
 	for _, g := range pa.excludes.PolicyGroups {
 		cache[g] = true
@@ -174,7 +112,7 @@ func isExcluded(s string, m map[string]bool) (bool, error) {
 	return result, nil
 }
 
-func (pa *PolicyAgent) compileModulesWithOpt(modules map[string]string, opts ast.CompileOpts) (*ast.Compiler, error) {
+func (pa *GKEPolicyAgent) compileModulesWithOpt(modules map[string]string, opts ast.CompileOpts) (*ast.Compiler, error) {
 
 	parsed := make(map[string]*ast.Module, len(modules))
 
@@ -220,7 +158,7 @@ module:
 	return compiler, nil
 }
 
-func (pa *PolicyAgent) ParseCompiled() []error {
+func (pa *GKEPolicyAgent) ParseCompiled() []error {
 	if pa.compiler == nil {
 		return []error{fmt.Errorf("compiler is nil")}
 	}
@@ -247,7 +185,7 @@ module:
 	return errors
 }
 
-func (pa *PolicyAgent) WithFiles(files []*PolicyFile, excludes cfg.ConfigPolicyExclusions) error {
+func (pa *GKEPolicyAgent) WithFiles(files []*PolicyFile, excludes cfg.ConfigPolicyExclusions) error {
 	pa.excludes = excludes
 	if err := pa.Compile(files); err != nil {
 		return err
@@ -262,7 +200,7 @@ func (pa *PolicyAgent) WithFiles(files []*PolicyFile, excludes cfg.ConfigPolicyE
 	return nil
 }
 
-func (pa *PolicyAgent) Evaluate(input interface{}, packageBase string) (*PolicyEvaluationResult, error) {
+func (pa *GKEPolicyAgent) Evaluate(input interface{}, packageBase string) (*PolicyEvaluationResult, error) {
 	query := getRegoQueryForPackageBase(packageBase)
 	var rgo *rego.Rego
 	if pa.compiler == nil {
@@ -282,13 +220,14 @@ func (pa *PolicyAgent) Evaluate(input interface{}, packageBase string) (*PolicyE
 	return pa.processRegoResultSet(packageBase, results)
 }
 
-func (pa *PolicyAgent) processRegoResultSet(packageBase string, results rego.ResultSet) (*PolicyEvaluationResult, error) {
+func (pa *GKEPolicyAgent) processRegoResultSet(packageBase string, results rego.ResultSet) (*PolicyEvaluationResult, error) {
 	pa.initEvalCache()
-	evalResults := NewPolicyEvaluationResult()
-	for _, result := range results {
+	evalResults := &PolicyEvaluationResult{}
+	for i, result := range results {
 		value, bindings, err := getResultDataForEval(result)
 		if err != nil {
-			evalResults.AddPolicy(NewPolicyFromEvalResult(&RegoEvaluationResult{}, []error{err}))
+			log.Debugf("failed to get data from Rego result at index %d: %s", i, err)
+			evalResults.Policies = append(evalResults.Policies, NewPolicyFromEvalResult(&RegoEvaluationResult{}, []error{err}))
 			continue
 		}
 		regoEvalResult := RegoEvaluationResult{}
@@ -309,12 +248,12 @@ func (pa *PolicyAgent) processRegoResultSet(packageBase string, results rego.Res
 		} else {
 			log.Warnf("rego policy %q has no match with any compiled policy", policyName)
 		}
-		evalResults.AddPolicy(policy)
+		evalResults.Policies = append(evalResults.Policies, policy)
 	}
 	return evalResults, nil
 }
 
-func (pa *PolicyAgent) initEvalCache() {
+func (pa *GKEPolicyAgent) initEvalCache() {
 	pa.evalCache = make(map[string]*Policy)
 	for _, policy := range pa.policies {
 		policyCopy := *policy

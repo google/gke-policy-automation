@@ -18,38 +18,49 @@ import (
 	"github.com/google/gke-policy-automation/internal/policy"
 )
 
-type ConsoleResultCollector struct {
-	out *Output
+type consoleResultCollector struct {
+	out          *Output
+	reportMapper ValidationReportMapper
 }
 
 func NewConsoleResultCollector(output *Output) ValidationResultCollector {
-	return &ConsoleResultCollector{
-		out: output,
+	return &consoleResultCollector{
+		out:          output,
+		reportMapper: NewValidationReportMapper(),
 	}
 }
 
-func (p *ConsoleResultCollector) RegisterResult(results []*policy.PolicyEvaluationResult) error {
-	for _, result := range results {
-		p.out.ColorPrintf("[yellow][bold]GKE Cluster [%s]:", result.ClusterName)
-		for _, group := range result.Groups() {
-			p.out.ColorPrintf("\n[light_gray][bold]Group %q:\n\n", group)
-			for _, policy := range result.Valid[group] {
-				p.out.ColorPrintf("[bold][green][\u2713] %s: [reset][green]%s\n", policy.Title, policy.Description)
-			}
-			for _, policy := range result.Violated[group] {
-				p.out.ColorPrintf("[bold][red][x] %s: [reset][red]%s. [bold]Violations:[reset][red] %s\n", policy.Title, policy.Description, policy.Violations[0])
-			}
-		}
-		p.out.ColorPrintf("\n[bold][green]GKE cluster [%s]: Policies: %d valid, %d violated, %d errored.\n",
-			result.ClusterName,
-			result.ValidCount(),
-			result.ViolatedCount(),
-			result.ErroredCount())
-	}
-
+func (p *consoleResultCollector) RegisterResult(results []*policy.PolicyEvaluationResult) error {
+	p.reportMapper.AddResults(results)
 	return nil
 }
 
-func (p *ConsoleResultCollector) Close() error {
+func (p *consoleResultCollector) Close() error {
+	report := p.reportMapper.GetReport()
+	p.out.Printf("\n")
+	p.out.InitTabs(95)
+	for _, policy := range report.Policies {
+		p.out.ColorPrintf("\U0001f50e [bold][white][%s][yellow] %s[reset]: %s\n", policy.PolicyGroup, policy.PolicyName, policy.PolicyTitle)
+		for _, evaluation := range policy.ClusterEvaluations {
+			statusString := "[ \033[1m\033[32mOK\033[0m ]"
+			if !evaluation.Valid {
+				statusString = "[\033[1m\033[31mFAIL\033[0m]"
+			}
+			p.out.TabPrintf("  - %s\t"+statusString+"\n", evaluation.ClusterID)
+			if !evaluation.Valid {
+				for _, violation := range evaluation.Violations {
+					p.out.TabPrintf("    \033[1m\033[31m%s\033[0m\t\n", violation)
+				}
+			}
+		}
+		p.out.TabFlush()
+		p.out.Printf("\n")
+	}
+	p.out.ColorPrintf("\u2139 [white][bold]Evaluated %d policies on %d clusters\n", len(report.Policies), len(report.ClusterStats))
+	p.out.InitTabs(0)
+	for _, stat := range report.ClusterStats {
+		p.out.TabPrintf("  - %s:\t\033[32m%d valid, \033[31m%d violated, \033[33m%d errored\033[0m\n", stat.ClusterID, stat.ValidPoliciesCount, stat.ViolatedPoliciesCount, stat.ErroredPoliciesCount)
+	}
+	p.out.TabFlush()
 	return nil
 }
