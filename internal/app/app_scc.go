@@ -15,6 +15,8 @@
 package app
 
 import (
+	"time"
+
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/outputs/scc"
 )
@@ -39,14 +41,18 @@ func (p *PolicyAutomationApp) ConfigureSCC() error {
 	}
 
 	log.Infof("Using source %v", *id)
-
-	_, err = cli.UpsertFinding(&scc.Finding{
-		SourceName:   *id,
-		ResourceName: "//container.googleapis.com/projects/gke-policy-demo/zones/europe-central2/clusters/cluster-waw",
+	finding := &scc.Finding{
 		Category:     "GKE_POLICY_AUTOMATION_TEST",
-	})
-	if err != nil {
-		return err
+		ResourceName: "//container.googleapis.com/projects/gke-policy-demo/zones/europe-central2/clusters/cluster-waw",
+		State:        scc.FINDING_STATE_STRING_INACTIVE,
+		Time:         time.Now(),
+		Description:  "test two",
+		Severity:     scc.FINDING_SEVERITY_STRING_HIGH,
 	}
+	findingName, err := cli.UpsertFinding(*id, finding)
+	if err != nil {
+		log.Errorf("Failed to update finding: %s ", err)
+	}
+	log.Infof("Finding name is %s", findingName)
 	return nil
 }
