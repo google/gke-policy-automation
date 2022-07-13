@@ -74,6 +74,8 @@ func TestParseCompiled(t *testing.T) {
 		"# description: TestDescription\n"+
 		"# custom:\n"+
 		"#   group: TestGroup\n"+
+		"#   severity: High\n"+
+		"#   sccCategory: Category\n"+
 		"package %s\n"+
 		"p = 1", goodPackage)
 	policyContentBadMeta := `# METADATA
@@ -123,6 +125,8 @@ func TestWithFiles(t *testing.T) {
 		"# description: Test\n"+
 		"# custom:\n"+
 		"#   group: Test\n"+
+		"#   severity: High\n"+
+		"#   sccCategory: Category\n"+
 		"package %s\n"+
 		"p = 1", titleOne, packageOne)
 	packageTwo := "gke.scalability.package_two"
@@ -132,6 +136,8 @@ func TestWithFiles(t *testing.T) {
 		"# description: Test\n"+
 		"# custom:\n"+
 		"#   group: Test\n"+
+		"#   severity: High\n"+
+		"#   sccCategory: Category\n"+
 		"package %s\n"+
 		"p = 1", titleTwo, packageTwo)
 	contentThree := fmt.Sprintf("# METADATA\n"+
@@ -416,8 +422,9 @@ func TestMapModule(t *testing.T) {
 
 func TestMetadataErrors(t *testing.T) {
 	input := []Policy{
+		{Title: "title", Description: "description", Group: "group", Severity: "High", Category: "TEST"},
+		{Title: "title", Description: "description", Group: "group", Severity: "High"},
 		{Title: "title", Description: "description", Group: "group"},
-		{Title: "title", Description: "description"},
 		{Title: "title"},
 		{},
 	}
@@ -425,7 +432,8 @@ func TestMetadataErrors(t *testing.T) {
 		0,
 		1,
 		2,
-		3,
+		4,
+		5,
 	}
 	for i := range input {
 		errors := input[i].MetadataErrors()

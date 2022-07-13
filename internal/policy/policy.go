@@ -49,6 +49,8 @@ type Policy struct {
 	Title            string
 	Description      string
 	Group            string
+	Severity         string
+	Category         string
 	Valid            bool
 	Violations       []string
 	ProcessingErrors []error
@@ -343,6 +345,16 @@ func (p *Policy) mapModule(module *ast.Module) {
 				p.Group = groupS
 			}
 		}
+		if severity, ok := annot.Custom["severity"]; ok {
+			if severityS, okS := severity.(string); okS {
+				p.Severity = severityS
+			}
+		}
+		if category, ok := annot.Custom["sccCategory"]; ok {
+			if categoryS, okS := category.(string); okS {
+				p.Category = categoryS
+			}
+		}
 	}
 }
 
@@ -356,6 +368,12 @@ func (p Policy) MetadataErrors() []string {
 	}
 	if p.Group == "" {
 		errs = append(errs, "group is not set")
+	}
+	if p.Severity == "" {
+		errs = append(errs, "severity is not set")
+	}
+	if p.Category == "" {
+		errs = append(errs, "category is not set")
 	}
 	return errs
 }
