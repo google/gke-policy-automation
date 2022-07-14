@@ -49,7 +49,7 @@ type PolicyAutomation interface {
 	ClusterJSONData() error
 	Version() error
 	PolicyCheck() error
-	ConfigureSCC() error
+	ConfigureSCC(orgNumber string) error
 }
 
 type evaluationResults struct {
@@ -172,6 +172,9 @@ func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 				return err
 			}
 			p.collectors = append(p.collectors, outputs.NewPubSubResultCollector(client, o.PubSub.Project, o.PubSub.Topic))
+		}
+		if err := p.configureSccOutput(o.SecurityCommandCenter, p.config.CredentialsFile); err != nil {
+			return err
 		}
 	}
 	return
@@ -427,6 +430,19 @@ func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 	}
 	log.Debugf("discovered %v clusters in projects and folders", len(clusters))
 	return clusters, nil
+}
+
+func (p *PolicyAutomationApp) configureSccOutput(config cfg.SecurityCommandCenterOutput, credsFile string) error {
+	if config.OrganizationNumber == "" {
+		return nil
+	}
+	log.Infof("Loading Security Command Center output")
+	collector, err := outputs.NewSccCollector(p.ctx, config.OrganizationNumber, config.ProvisionSource, credsFile)
+	if err != nil {
+		return err
+	}
+	p.collectors = append(p.collectors, collector)
+	return nil
 }
 
 func addDatetimePrefix(value string, time time.Time) string {

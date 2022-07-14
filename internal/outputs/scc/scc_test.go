@@ -16,6 +16,7 @@ package scc
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"testing"
 	"time"
@@ -58,7 +59,84 @@ func (m *sccSourceIteratorMock) Next() (*sccpb.Source, error) {
 	return m.NextFn()
 }
 
-func TestGetActiveFindings(t *testing.T) {
+func TestCreateSource(t *testing.T) {
+	orgNumber := "123456789"
+	srcName := "testSourceName"
+	mock := &sccApiClientMock{
+		CreateSourceFn: func(ctx context.Context, req *sccpb.CreateSourceRequest, opts ...gax.CallOption) (*sccpb.Source, error) {
+			if req.Source.DisplayName != sourceDisplayName {
+				t.Errorf("req source display name = %v; want %v", req.Source.DisplayName, sourceDisplayName)
+			}
+			if req.Source.Description != sourceDescription {
+				t.Errorf("req source description = %v; want %v", req.Source.Description, sourceDescription)
+			}
+			return &sccpb.Source{Name: srcName}, nil
+		},
+	}
+	cli := securityCommandCenterClientImpl{ctx: context.TODO(), client: mock}
+	cli.organizationNumber = orgNumber
+	result, err := cli.CreateSource()
+	if err != nil {
+		t.Fatalf("err = %v; want nil", err)
+	}
+	if result != srcName {
+		t.Errorf("result source name = %v; want %v", result, srcName)
+	}
+}
+
+func TestFindSource(t *testing.T) {
+	orgNumber := "123456789"
+	mock := &sccApiClientMock{
+		ListSourcesFn: func(ctx context.Context, req *sccpb.ListSourcesRequest, opts ...gax.CallOption) *scc.SourceIterator {
+			expectedParent := fmt.Sprintf("organizations/%s", orgNumber)
+			if req.Parent != expectedParent {
+				t.Fatalf("request parent = %v; want %v", req.Parent, expectedParent)
+			}
+			return &scc.SourceIterator{}
+		},
+	}
+	cli := securityCommandCenterClientImpl{ctx: context.TODO(), client: mock, sourcesSearchLimit: 0}
+	cli.organizationNumber = orgNumber
+	_, err := cli.FindSource()
+	if err != nil {
+		t.Fatalf("err = %v; want nil", err)
+	}
+}
+
+func TestFindSourceNameByDisplayName(t *testing.T) {
+	name := "sourceOne"
+	displayName := "sourceOneDisplayName"
+	expected := []*sccpb.Source{
+		{Name: name, DisplayName: displayName},
+		{Name: "sourceTwo", DisplayName: "sourceTwoDisplayName"},
+		nil,
+	}
+	errors := []error{
+		nil,
+		nil,
+		iterator.Done,
+	}
+	i := 0
+	nextFn := func() (res *sccpb.Source, err error) {
+		res, err = expected[i], errors[i]
+		i++
+		return
+	}
+	itMock := &sccSourceIteratorMock{NextFn: nextFn}
+	cli := securityCommandCenterClientImpl{ctx: context.TODO(), sourcesSearchLimit: 3}
+	result, err := cli.findSourceNameByDisplayName(displayName, itMock)
+	if err != nil {
+		t.Fatalf("err = %v; want nil", err)
+	}
+	if result == nil {
+		t.Fatalf("result is nil; want %s", name)
+	}
+	if *result != name {
+		t.Errorf("result is %s; want %s", *result, name)
+	}
+}
+
+func TestGetFindings(t *testing.T) {
 	source := "source"
 	resource := "resource"
 	category := "category"
@@ -67,7 +145,7 @@ func TestGetActiveFindings(t *testing.T) {
 			if req.Parent != source {
 				t.Errorf("parent = %v; want %v", req.Parent, source)
 			}
-			r := regexp.MustCompile("resourceName=\"(.+)\" AND category=\"(.+)\" AND state=\"(.+)\"")
+			r := regexp.MustCompile("resourceName=\"(.+)\" AND category=\"(.+)\"")
 			if !r.MatchString(req.Filter) {
 				t.Fatalf("filter does not match regexp")
 			}
@@ -78,14 +156,11 @@ func TestGetActiveFindings(t *testing.T) {
 			if matches[2] != category {
 				t.Errorf("category in filter = %v; want %v", matches[2], category)
 			}
-			if matches[3] != FINDING_STATE_STRING_ACTIVE {
-				t.Errorf("state in filter = %v; want %v", matches[3], FINDING_STATE_STRING_ACTIVE)
-			}
 			return &scc.ListFindingsResponse_ListFindingsResultIterator{}
 		},
 	}
 	cli := securityCommandCenterClientImpl{ctx: context.TODO(), client: mock, sourcesSearchLimit: 0}
-	cli.getActiveFindings(source, resource, category)
+	cli.getFindings(source, resource, category)
 }
 
 func TestCreateFinding(t *testing.T) {
@@ -140,9 +215,10 @@ func TestCreateFinding(t *testing.T) {
 	}
 }
 
-func TestUpdateFindingEventTimeFinding(t *testing.T) {
+func TestUpdateFinding(t *testing.T) {
 	findingName := "test"
 	time := time.Now()
+	state := sccpb.Finding_ACTIVE
 	mock := &sccApiClientMock{
 		UpdateFindingFn: func(ctx context.Context, req *sccpb.UpdateFindingRequest, opts ...gax.CallOption) (*sccpb.Finding, error) {
 			if req.Finding.Name != findingName {
@@ -152,38 +228,15 @@ func TestUpdateFindingEventTimeFinding(t *testing.T) {
 			if eventTime != time.UTC() {
 				t.Fatalf("finding eventTime = %v; want %v", eventTime, time.UTC())
 			}
-			assert.ElementsMatch(t, req.UpdateMask.Paths, []string{"event_time"}, "request update mask paths matches")
-			return req.Finding, nil
-		},
-	}
-	cli := securityCommandCenterClientImpl{ctx: context.TODO(), client: mock}
-	err := cli.updateFindingEventTime(findingName, time)
-	if err != nil {
-		t.Fatalf("err = %v; want nil", err)
-	}
-}
-
-func TestDeactivateFinding(t *testing.T) {
-	findingName := "test"
-	time := time.Now()
-	mock := &sccApiClientMock{
-		UpdateFindingFn: func(ctx context.Context, req *sccpb.UpdateFindingRequest, opts ...gax.CallOption) (*sccpb.Finding, error) {
-			if req.Finding.Name != findingName {
-				t.Fatalf("finding name = %v; want %v", req.Finding.Name, findingName)
-			}
-			if req.Finding.State != sccpb.Finding_INACTIVE {
-				t.Fatalf("finding state = %v; want %v", req.Finding.State, sccpb.Finding_INACTIVE)
-			}
-			eventTime := req.Finding.EventTime.AsTime()
-			if eventTime != time.UTC() {
-				t.Fatalf("finding eventTime = %v; want %v", eventTime, time.UTC())
+			if req.Finding.State != state {
+				t.Fatalf("finding state = %v; want %v", req.Finding.State, state)
 			}
 			assert.ElementsMatch(t, req.UpdateMask.Paths, []string{"state", "event_time"}, "request update mask paths matches")
 			return req.Finding, nil
 		},
 	}
 	cli := securityCommandCenterClientImpl{ctx: context.TODO(), client: mock}
-	err := cli.deactivateFinding(findingName, time)
+	err := cli.updateFinding(findingName, state, time)
 	if err != nil {
 		t.Fatalf("err = %v; want nil", err)
 	}
@@ -263,6 +316,22 @@ func TestMapFindingSeverityString(t *testing.T) {
 	}
 	for k, v := range data {
 		r := mapFindingSeverityString(k)
+		if r != v {
+			t.Errorf("severity of %v = %v; want %v", k, r, v)
+		}
+	}
+}
+
+func TestMapFindingStateString(t *testing.T) {
+	data := map[string]sccpb.Finding_State{
+		FINDING_STATE_STRING_ACTIVE:      sccpb.Finding_ACTIVE,
+		FINDING_STATE_STRING_INACTIVE:    sccpb.Finding_INACTIVE,
+		FINDING_STATE_STRING_UNSPECIFIED: sccpb.Finding_STATE_UNSPECIFIED,
+		"bogus":                          sccpb.Finding_STATE_UNSPECIFIED,
+		"":                               sccpb.Finding_STATE_UNSPECIFIED,
+	}
+	for k, v := range data {
+		r := mapFindingStateString(k)
 		if r != v {
 			t.Errorf("severity of %v = %v; want %v", k, r, v)
 		}

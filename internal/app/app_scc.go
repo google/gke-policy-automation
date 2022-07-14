@@ -15,44 +15,40 @@
 package app
 
 import (
-	"time"
+	"errors"
 
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/outputs/scc"
 )
 
-func (p *PolicyAutomationApp) ConfigureSCC() error {
-	p.out.Printf("suck\n")
-	cli, err := scc.NewSecurityCommandCenterClient(p.ctx, "153963171798")
+func (p *PolicyAutomationApp) ConfigureSCC(orgNumber string) error {
+	if orgNumber == "" {
+		return errors.New("organization number is not set")
+	}
+	cli, err := scc.NewSecurityCommandCenterClient(p.ctx, orgNumber)
 	if err != nil {
 		return err
 	}
-	log.Infof("Searching for source")
+	p.out.ColorPrintf("\u2139 [light_gray][bold]Searching for GKE Policy Automation in SCC organization... [%s]\n", orgNumber)
+	log.Infof("Searching for GKE Policy Automation in SCC organization %s", orgNumber)
 	id, err := cli.FindSource()
 	if err != nil {
+		p.out.ErrorPrint("could not fetch SCC sources", err)
 		return err
 	}
-	if id == nil {
-		log.Infof("Creating source: %v", id)
-		*id, err = cli.CreateSource()
-		if err != nil {
-			return err
-		}
+	if id != nil {
+		p.out.ColorPrintf("\u2139 [light_gray][bold]Found GKE Policy Automation in SCC... [%s]\n", *id)
+		log.Infof("Found GKE Policy Automation in SCC: %s", *id)
+		return nil
 	}
-
-	log.Infof("Using source %v", *id)
-	finding := &scc.Finding{
-		Category:     "GKE_POLICY_AUTOMATION_TEST",
-		ResourceName: "//container.googleapis.com/projects/gke-policy-demo/zones/europe-central2/clusters/cluster-waw",
-		State:        scc.FINDING_STATE_STRING_INACTIVE,
-		Time:         time.Now(),
-		Description:  "test two",
-		Severity:     scc.FINDING_SEVERITY_STRING_HIGH,
-	}
-	findingName, err := cli.UpsertFinding(*id, finding)
+	p.out.ColorPrintf("\u2139 [light_gray][bold]GKE Policy Automation was not found in SCC, creating it...\n")
+	log.Info("Creating GKE Policy Automation in SCC")
+	*id, err = cli.CreateSource()
 	if err != nil {
-		log.Errorf("Failed to update finding: %s ", err)
+		p.out.ErrorPrint("could not create GKE Policy Automation source in SCC", err)
+		return err
 	}
-	log.Infof("Finding name is %s", findingName)
+	p.out.ColorPrintf("\u2139 [light_gray][bold]Created GKE Policy Automation in SCC... [%s]\n", *id)
+	log.Infof("Created GKE Policy Automation in SCC: %s", *id)
 	return nil
 }

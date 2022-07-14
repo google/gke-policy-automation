@@ -51,7 +51,7 @@ const (
 type SecurityCommandCenterClient interface {
 	CreateSource() (string, error)
 	FindSource() (*string, error)
-	UpsertFinding(sourceName string, finding *Finding) (string, error)
+	UpsertFinding(sourceName string, finding *Finding) error
 }
 
 type sccApiClient interface {
@@ -98,7 +98,15 @@ type securityCommandCenterClientImpl struct {
 }
 
 func NewSecurityCommandCenterClient(ctx context.Context, organizationNumber string) (SecurityCommandCenterClient, error) {
-	opts := []option.ClientOption{option.WithUserAgent(version.UserAgent)}
+	return newSecurityCommandCenterClient(ctx, organizationNumber)
+}
+
+func NewSecurityCommandCenterClientWithCredentialsFile(ctx context.Context, organizationNumber string, credsFile string) (SecurityCommandCenterClient, error) {
+	return newSecurityCommandCenterClient(ctx, organizationNumber, option.WithCredentialsFile(credsFile))
+}
+
+func newSecurityCommandCenterClient(ctx context.Context, organizationNumber string, opts ...option.ClientOption) (SecurityCommandCenterClient, error) {
+	opts = append(opts, option.WithUserAgent(version.UserAgent))
 	c, err := scc.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -134,25 +142,19 @@ func (c *securityCommandCenterClientImpl) FindSource() (*string, error) {
 	return c.findSourceNameByDisplayName(sourceDisplayName, sourcesIterator)
 }
 
-func (c *securityCommandCenterClientImpl) UpsertFinding(sourceName string, finding *Finding) (string, error) {
-	sccFindings, err := c.getActiveFindings(sourceName, finding.ResourceName, finding.Category)
+func (c *securityCommandCenterClientImpl) UpsertFinding(sourceName string, finding *Finding) error {
+	sccFindings, err := c.getFindings(sourceName, finding.ResourceName, finding.Category)
 	if err != nil {
-		return "", err
+		return err
 	}
-	if finding.State == FINDING_STATE_STRING_INACTIVE {
-		if errors := c.deactivateFindings(sccFindings, finding.Time); len(errors) > 0 {
-			return "", errors.Error()
-		}
-		if len(sccFindings) > 0 {
-			return sccFindings[0].Finding.Name, nil
-		}
-		return "", nil
+	if len(sccFindings) < 1 && finding.State == FINDING_STATE_STRING_ACTIVE {
+		_, err = c.createFinding(sourceName, finding)
+		return err
 	}
-
-	if len(sccFindings) > 0 {
-		return sccFindings[0].Finding.Name, c.updateFindingEventTime(sccFindings[0].Finding.Name, finding.Time)
+	if errors := c.updateFindings(sccFindings, mapFindingStateString(finding.State), finding.Time); len(errors) > 0 {
+		return errors.Error()
 	}
-	return c.createFinding(sourceName, finding)
+	return nil
 }
 
 func (c *securityCommandCenterClientImpl) findSourceNameByDisplayName(displayName string, it sccResourceIterator[*sccpb.Source]) (*string, error) {
@@ -172,11 +174,11 @@ func (c *securityCommandCenterClientImpl) findSourceNameByDisplayName(displayNam
 	return &name, nil
 }
 
-//getActiveFindings returns slice of active findings for a given SCC source, resource and category.
-func (c *securityCommandCenterClientImpl) getActiveFindings(source string, resource string, category string) ([]*sccpb.ListFindingsResponse_ListFindingsResult, error) {
+//getFindings returns slice of findings for a given SCC source, resource and category.
+func (c *securityCommandCenterClientImpl) getFindings(source string, resource string, category string) ([]*sccpb.ListFindingsResponse_ListFindingsResult, error) {
 	req := &sccpb.ListFindingsRequest{
 		Parent: source,
-		Filter: fmt.Sprintf("resourceName=%q AND category=%q AND state=%q", resource, category, FINDING_STATE_STRING_ACTIVE),
+		Filter: fmt.Sprintf("resourceName=%q AND category=%q", resource, category),
 	}
 	it := c.client.ListFindings(c.ctx, req)
 	return resourceIteratorToSlice[*sccpb.ListFindingsResponse_ListFindingsResult](
@@ -205,35 +207,25 @@ func (c *securityCommandCenterClientImpl) createFinding(sourceName string, findi
 	return sccFinding.Name, nil
 }
 
-func (c *securityCommandCenterClientImpl) updateFindingEventTime(findingName string, time time.Time) error {
-	finding := &sccpb.Finding{
-		Name:      findingName,
-		EventTime: timestamppb.New(time),
-	}
-	log.Debugf("updating event time for finding %s with %s", findingName, time)
-	_, err := c.upsertFinding(finding, []string{"event_time"})
-	return err
-}
-
-//deactivateFindings updates state to INACTIVE and event time to all findings with a names from given slice
-func (c *securityCommandCenterClientImpl) deactivateFindings(findingListResults []*sccpb.ListFindingsResponse_ListFindingsResult, startTime time.Time) MultipleErrors {
+//updateFinding updates state and event time to all findings with a names from given slice
+func (c *securityCommandCenterClientImpl) updateFindings(findingListResults []*sccpb.ListFindingsResponse_ListFindingsResult, state sccpb.Finding_State, startTime time.Time) MultipleErrors {
 	errors := MultipleErrors{}
 	for _, result := range findingListResults {
-		if err := c.deactivateFinding(result.Finding.Name, startTime); err != nil {
+		if err := c.updateFinding(result.Finding.Name, state, startTime); err != nil {
 			errors = append(errors, err)
 		}
 	}
 	return errors
 }
 
-//deactivateFinding updates state to INACTIVE and event time to the given one for a finding with a given name.
-func (c *securityCommandCenterClientImpl) deactivateFinding(findingName string, startTime time.Time) error {
+//updateFinding updates state and event time for a given finding
+func (c *securityCommandCenterClientImpl) updateFinding(findingName string, state sccpb.Finding_State, startTime time.Time) error {
 	finding := &sccpb.Finding{
 		Name:      findingName,
-		State:     sccpb.Finding_INACTIVE,
+		State:     state,
 		EventTime: timestamppb.New(startTime),
 	}
-	log.Debugf("deactivating finding %s with startTime %s", findingName, startTime)
+	log.Debugf("updating finding %s with state %s, startTime %s", findingName, state.String(), startTime)
 	_, err := c.upsertFinding(finding, []string{"state", "event_time"})
 	return err
 }
@@ -293,5 +285,17 @@ func mapFindingSeverityString(severity string) sccpb.Finding_Severity {
 		return sccpb.Finding_LOW
 	default:
 		return sccpb.Finding_SEVERITY_UNSPECIFIED
+	}
+}
+
+//mapFindingStateString maps severity string to SCC severity uint32
+func mapFindingStateString(state string) sccpb.Finding_State {
+	switch state {
+	case FINDING_STATE_STRING_ACTIVE:
+		return sccpb.Finding_ACTIVE
+	case FINDING_STATE_STRING_INACTIVE:
+		return sccpb.Finding_INACTIVE
+	default:
+		return sccpb.Finding_STATE_UNSPECIFIED
 	}
 }
