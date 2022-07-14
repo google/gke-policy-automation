@@ -93,11 +93,11 @@ func (c *sccCollector) getSccSource() (string, error) {
 		return "", errors.New("SCC source was not found and its provisioning is disabled")
 	}
 	log.Debugf("Creating SCC source")
-	*source, err = c.cli.CreateSource()
+	newSource, err := c.cli.CreateSource()
 	if err != nil {
 		return "", err
 	}
-	return *source, nil
+	return newSource, nil
 }
 
 func mapPolicyToFinding(resourceName string, eventTime time.Time, policy *policy.Policy) *scc.Finding {
