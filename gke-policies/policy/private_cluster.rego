@@ -17,6 +17,9 @@
 # description: GKE cluster should be private to ensure network isolation
 # custom:
 #   group: Security
+#   severity: High
+#   sccCategory: NODES_PUBLIC
+
 package gke.policy.private_cluster
 
 default valid = false

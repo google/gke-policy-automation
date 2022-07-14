@@ -17,6 +17,8 @@
 # description: GKE node pools should have integrity monitoring feature enabled to detect changes in a VM boot measurments
 # custom:
 #   group: Security
+#   severity: Critical
+#   sccCategory: NODEPOOL_INTEGRITY_MONITORING_DISABLED
 
 package gke.policy.node_pool_integrity_monitoring
 

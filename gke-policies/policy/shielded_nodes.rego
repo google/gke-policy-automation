@@ -17,6 +17,9 @@
 # description: GKE cluster should use shielded nodes
 # custom:
 #   group: Security
+#   severity: High
+#   sccCategory: SHIELDED_NODES_DISABLED
+
 package gke.policy.shielded_nodes
 
 default valid = false

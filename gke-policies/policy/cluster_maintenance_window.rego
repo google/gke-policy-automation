@@ -17,6 +17,8 @@
 # description: GKE cluster should schedule maintenance windows and exclusions to upgrade predictability and to align updates with off-peak business hours.
 # custom:
 #   group: Management
+#   severity: Medium
+#   sccCategory: MAINTENANCE_WINDOWS_DISABLED
 
 package gke.policy.cluster_maintenance_window
 

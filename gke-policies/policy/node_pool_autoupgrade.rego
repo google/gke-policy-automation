@@ -17,6 +17,9 @@
 # description: GKE node pools should have Node Auto-Upgrade enabled to configure Kubernetes Engine
 # custom:
 #   group: Availability
+#   severity: High
+#   sccCategory: NODEPOOL_AUTOUPGRADE_DISABLED
+
 package gke.policy.node_pool_autoupgrade
 
 default valid = false

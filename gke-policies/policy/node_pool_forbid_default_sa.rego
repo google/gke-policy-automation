@@ -17,6 +17,9 @@
 # description: GKE node pools should have a dedicated sa with a restricted set of permissions
 # custom:
 #   group: Security
+#   severity: Critical
+#   sccCategory: DEFAULT_SA_CONFIGURED
+
 package gke.policy.node_pool_forbid_default_sa
 
 default valid = false

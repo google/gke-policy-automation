@@ -17,6 +17,9 @@
 # description: GKE cluster should use RBAC instead of legacy ABAC authorization
 # custom:
 #   group: Security
+#   severity: Critical
+#   sccCategory: RBAC_DISABLED
+
 package gke.policy.disable_legacy_authorization
 
 default valid = false

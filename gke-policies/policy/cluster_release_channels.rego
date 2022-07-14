@@ -17,6 +17,8 @@
 # description: GKE cluster should be enrolled in release channels
 # custom:
 #   group: Security
+#   severity: High
+#   sccCategory: RELEASE_CHANNELS_DISABLED
 
 package gke.policy.cluster_release_channels
 

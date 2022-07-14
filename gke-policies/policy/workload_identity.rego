@@ -17,6 +17,9 @@
 # description: GKE cluster should have Workload Identity enabled
 # custom:
 #   group: Security
+#   severity: CRITICAL
+#   sccCategory: WORKLOAD_IDENTITY_DISABLED
+
 package gke.policy.workload_identity
 
 default valid = false
@@ -27,6 +30,5 @@ valid {
 
 violation[msg] {
 	not input.workload_identity_config.workload_pool
-
 	msg := "The GKE cluster does not have workload identity enabled"
 }

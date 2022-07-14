@@ -17,6 +17,9 @@
 # description: Control Plane endpoint should be locked from external access
 # custom:
 #   group: Security
+#   severity: High
+#   sccCategory: CONTROL_PLANE_ENDPOINT_PUBLIC
+
 package gke.policy.control_plane_endpoint
 
 default valid = false

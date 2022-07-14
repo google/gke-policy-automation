@@ -16,7 +16,10 @@
 # title: Use node pool autoscaling
 # description: GKE node pools should have autoscaling configured to proper resize nodes according to traffic
 # custom:
-#   group: Availability
+#   group: Scalability
+#   severity: Medium
+#   sccCategory: NODEPOOL_AUTOSCALING_DISABLED
+
 package gke.policy.node_pool_autoscaling
 
 default valid = false

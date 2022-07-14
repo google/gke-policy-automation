@@ -17,6 +17,8 @@
 # description: GKE cluster should be proactively receive updates about GKE upgrades and GKE versions
 # custom:
 #   group: Management
+#   severity: Low
+#   sccCategory: UPDATE_NOTIFICATIONS_DISABLED
 
 package gke.policy.cluster_receive_updates
 

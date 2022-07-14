@@ -17,6 +17,9 @@
 # description: GKE node pools should be regional (multiple zones) for maximum nodes availability during zonal outages
 # custom:
 #   group: Availability
+#   severity: High
+#   sccCategory: NODEPOOL_ZONAL
+
 package gke.policy.node_pool_multi_zone
 
 default valid = false

@@ -17,6 +17,9 @@
 # description: Control Plane endpoint access should be limited to authorized networks only
 # custom:
 #   group: Security
+#   severity: Critical
+#   sccCategory: CONTROL_PLANE_ACCESS_UNRESTRICTED
+
 package gke.policy.control_plane_access
 
 default valid = false
