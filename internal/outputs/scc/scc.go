@@ -52,6 +52,7 @@ type SecurityCommandCenterClient interface {
 	CreateSource() (string, error)
 	FindSource() (*string, error)
 	UpsertFinding(sourceName string, finding *Finding) error
+	Close() error
 }
 
 type sccApiClient interface {
@@ -59,6 +60,7 @@ type sccApiClient interface {
 	CreateSource(ctx context.Context, req *sccpb.CreateSourceRequest, opts ...gax.CallOption) (*sccpb.Source, error)
 	ListFindings(ctx context.Context, req *sccpb.ListFindingsRequest, opts ...gax.CallOption) *scc.ListFindingsResponse_ListFindingsResultIterator
 	UpdateFinding(ctx context.Context, req *sccpb.UpdateFindingRequest, opts ...gax.CallOption) (*sccpb.Finding, error)
+	Close() error
 }
 
 type sccResource interface {
@@ -155,6 +157,11 @@ func (c *securityCommandCenterClientImpl) UpsertFinding(sourceName string, findi
 		return errors.Error()
 	}
 	return nil
+}
+
+func (c *securityCommandCenterClientImpl) Close() error {
+	log.Debugf("closing scc client")
+	return c.client.Close()
 }
 
 func (c *securityCommandCenterClientImpl) findSourceNameByDisplayName(displayName string, it sccResourceIterator[*sccpb.Source]) (*string, error) {

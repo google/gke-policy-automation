@@ -15,17 +15,22 @@
 package outputs
 
 import (
+	"context"
+	"fmt"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/gke-policy-automation/internal/outputs/scc"
 	"github.com/google/gke-policy-automation/internal/policy"
+	"github.com/stretchr/testify/assert"
 )
 
 type sccClientMock struct {
 	CreateSourceFn  func() (string, error)
 	FindSourceFn    func() (*string, error)
 	UpsertFindingFn func(sourceName string, finding *scc.Finding) error
+	CloseFn         func() error
 }
 
 func (m *sccClientMock) CreateSource() (string, error) {
@@ -38,6 +43,31 @@ func (m *sccClientMock) FindSource() (*string, error) {
 
 func (m *sccClientMock) UpsertFinding(sourceName string, finding *scc.Finding) error {
 	return m.UpsertFindingFn(sourceName, finding)
+}
+
+func (m *sccClientMock) Close() error {
+	return m.CloseFn()
+}
+
+func TestNewSccCollector(t *testing.T) {
+	ctx := context.TODO()
+	createSource := true
+	mock := &sccClientMock{}
+	col := newSccCollector(ctx, createSource, mock)
+
+	sccCol, ok := col.(*sccCollector)
+	if !ok {
+		t.Fatalf("created collector is not *sccCollector")
+	}
+	if sccCol.createSource != createSource {
+		t.Errorf("collector createSource = %v; want %v", sccCol.createSource, createSource)
+	}
+	if defaultNoThreads < 2 {
+		t.Errorf("defaultNoThreads = %v; want at least 2", defaultNoThreads)
+	}
+	if sccCol.threadsNo != defaultNoThreads {
+		t.Errorf("collector threadsNo = %v; want %v", sccCol.threadsNo, defaultNoThreads)
+	}
 }
 
 func TestSccCollectorRegisterResult(t *testing.T) {
@@ -64,6 +94,56 @@ func TestSccCollectorRegisterResult(t *testing.T) {
 	}
 	if len(c.findings) != 4 {
 		t.Fatalf("number of findings = %v; want %v", len(c.findings), 4)
+	}
+}
+
+func TestUpsertFindings(t *testing.T) {
+	sourceName := "testSource"
+	var upserted []*scc.Finding
+	mock := sccClientMock{
+		UpsertFindingFn: func(sourceName string, finding *scc.Finding) error {
+			upserted = append(upserted, finding)
+			return nil
+		},
+	}
+	findings := []*scc.Finding{
+		{Category: "test-one"},
+		{Category: "test-two"},
+		{Category: "test-three"},
+	}
+	var wg sync.WaitGroup
+	wg.Add(1)
+	ch := make(chan error)
+	c := &sccCollector{cli: &mock}
+	c.upsertFindings(0, &wg, findings, sourceName, ch)
+	wg.Wait()
+	close(ch)
+	assert.ElementsMatch(t, findings, upserted, "upserted findings match test findings")
+	if len(ch) != 0 {
+		t.Errorf("number of errors in result channel = %v; want %v", len(ch), 0)
+	}
+}
+
+func TestDivideFindings(t *testing.T) {
+	chunksNo := 7
+	var findings []*scc.Finding
+	for i := 0; i < 24; i++ {
+		findings = append(findings, &scc.Finding{
+			Category: fmt.Sprintf("test-%d", i),
+		})
+	}
+	result := divideFindings(chunksNo, findings)
+	var mergedBack []*scc.Finding
+	for i := range result {
+		for j := range result[i] {
+			mergedBack = append(mergedBack, result[i][j])
+		}
+	}
+	if len(mergedBack) != len(findings) {
+		t.Errorf("sum len of slices in result = %v; want %v", len(mergedBack), len(findings))
+	}
+	for i := range findings {
+		assert.Containsf(t, mergedBack, findings[i], "result contains finding %+v", findings[i])
 	}
 }
 

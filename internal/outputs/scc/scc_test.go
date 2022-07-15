@@ -33,6 +33,7 @@ type sccApiClientMock struct {
 	CreateSourceFn  func(ctx context.Context, req *sccpb.CreateSourceRequest, opts ...gax.CallOption) (*sccpb.Source, error)
 	ListFindingsFn  func(ctx context.Context, req *sccpb.ListFindingsRequest, opts ...gax.CallOption) *scc.ListFindingsResponse_ListFindingsResultIterator
 	UpdateFindingFn func(ctx context.Context, req *sccpb.UpdateFindingRequest, opts ...gax.CallOption) (*sccpb.Finding, error)
+	CloseFn         func() error
 }
 
 func (m *sccApiClientMock) ListSources(ctx context.Context, req *sccpb.ListSourcesRequest, opts ...gax.CallOption) *scc.SourceIterator {
@@ -49,6 +50,10 @@ func (m *sccApiClientMock) ListFindings(ctx context.Context, req *sccpb.ListFind
 
 func (m *sccApiClientMock) UpdateFinding(ctx context.Context, req *sccpb.UpdateFindingRequest, opts ...gax.CallOption) (*sccpb.Finding, error) {
 	return m.UpdateFindingFn(ctx, req, opts...)
+}
+
+func (m *sccApiClientMock) Close() error {
+	return m.CloseFn()
 }
 
 type sccSourceIteratorMock struct {
