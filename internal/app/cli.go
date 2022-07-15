@@ -14,22 +14,28 @@
 
 package app
 
-import cli "github.com/urfave/cli/v2"
+import (
+	"os"
+
+	"github.com/google/gke-policy-automation/internal/policy"
+	cli "github.com/urfave/cli/v2"
+)
 
 type CliConfig struct {
-	ConfigFile      string
-	SilentMode      bool
-	K8SCheck        bool
-	CredentialsFile string
-	DumpFile        string
-	ClusterName     string
-	ClusterLocation string
-	ProjectName     string
-	GitRepository   string
-	GitBranch       string
-	GitDirectory    string
-	LocalDirectory  string
-	OutputFile      string
+	ConfigFile          string
+	SilentMode          bool
+	K8SCheck            bool
+	CredentialsFile     string
+	DumpFile            string
+	ClusterName         string
+	ClusterLocation     string
+	ProjectName         string
+	GitRepository       string
+	GitBranch           string
+	GitDirectory        string
+	LocalDirectory      string
+	OutputFile          string
+	DocumentationOutput string
 }
 
 func NewPolicyAutomationCli(p PolicyAutomation) *cli.App {
@@ -130,6 +136,32 @@ func CreatePolicyCheckCommand(p PolicyAutomation) *cli.Command {
 						return err
 					}
 					p.PolicyCheck()
+					return nil
+				},
+			},
+			{
+				Name:  "generate-docs",
+				Usage: "Generate documentation for policy files",
+				Flags: (getPolicyDocumentationFlags(config)),
+				Action: func(c *cli.Context) error {
+					defer p.Close()
+					if err := p.LoadCliConfig(config, ValidatePolicyCheckConfig); err != nil {
+						cli.ShowSubcommandHelp(c)
+						return err
+					}
+
+					// Required output file to write documentation text
+					w, err := os.OpenFile(config.DocumentationOutput, os.O_CREATE|os.O_WRONLY, 0644)
+
+					if err != nil {
+						return err
+					}
+
+					defer w.Close()
+
+					// it's possible to wire different policy generators for console, json, etc
+					p.PolicyGenerateDocumentation(policy.NewMarkdownPolicyDocumentation, w)
+
 					return nil
 				},
 			},
@@ -234,4 +266,16 @@ func getPolicySourceFlags(config *CliConfig) []cli.Flag {
 			Destination: &config.GitDirectory,
 		},
 	}
+}
+
+func getPolicyDocumentationFlags(config *CliConfig) []cli.Flag {
+	return append(getPolicySourceFlags(config),
+		&cli.StringFlag{
+			Name:        "output",
+			Aliases:     []string{"o"},
+			Usage:       "Path to output the documentation file",
+			Required:    true,
+			Destination: &config.DocumentationOutput,
+		},
+	)
 }

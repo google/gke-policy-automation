@@ -193,6 +193,10 @@ func (pa *PolicyAgent) Evaluate(input interface{}) (*PolicyEvaluationResult, err
 	return pa.processRegoResultSet(results)
 }
 
+func (pa *PolicyAgent) GetPolicies() []*Policy {
+	return pa.policies
+}
+
 func (pa *PolicyAgent) processRegoResultSet(results rego.ResultSet) (*PolicyEvaluationResult, error) {
 	pa.initEvalCache()
 	evalResults := NewPolicyEvaluationResult()
