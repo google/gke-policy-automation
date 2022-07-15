@@ -13,9 +13,9 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/googleapis/gax-go/v2 v2.4.0
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
-	github.com/open-policy-agent/opa v0.41.0
+	github.com/open-policy-agent/opa v0.42.0
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.3
+	github.com/stretchr/testify v1.8.0
 	github.com/urfave/cli/v2 v2.10.1
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
 	golang.org/x/oauth2 v0.0.0-20220608161450-d0670ef3b1eb
@@ -38,7 +38,7 @@ require (
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/agnivade/levenshtein v1.0.1 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
@@ -75,14 +75,14 @@ require (
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.4.0 // indirect
-	github.com/vektah/gqlparser/v2 v2.4.4 // indirect
+	github.com/vektah/gqlparser/v2 v2.4.5 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	github.com/yashtewari/glob-intersection v0.1.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
+	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
 	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d // indirect
