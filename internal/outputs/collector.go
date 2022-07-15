@@ -22,6 +22,7 @@ import (
 type ValidationResultCollector interface {
 	RegisterResult(results []*policy.PolicyEvaluationResult) error
 	Close() error
+	Name() string
 }
 
 type ClusterDumpCollector interface {

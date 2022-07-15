@@ -71,3 +71,7 @@ func (p *JSONResultCollector) Close() error {
 	log.Infof("Validation results written to the [%s] file", p.filename)
 	return nil
 }
+
+func (p *JSONResultCollector) Name() string {
+	return p.filename + " file"
+}

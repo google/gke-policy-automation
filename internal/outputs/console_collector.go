@@ -62,5 +62,10 @@ func (p *consoleResultCollector) Close() error {
 		p.out.TabPrintf("  - %s:\t\033[32m%d valid, \033[31m%d violated, \033[33m%d errored\033[0m\n", stat.ClusterID, stat.ValidPoliciesCount, stat.ViolatedPoliciesCount, stat.ErroredPoliciesCount)
 	}
 	p.out.TabFlush()
+	p.out.Printf("\n")
 	return nil
+}
+
+func (p *consoleResultCollector) Name() string {
+	return "console"
 }

@@ -86,6 +86,10 @@ func (c *sccCollector) RegisterResult(results []*policy.PolicyEvaluationResult) 
 	return nil
 }
 
+func (c *sccCollector) Name() string {
+	return "Security Command Center"
+}
+
 func (c *sccCollector) getSccSource() (string, error) {
 	source, err := c.cli.FindSource()
 	if err != nil {
