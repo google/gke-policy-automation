@@ -29,6 +29,7 @@ import (
 
 const (
 	defaultNoThreads = 5
+	collectorName    = "Security Command Center"
 )
 
 type sccCollector struct {
@@ -87,7 +88,7 @@ func (c *sccCollector) RegisterResult(results []*policy.PolicyEvaluationResult) 
 }
 
 func (c *sccCollector) Name() string {
-	return "Security Command Center"
+	return collectorName
 }
 
 func (c *sccCollector) getSccSource() (string, error) {

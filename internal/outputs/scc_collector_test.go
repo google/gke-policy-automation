@@ -16,6 +16,7 @@ package outputs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"testing"
@@ -67,6 +68,44 @@ func TestNewSccCollector(t *testing.T) {
 	}
 	if sccCol.threadsNo != defaultNoThreads {
 		t.Errorf("collector threadsNo = %v; want %v", sccCol.threadsNo, defaultNoThreads)
+	}
+}
+
+func TestGetName(t *testing.T) {
+	c := sccCollector{}
+	result := c.Name()
+	if result != collectorName {
+		t.Errorf("name = %v; want %v", result, collectorName)
+	}
+}
+
+func TestProcessFindings(t *testing.T) {
+	findings := []*scc.Finding{
+		{Category: "category1"},
+		{Category: "category2"},
+		{Category: "category3"},
+	}
+	findingsToErr := map[string]error{
+		"category1": errors.New("error1"),
+		"category2": errors.New("error2"),
+		"category3": errors.New("error3"),
+	}
+	source := "src"
+	mock := &sccClientMock{
+		UpsertFindingFn: func(sourceName string, finding *scc.Finding) error {
+			if sourceName != source {
+				t.Fatalf("upsert fn source = %v; want %v", sourceName, source)
+			}
+			return findingsToErr[finding.Category]
+		},
+	}
+	c := &sccCollector{cli: mock, findings: findings, threadsNo: 2}
+	result := c.processFindings(source)
+	if len(result) != len(findingsToErr) {
+		t.Fatalf("number of results = %v; want %v", len(result), len(findingsToErr))
+	}
+	for _, v := range findingsToErr {
+		assert.Containsf(t, result, v, "result contains error %v", v)
 	}
 }
 
