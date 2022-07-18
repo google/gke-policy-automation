@@ -16,6 +16,7 @@ package scc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"testing"
@@ -86,6 +87,78 @@ func TestCreateSource(t *testing.T) {
 	}
 	if result != srcName {
 		t.Errorf("result source name = %v; want %v", result, srcName)
+	}
+}
+
+func TestUpsertFinding_emptySearch_active(t *testing.T) {
+	source := "source"
+	finding := &Finding{
+		ResourceName: "resource",
+		Category:     "category",
+		State:        FINDING_STATE_STRING_ACTIVE,
+	}
+	mock := &sccApiClientMock{
+		ListFindingsFn: func(ctx context.Context, req *sccpb.ListFindingsRequest, opts ...gax.CallOption) *scc.ListFindingsResponse_ListFindingsResultIterator {
+			return &scc.ListFindingsResponse_ListFindingsResultIterator{}
+		},
+		UpdateFindingFn: func(ctx context.Context, req *sccpb.UpdateFindingRequest, opts ...gax.CallOption) (*sccpb.Finding, error) {
+			if req.Finding.Parent != source {
+				t.Fatalf("new finding parent = %v; want %v", req.Finding.Parent, source)
+			}
+			if req.Finding.ResourceName != finding.ResourceName {
+				t.Fatalf("new finding resourceName = %v; want %v", req.Finding.ResourceName, finding.ResourceName)
+			}
+			if req.Finding.Category != finding.Category {
+				t.Fatalf("new finding category = %v; want %v", req.Finding.Category, finding.Category)
+			}
+			if req.Finding.State.String() != finding.State {
+				t.Fatalf("new finding state  = %v; want %v", req.Finding.State.String(), finding.State)
+			}
+			return &sccpb.Finding{}, nil
+		},
+	}
+	c := securityCommandCenterClientImpl{client: mock, sourcesSearchLimit: 0}
+	err := c.UpsertFinding(source, finding)
+	if err != nil {
+		t.Fatalf("err = %v; want nil", err)
+	}
+}
+
+func TestUpsertFinding_emptySearch_inactive(t *testing.T) {
+	source := "source"
+	finding := &Finding{
+		ResourceName: "resource",
+		Category:     "category",
+		State:        FINDING_STATE_STRING_INACTIVE,
+	}
+	mock := &sccApiClientMock{
+		ListFindingsFn: func(ctx context.Context, req *sccpb.ListFindingsRequest, opts ...gax.CallOption) *scc.ListFindingsResponse_ListFindingsResultIterator {
+			return &scc.ListFindingsResponse_ListFindingsResultIterator{}
+		},
+		UpdateFindingFn: func(ctx context.Context, req *sccpb.UpdateFindingRequest, opts ...gax.CallOption) (*sccpb.Finding, error) {
+			t.Fatal("update finding was called on non-existing, inactive finding")
+			return nil, nil
+
+		},
+	}
+	c := securityCommandCenterClientImpl{client: mock, sourcesSearchLimit: 0}
+	err := c.UpsertFinding(source, finding)
+	if err != nil {
+		t.Fatalf("err = %v; want nil", err)
+	}
+}
+
+func TestClose(t *testing.T) {
+	err := errors.New("test error")
+	mock := &sccApiClientMock{
+		CloseFn: func() error {
+			return err
+		},
+	}
+	c := securityCommandCenterClientImpl{client: mock}
+	result := c.Close()
+	if result != err {
+		t.Errorf("result = %v; want %v", result, err)
 	}
 }
 
