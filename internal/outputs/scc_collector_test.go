@@ -231,6 +231,9 @@ func TestMapPolicyToFinding(t *testing.T) {
 		Category:    "category",
 		Severity:    "LOW",
 		Description: "description",
+		Group:       "Security",
+		File:        "file.rego",
+		Name:        "gke.policy.test",
 	}
 	finding := mapPolicyToFinding(resourceName, time, policy)
 	if finding.Time != time {
@@ -245,6 +248,15 @@ func TestMapPolicyToFinding(t *testing.T) {
 	}
 	if finding.Description != policy.Description {
 		t.Errorf("finding description = %v; want %v", finding.Description, policy.Description)
+	}
+	if finding.SourcePolicyName != policy.Name {
+		t.Errorf("finding sourcePolicyName = %v; want %v", finding.SourcePolicyName, policy.Name)
+	}
+	if finding.SourcePolicyGroup != policy.Group {
+		t.Errorf("finding sourcePolicyGroup = %v; want %v", finding.SourcePolicyGroup, policy.Group)
+	}
+	if finding.SourcePolicyFile != policy.File {
+		t.Errorf("finding sourcePolicyFile = %v; want %v", finding.SourcePolicyFile, policy.File)
 	}
 	if finding.State != scc.FINDING_STATE_STRING_ACTIVE {
 		t.Errorf("finding state = %v; want %v", finding.State, scc.FINDING_STATE_STRING_ACTIVE)

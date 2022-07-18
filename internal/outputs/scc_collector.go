@@ -159,12 +159,15 @@ func divideFindings(chunksNo int, findings []*scc.Finding) [][]*scc.Finding {
 
 func mapPolicyToFinding(resourceName string, eventTime time.Time, policy *policy.Policy) *scc.Finding {
 	return &scc.Finding{
-		Time:         eventTime,
-		ResourceName: fmt.Sprintf("//container.googleapis.com/%s", resourceName),
-		Category:     policy.Category,
-		Description:  policy.Description,
-		State:        mapPolicyEvaluationToFindingState(policy),
-		Severity:     strings.ToUpper(policy.Severity),
+		Time:              eventTime,
+		ResourceName:      fmt.Sprintf("//container.googleapis.com/%s", resourceName),
+		Category:          policy.Category,
+		Description:       policy.Description,
+		State:             mapPolicyEvaluationToFindingState(policy),
+		Severity:          strings.ToUpper(policy.Severity),
+		SourcePolicyName:  policy.Name,
+		SourcePolicyFile:  policy.File,
+		SourcePolicyGroup: policy.Group,
 	}
 }
 

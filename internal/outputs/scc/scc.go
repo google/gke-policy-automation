@@ -30,6 +30,7 @@ import (
 	"google.golang.org/api/option"
 	sccpb "google.golang.org/genproto/googleapis/cloud/securitycenter/v1"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -84,12 +85,15 @@ func (m MultipleErrors) Error() error {
 }
 
 type Finding struct {
-	Time         time.Time
-	ResourceName string
-	Category     string
-	Description  string
-	State        string
-	Severity     string
+	Time              time.Time
+	ResourceName      string
+	Category          string
+	Description       string
+	State             string
+	Severity          string
+	SourcePolicyName  string
+	SourcePolicyFile  string
+	SourcePolicyGroup string
 }
 
 type securityCommandCenterClientImpl struct {
@@ -153,7 +157,7 @@ func (c *securityCommandCenterClientImpl) UpsertFinding(sourceName string, findi
 		_, err = c.createFinding(sourceName, finding)
 		return err
 	}
-	if errors := c.updateFindings(sccFindings, mapFindingStateString(finding.State), finding.Time); len(errors) > 0 {
+	if errors := c.updateFindings(sccFindings, finding); len(errors) > 0 {
 		return errors.Error()
 	}
 	return nil
@@ -197,15 +201,16 @@ func (c *securityCommandCenterClientImpl) getFindings(source string, resource st
 //createFinding creates given finding under the given source.
 func (c *securityCommandCenterClientImpl) createFinding(sourceName string, finding *Finding) (string, error) {
 	sccFinding := &sccpb.Finding{
-		Name:         fmt.Sprintf("%s/findings/%s", sourceName, uniuri.NewLen(32)),
-		Parent:       sourceName,
-		Description:  finding.Description,
-		ResourceName: finding.ResourceName,
-		State:        sccpb.Finding_ACTIVE,
-		Category:     finding.Category,
-		Severity:     mapFindingSeverityString(finding.Severity),
-		FindingClass: sccpb.Finding_MISCONFIGURATION,
-		EventTime:    timestamppb.New(finding.Time),
+		Name:             fmt.Sprintf("%s/findings/%s", sourceName, uniuri.NewLen(32)),
+		Parent:           sourceName,
+		Description:      finding.Description,
+		ResourceName:     finding.ResourceName,
+		State:            sccpb.Finding_ACTIVE,
+		Category:         finding.Category,
+		Severity:         mapFindingSeverityString(finding.Severity),
+		FindingClass:     sccpb.Finding_MISCONFIGURATION,
+		EventTime:        timestamppb.New(finding.Time),
+		SourceProperties: mapFindingSourceProperties(finding),
 	}
 	sccFinding, err := c.upsertFinding(sccFinding, nil)
 	if err != nil {
@@ -214,11 +219,11 @@ func (c *securityCommandCenterClientImpl) createFinding(sourceName string, findi
 	return sccFinding.Name, nil
 }
 
-//updateFinding updates state and event time to all findings with a names from given slice
-func (c *securityCommandCenterClientImpl) updateFindings(findingListResults []*sccpb.ListFindingsResponse_ListFindingsResult, state sccpb.Finding_State, startTime time.Time) MultipleErrors {
+//updateFinding updates all findings with a names from given slice
+func (c *securityCommandCenterClientImpl) updateFindings(findingListResults []*sccpb.ListFindingsResponse_ListFindingsResult, finding *Finding) MultipleErrors {
 	errors := MultipleErrors{}
 	for _, result := range findingListResults {
-		if err := c.updateFinding(result.Finding.Name, state, startTime); err != nil {
+		if err := c.updateFinding(result.Finding, finding); err != nil {
 			errors = append(errors, err)
 		}
 	}
@@ -226,14 +231,12 @@ func (c *securityCommandCenterClientImpl) updateFindings(findingListResults []*s
 }
 
 //updateFinding updates state and event time for a given finding
-func (c *securityCommandCenterClientImpl) updateFinding(findingName string, state sccpb.Finding_State, startTime time.Time) error {
-	finding := &sccpb.Finding{
-		Name:      findingName,
-		State:     state,
-		EventTime: timestamppb.New(startTime),
-	}
-	log.Debugf("updating finding %s with state %s, startTime %s", findingName, state.String(), startTime)
-	_, err := c.upsertFinding(finding, []string{"state", "event_time"})
+func (c *securityCommandCenterClientImpl) updateFinding(result *sccpb.Finding, finding *Finding) error {
+	result.EventTime = timestamppb.New(finding.Time)
+	result.SourceProperties = mapFindingSourceProperties(finding)
+	updateMask := []string{"state", "event_time", "source_properties"}
+	log.Debugf("updating finding: data %v; updateMask %v", finding, updateMask)
+	_, err := c.upsertFinding(result, updateMask)
 	return err
 }
 
@@ -295,14 +298,10 @@ func mapFindingSeverityString(severity string) sccpb.Finding_Severity {
 	}
 }
 
-//mapFindingStateString maps severity string to SCC severity uint32
-func mapFindingStateString(state string) sccpb.Finding_State {
-	switch state {
-	case FINDING_STATE_STRING_ACTIVE:
-		return sccpb.Finding_ACTIVE
-	case FINDING_STATE_STRING_INACTIVE:
-		return sccpb.Finding_INACTIVE
-	default:
-		return sccpb.Finding_STATE_UNSPECIFIED
-	}
+func mapFindingSourceProperties(finding *Finding) map[string]*structpb.Value {
+	result := make(map[string]*structpb.Value)
+	result["PolicyName"] = structpb.NewStringValue(finding.SourcePolicyName)
+	result["PolicyFile"] = structpb.NewStringValue(finding.SourcePolicyFile)
+	result["PolicyGroup"] = structpb.NewStringValue(finding.SourcePolicyGroup)
+	return result
 }

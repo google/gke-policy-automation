@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
 	"testing"
 	"time"
@@ -27,6 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/api/iterator"
 	sccpb "google.golang.org/genproto/googleapis/cloud/securitycenter/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type sccApiClientMock struct {
@@ -244,12 +246,15 @@ func TestGetFindings(t *testing.T) {
 func TestCreateFinding(t *testing.T) {
 	sourceName := "sourceName"
 	finding := &Finding{
-		Time:         time.Now(),
-		ResourceName: "cluster-resource",
-		Category:     "category",
-		Description:  "description",
-		State:        FINDING_STATE_STRING_ACTIVE,
-		Severity:     FINDING_SEVERITY_STRING_HIGH,
+		Time:              time.Now(),
+		ResourceName:      "cluster-resource",
+		Category:          "category",
+		Description:       "description",
+		State:             FINDING_STATE_STRING_ACTIVE,
+		Severity:          FINDING_SEVERITY_STRING_HIGH,
+		SourcePolicyName:  "gke.policy.some_policy",
+		SourcePolicyGroup: "Security",
+		SourcePolicyFile:  "name.rego",
 	}
 	mock := &sccApiClientMock{
 		UpdateFindingFn: func(ctx context.Context, req *sccpb.UpdateFindingRequest, opts ...gax.CallOption) (*sccpb.Finding, error) {
@@ -275,6 +280,10 @@ func TestCreateFinding(t *testing.T) {
 			if req.UpdateMask != nil {
 				t.Errorf("update mask = %v; want nil", req.UpdateMask)
 			}
+			expectedSrcProperties := mapFindingSourceProperties(finding)
+			if !reflect.DeepEqual(req.Finding.SourceProperties, expectedSrcProperties) {
+				t.Errorf("finding sourceProperties = %v; want %v", req.Finding.SourceProperties, expectedSrcProperties)
+			}
 			return req.Finding, nil
 		},
 	}
@@ -294,27 +303,31 @@ func TestCreateFinding(t *testing.T) {
 }
 
 func TestUpdateFinding(t *testing.T) {
-	findingName := "test"
-	time := time.Now()
-	state := sccpb.Finding_ACTIVE
+	finding := &Finding{
+		Time: time.Now(),
+	}
+	resultFinding := &sccpb.Finding{
+		Name:      "finding",
+		EventTime: timestamppb.New(finding.Time),
+		State:     sccpb.Finding_ACTIVE,
+	}
 	mock := &sccApiClientMock{
 		UpdateFindingFn: func(ctx context.Context, req *sccpb.UpdateFindingRequest, opts ...gax.CallOption) (*sccpb.Finding, error) {
-			if req.Finding.Name != findingName {
-				t.Fatalf("finding name = %v; want %v", req.Finding.Name, findingName)
+			if req.Finding.Name != resultFinding.Name {
+				t.Fatalf("finding name = %v; want %v", req.Finding.Name, resultFinding.Name)
 			}
-			eventTime := req.Finding.EventTime.AsTime()
-			if eventTime != time.UTC() {
-				t.Fatalf("finding eventTime = %v; want %v", eventTime, time.UTC())
+			if req.Finding.EventTime != resultFinding.EventTime {
+				t.Fatalf("finding eventTime = %v; want %v", req.Finding.EventTime, resultFinding.EventTime)
 			}
-			if req.Finding.State != state {
-				t.Fatalf("finding state = %v; want %v", req.Finding.State, state)
+			if req.Finding.State != resultFinding.State {
+				t.Fatalf("finding state = %v; want %v", req.Finding.State, resultFinding.State)
 			}
-			assert.ElementsMatch(t, req.UpdateMask.Paths, []string{"state", "event_time"}, "request update mask paths matches")
+			assert.ElementsMatch(t, req.UpdateMask.Paths, []string{"state", "event_time", "source_properties"}, "request update mask paths matches")
 			return req.Finding, nil
 		},
 	}
 	cli := securityCommandCenterClientImpl{ctx: context.TODO(), client: mock}
-	err := cli.updateFinding(findingName, state, time)
+	err := cli.updateFinding(resultFinding, finding)
 	if err != nil {
 		t.Fatalf("err = %v; want nil", err)
 	}
@@ -400,18 +413,23 @@ func TestMapFindingSeverityString(t *testing.T) {
 	}
 }
 
-func TestMapFindingStateString(t *testing.T) {
-	data := map[string]sccpb.Finding_State{
-		FINDING_STATE_STRING_ACTIVE:      sccpb.Finding_ACTIVE,
-		FINDING_STATE_STRING_INACTIVE:    sccpb.Finding_INACTIVE,
-		FINDING_STATE_STRING_UNSPECIFIED: sccpb.Finding_STATE_UNSPECIFIED,
-		"bogus":                          sccpb.Finding_STATE_UNSPECIFIED,
-		"":                               sccpb.Finding_STATE_UNSPECIFIED,
+func TestMapFindingSourceProperties(t *testing.T) {
+	finding := &Finding{
+		SourcePolicyName:  "name",
+		SourcePolicyFile:  "file",
+		SourcePolicyGroup: "group",
 	}
-	for k, v := range data {
-		r := mapFindingStateString(k)
-		if r != v {
-			t.Errorf("severity of %v = %v; want %v", k, r, v)
-		}
+	result := mapFindingSourceProperties(finding)
+	expectedPolicyName := fmt.Sprintf("string_value:%q", finding.SourcePolicyName)
+	if result["PolicyName"].String() != expectedPolicyName {
+		t.Errorf("PolicyName = %v; want %v", result["PolicyName"].String(), expectedPolicyName)
+	}
+	expectedPolicyFile := fmt.Sprintf("string_value:%q", finding.SourcePolicyFile)
+	if result["PolicyFile"].String() != expectedPolicyFile {
+		t.Errorf("PolicyFile = %v; want %v", result["PolicyFile"].String(), expectedPolicyFile)
+	}
+	expectedPolicyGroup := fmt.Sprintf("string_value:%q", finding.SourcePolicyGroup)
+	if result["PolicyGroup"].String() != expectedPolicyGroup {
+		t.Errorf("PolicyGroup = %v; want %v", result["PolicyGroup"].String(), expectedPolicyGroup)
 	}
 }
