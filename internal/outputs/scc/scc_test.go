@@ -255,6 +255,8 @@ func TestCreateFinding(t *testing.T) {
 		SourcePolicyName:  "gke.policy.some_policy",
 		SourcePolicyGroup: "Security",
 		SourcePolicyFile:  "name.rego",
+		CisVersion:        "1.0",
+		CisID:             "1.2.3",
 	}
 	mock := &sccApiClientMock{
 		UpdateFindingFn: func(ctx context.Context, req *sccpb.UpdateFindingRequest, opts ...gax.CallOption) (*sccpb.Finding, error) {
@@ -284,6 +286,10 @@ func TestCreateFinding(t *testing.T) {
 			if !reflect.DeepEqual(req.Finding.SourceProperties, expectedSrcProperties) {
 				t.Errorf("finding sourceProperties = %v; want %v", req.Finding.SourceProperties, expectedSrcProperties)
 			}
+			expectedCompliances := mapFindingCompliances(finding)
+			if !reflect.DeepEqual(req.Finding.Compliances, expectedCompliances) {
+				t.Errorf("finding compliances = %v; want %v", req.Finding.Compliances, expectedCompliances)
+			}
 			return req.Finding, nil
 		},
 	}
@@ -304,7 +310,12 @@ func TestCreateFinding(t *testing.T) {
 
 func TestUpdateFinding(t *testing.T) {
 	finding := &Finding{
-		Time: time.Now(),
+		Time:              time.Now(),
+		SourcePolicyName:  "gke.policy.test",
+		SourcePolicyFile:  "file.rego",
+		SourcePolicyGroup: "group",
+		CisVersion:        "1.0",
+		CisID:             "1.4.5",
 	}
 	resultFinding := &sccpb.Finding{
 		Name:      "finding",
@@ -321,6 +332,10 @@ func TestUpdateFinding(t *testing.T) {
 			}
 			if req.Finding.State != resultFinding.State {
 				t.Fatalf("finding state = %v; want %v", req.Finding.State, resultFinding.State)
+			}
+			expectedSrcProperties := mapFindingSourceProperties(finding)
+			if !reflect.DeepEqual(req.Finding.SourceProperties, expectedSrcProperties) {
+				t.Errorf("finding sourceProperties = %v; want %v", req.Finding.SourceProperties, expectedSrcProperties)
 			}
 			assert.ElementsMatch(t, req.UpdateMask.Paths, []string{"state", "event_time", "source_properties"}, "request update mask paths matches")
 			return req.Finding, nil
@@ -418,6 +433,8 @@ func TestMapFindingSourceProperties(t *testing.T) {
 		SourcePolicyName:  "name",
 		SourcePolicyFile:  "file",
 		SourcePolicyGroup: "group",
+		CisVersion:        "1.2",
+		CisID:             "6.9.1",
 	}
 	result := mapFindingSourceProperties(finding)
 	expectedPolicyName := fmt.Sprintf("string_value:%q", finding.SourcePolicyName)
@@ -431,5 +448,59 @@ func TestMapFindingSourceProperties(t *testing.T) {
 	expectedPolicyGroup := fmt.Sprintf("string_value:%q", finding.SourcePolicyGroup)
 	if result["PolicyGroup"].String() != expectedPolicyGroup {
 		t.Errorf("PolicyGroup = %v; want %v", result["PolicyGroup"].String(), expectedPolicyGroup)
+	}
+	complianceStruct := result["compliance_standards"].GetStructValue()
+	if complianceStruct == nil {
+		t.Fatalf("result compliance_standards struct is nil")
+	}
+	cisList := complianceStruct.Fields["cis"].GetListValue()
+	if cisList == nil {
+		t.Fatalf("result compliance_standards struct is nil")
+	}
+	if len(cisList.Values) < 1 {
+		t.Fatalf("result compliance_standards has empty or nil cis value")
+	}
+	cisElementStruct := cisList.Values[0].GetStructValue()
+	if cisElementStruct == nil {
+		t.Fatalf("result compliance_standards cis element 0 is nil")
+	}
+	version := cisElementStruct.Fields["version"].GetStringValue()
+	if version != finding.CisVersion {
+		t.Errorf("result compliance_standards cis element 0 version = %v; want %v", version, finding.CisVersion)
+	}
+	idList := cisElementStruct.Fields["ids"].GetListValue()
+	if idList == nil {
+		t.Fatalf("result compliance_standards cis element 0 ids is nil")
+	}
+	id := idList.Values[0].GetStringValue()
+	if id != finding.CisID {
+		t.Errorf("result compliance_standards cis element 0 ids element 0 = %v; want %v", id, finding.CisID)
+	}
+}
+
+func TestMapFindingCompliances_positive(t *testing.T) {
+	finding := &Finding{CisVersion: "1.0", CisID: "6.1.2"}
+	expected := []*sccpb.Compliance{{Standard: "cis", Version: "1.0", Ids: []string{"6.1.2"}}}
+
+	result := mapFindingCompliances(finding)
+	if len(result) != 1 {
+		t.Errorf("result has %v elements; want %v", len(result), 1)
+	}
+	if !reflect.DeepEqual(*result[0], *expected[0]) {
+		t.Errorf("result element =  %v; want %v", *result[0], *expected[0])
+	}
+}
+
+func TestMapFindingCompliances_negative(t *testing.T) {
+	findings := []*Finding{
+		{CisVersion: "1.0"},
+		{CisID: "2.2.1"},
+		{},
+	}
+	for i := range findings {
+		result := mapFindingCompliances(findings[i])
+		if result != nil {
+			t.Errorf("result = %v; want nil", result[i])
+		}
 	}
 }

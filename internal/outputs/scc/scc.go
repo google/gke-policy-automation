@@ -91,6 +91,8 @@ type Finding struct {
 	Description       string
 	State             string
 	Severity          string
+	CisVersion        string
+	CisID             string
 	SourcePolicyName  string
 	SourcePolicyFile  string
 	SourcePolicyGroup string
@@ -211,6 +213,7 @@ func (c *securityCommandCenterClientImpl) createFinding(sourceName string, findi
 		FindingClass:     sccpb.Finding_MISCONFIGURATION,
 		EventTime:        timestamppb.New(finding.Time),
 		SourceProperties: mapFindingSourceProperties(finding),
+		Compliances:      mapFindingCompliances(finding),
 	}
 	sccFinding, err := c.upsertFinding(sccFinding, nil)
 	if err != nil {
@@ -303,5 +306,32 @@ func mapFindingSourceProperties(finding *Finding) map[string]*structpb.Value {
 	result["PolicyName"] = structpb.NewStringValue(finding.SourcePolicyName)
 	result["PolicyFile"] = structpb.NewStringValue(finding.SourcePolicyFile)
 	result["PolicyGroup"] = structpb.NewStringValue(finding.SourcePolicyGroup)
+
+	if finding.CisID != "" && finding.CisVersion != "" {
+		standards := map[string]interface{}{
+			"cis": []interface{}{
+				map[string]interface{}{
+					"version": finding.CisVersion,
+					"ids":     []interface{}{finding.CisID},
+				},
+			},
+		}
+		structValue, err := structpb.NewStruct(standards)
+		if err != nil {
+			panic("mapping finding sourceProperties failed: cannot construct strucpb struct Value")
+		}
+		result["compliance_standards"] = structpb.NewStructValue(structValue)
+	}
 	return result
+}
+
+func mapFindingCompliances(finding *Finding) []*sccpb.Compliance {
+	if finding.CisID == "" || finding.CisVersion == "" {
+		return nil
+	}
+	return []*sccpb.Compliance{{
+		Standard: "cis",
+		Version:  finding.CisVersion,
+		Ids:      []string{finding.CisID}},
+	}
 }

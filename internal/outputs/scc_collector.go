@@ -168,6 +168,8 @@ func mapPolicyToFinding(resourceName string, eventTime time.Time, policy *policy
 		SourcePolicyName:  policy.Name,
 		SourcePolicyFile:  policy.File,
 		SourcePolicyGroup: policy.Group,
+		CisVersion:        policy.CisVersion,
+		CisID:             policy.CisID,
 	}
 }
 
