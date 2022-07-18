@@ -19,6 +19,9 @@
 #   group: Security
 #   severity: Critical
 #   sccCategory: NODEPOOL_INTEGRITY_MONITORING_DISABLED
+#   cis:
+#     version: "1.2"
+#     id: "5.5.6"
 
 package gke.policy.node_pool_integrity_monitoring
 

@@ -19,6 +19,9 @@
 #   group: Security
 #   severity: Critical
 #   sccCategory: CONTROL_PLANE_ACCESS_UNRESTRICTED
+#   cis:
+#     version: "1.2"
+#     id: "5.6.3"
 
 package gke.policy.control_plane_access
 

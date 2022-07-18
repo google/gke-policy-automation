@@ -19,6 +19,9 @@
 #   group: Availability
 #   severity: High
 #   sccCategory: NODEPOOL_AUTOREPAIR_DISABLED
+#   cis:
+#     version: "1.2"
+#     id: "5.5.2"
 
 package gke.policy.node_pool_autorepair
 

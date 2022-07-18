@@ -19,6 +19,9 @@
 #   group: Management
 #   severity: Low
 #   sccCategory: BINARY_AUTHORIZATION_DISABLED
+#   cis:
+#     version: "1.2"
+#     id: "5.10.5"
 
 package gke.policy.cluster_binary_authorization
 

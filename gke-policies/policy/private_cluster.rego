@@ -19,6 +19,9 @@
 #   group: Security
 #   severity: High
 #   sccCategory: NODES_PUBLIC
+#   cis:
+#     version: "1.2"
+#     id: "5.6.5"
 
 package gke.policy.private_cluster
 

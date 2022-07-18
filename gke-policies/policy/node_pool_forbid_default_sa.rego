@@ -19,6 +19,9 @@
 #   group: Security
 #   severity: Critical
 #   sccCategory: DEFAULT_SA_CONFIGURED
+#   cis:
+#     version: "1.2"
+#     id: "5.2.1"
 
 package gke.policy.node_pool_forbid_default_sa
 

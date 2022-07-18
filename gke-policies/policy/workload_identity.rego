@@ -19,6 +19,9 @@
 #   group: Security
 #   severity: CRITICAL
 #   sccCategory: WORKLOAD_IDENTITY_DISABLED
+#   cis:
+#     version: "1.2"
+#     id: "5.2.2"
 
 package gke.policy.workload_identity
 

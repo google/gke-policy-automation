@@ -19,6 +19,9 @@
 #   group: Security
 #   severity: High
 #   sccCategory: SHIELDED_NODES_DISABLED
+#   cis:
+#     version: "1.2"
+#     id: "5.5.5"
 
 package gke.policy.shielded_nodes
 

@@ -19,6 +19,9 @@
 #   group: Security
 #   severity: High
 #   sccCategory: RELEASE_CHANNELS_DISABLED
+#   cis:
+#     version: "1.2"
+#     id: "5.5.4"
 
 package gke.policy.cluster_release_channels
 
