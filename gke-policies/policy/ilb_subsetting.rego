@@ -14,7 +14,7 @@
 
 # METADATA
 # title: GKE L4 ILB Subsetting
-# description: GKE cluster should use GKE L4 ILB Subsetting is nodes > 250
+# description: GKE cluster should use GKE L4 ILB Subsetting if nodes > 250
 # custom:
 #   group: Scalability
 package gke.policy.enable_ilb_subsetting
