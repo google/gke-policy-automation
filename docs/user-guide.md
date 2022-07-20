@@ -220,9 +220,10 @@ outputs:
 
 The custom GIT policy source can be specified with a command line flags or in a [configuration file](#configuration-file).
 
-* `git-policy-repo` is a repository URL to clone from
-* `git-policy-branch` is a name of a GIT branch to clone
-* `git-policy-dir` is a directory within the GIT repository to search for policy files
+* `git-policy-repo` for command line and `repository` in config file is a repository URL to clone from
+* `git-policy-branch` for command line and `branch` in config file is a name of a GIT branch to clone
+* `git-policy-dir` for command line and `directory` in config file is a directory within the GIT
+repository to search for policy files
 
 The GKE Policy Automation tool scans for files with `rego` extension. Refer to the
 [policy authoring guide](../gke-policies/README.md) for more details about policies for this tool.
@@ -243,7 +244,8 @@ Example of a check command with a custom policy repository:
 
 The local policy source directory can be specified with a command line flags or in a [configuration file](#configuration-file).
 
-* `local-policy-dir` is a path to the local policy directory to search for policy files
+* `local-policy-dir` for command line and `local` in config file is a path to the local policy
+directory to search for policy files
 
 ### Validating policies
 
