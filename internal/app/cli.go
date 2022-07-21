@@ -50,6 +50,7 @@ func NewPolicyAutomationCli(p PolicyAutomation) *cli.App {
 			createDumpCommand(p),
 			createConfigureCommand(p),
 			createVersionCommand(p),
+			createGenerateCommand(p),
 		},
 	}
 	return app
@@ -163,8 +164,18 @@ func createConfigureCommand(p PolicyAutomation) *cli.Command {
 					return p.ConfigureSCC(config.SccOrgNumber)
 				},
 			},
+		},
+	}
+}
+
+func createGenerateCommand(p PolicyAutomation) *cli.Command {
+	config := &CliConfig{}
+	return &cli.Command{
+		Name:  "generate",
+		Usage: "Generate GKE Policy outputs.",
+		Subcommands: []*cli.Command{
 			{
-				Name:  "generate-docs",
+				Name:  "policy-docs",
 				Usage: "Generate documentation for policy files",
 				Flags: (getPolicyDocumentationFlags(config)),
 				Action: func(c *cli.Context) error {

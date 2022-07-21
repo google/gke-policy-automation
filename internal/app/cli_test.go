@@ -46,8 +46,8 @@ func TestConfigureCommand(t *testing.T) {
 
 func TestCreatePolicyGenerateDocsCommand(t *testing.T) {
 	app := NewPolicyAutomationApp()
-	cmd := CreatePolicyCheckCommand(app)
-	validateCommandsExist(t, cmd.Subcommands, []string{"generate-docs"})
+	cmd := createGenerateCommand(app)
+	validateCommandsExist(t, cmd.Subcommands, []string{"policy-docs"})
 }
 
 func validateCommandsExist(t *testing.T, commands []*cli.Command, expected []string) {
