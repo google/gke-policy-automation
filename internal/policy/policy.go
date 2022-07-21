@@ -55,8 +55,8 @@ type Policy struct {
 }
 
 type PolicyEvaluationResult struct {
-	ClusterName string
-	Policies    []*Policy
+	ClusterID string
+	Policies  []*Policy
 }
 
 type RegoEvaluationResult struct {

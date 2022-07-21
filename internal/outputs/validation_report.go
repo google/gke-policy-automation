@@ -75,10 +75,10 @@ func NewValidationReportMapper() ValidationReportMapper {
 }
 
 func (m *validationReportMapperImpl) AddResult(result *policy.PolicyEvaluationResult) {
-	clusterStat, ok := m.clusterStats[result.ClusterName]
+	clusterStat, ok := m.clusterStats[result.ClusterID]
 	if !ok {
-		clusterStat = &ValidationReportClusterStats{ClusterID: result.ClusterName}
-		m.clusterStats[result.ClusterName] = clusterStat
+		clusterStat = &ValidationReportClusterStats{ClusterID: result.ClusterID}
+		m.clusterStats[result.ClusterID] = clusterStat
 	}
 	for _, resultPolicy := range result.Policies {
 		reportPolicy, ok := m.policies[resultPolicy.Name]
@@ -86,7 +86,7 @@ func (m *validationReportMapperImpl) AddResult(result *policy.PolicyEvaluationRe
 			reportPolicy = mapResultPolicyToReportPolicy(resultPolicy)
 			m.policies[resultPolicy.Name] = reportPolicy
 		}
-		clusterEvaluation := mapResultPolicyToReportClusterEvaluation(resultPolicy, result.ClusterName)
+		clusterEvaluation := mapResultPolicyToReportClusterEvaluation(resultPolicy, result.ClusterID)
 		reportPolicy.ClusterEvaluations = append(reportPolicy.ClusterEvaluations, clusterEvaluation)
 		if clusterEvaluation.Errored {
 			clusterStat.ErroredPoliciesCount++
