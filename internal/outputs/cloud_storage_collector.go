@@ -16,7 +16,6 @@ package outputs
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/policy"
@@ -28,43 +27,41 @@ type StorageClient interface {
 	Close() error
 }
 
-type Mapper func(evaluationResult []*policy.PolicyEvaluationResult, time time.Time) ([]byte, error)
-
-type CloudStorageResultCollector struct {
-	client            StorageClient
-	mapper            Mapper
-	bucketName        string
-	objectName        string
-	evaluationResults []*policy.PolicyEvaluationResult
+type reportMapper interface {
+	AddResults(results []*policy.PolicyEvaluationResult)
+	GetJsonReport() ([]byte, error)
 }
 
-func NewCloudStorageResultCollector(client StorageClient, mapper Mapper, bucketName string, objectName string) (*CloudStorageResultCollector, error) {
+type cloudStorageResultCollector struct {
+	client       StorageClient
+	bucketName   string
+	objectName   string
+	reportMapper reportMapper
+}
 
+func NewCloudStorageResultCollector(client StorageClient, bucketName string, objectName string) (ValidationResultCollector, error) {
 	if !client.BucketExists(bucketName) {
 		return nil, fmt.Errorf("bucket does not exist: %s", bucketName)
 	}
-
-	return &CloudStorageResultCollector{
-		client:     client,
-		mapper:     mapper,
-		bucketName: bucketName,
-		objectName: objectName,
+	return &cloudStorageResultCollector{
+		client:       client,
+		bucketName:   bucketName,
+		objectName:   objectName,
+		reportMapper: NewValidationReportMapper(),
 	}, nil
 }
 
-func (p *CloudStorageResultCollector) RegisterResult(results []*policy.PolicyEvaluationResult) error {
-	p.evaluationResults = append(p.evaluationResults, results...)
+func (p *cloudStorageResultCollector) RegisterResult(results []*policy.PolicyEvaluationResult) error {
+	p.reportMapper.AddResults(results)
 	return nil
 }
 
-func (p *CloudStorageResultCollector) Close() error {
-
-	res, err := p.mapper(p.evaluationResults, time.Now())
+func (p *cloudStorageResultCollector) Close() error {
+	reportData, err := p.reportMapper.GetJsonReport()
 	if err != nil {
 		return err
 	}
-
-	if err := p.client.Write(p.bucketName, p.objectName, res); err != nil {
+	if err := p.client.Write(p.bucketName, p.objectName, reportData); err != nil {
 		return err
 	}
 	log.Infof("Validation results stored in [%s] object in [%s] Cloud Storage bucket", p.objectName, p.bucketName)
