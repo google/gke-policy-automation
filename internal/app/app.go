@@ -351,7 +351,7 @@ func (p *PolicyAutomationApp) PolicyGenerateDocumentation(generator outputs.Docu
 	}
 
 	pa := policy.NewPolicyAgent(p.ctx)
-	if err := pa.WithFiles(files); err != nil {
+	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
 		p.out.ErrorPrint("could not parse policy files", err)
 		log.Errorf("could not parse policy files: %s", err)
 		return err

@@ -17,8 +17,8 @@ package app
 import (
 	"os"
 
-	"github.com/google/gke-policy-automation/internal/outputs"
 	cfg "github.com/google/gke-policy-automation/internal/config"
+	"github.com/google/gke-policy-automation/internal/outputs"
 	cli "github.com/urfave/cli/v2"
 )
 
@@ -36,7 +36,7 @@ type CliConfig struct {
 	GitDirectory        string
 	LocalDirectory      string
 	OutputFile          string
-  DocumentationOutput string
+	DocumentationOutput string
 	DiscoveryEnabled    bool
 	SccOrgNumber        string
 }
@@ -169,7 +169,7 @@ func createConfigureCommand(p PolicyAutomation) *cli.Command {
 				Flags: (getPolicyDocumentationFlags(config)),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config, ValidatePolicyCheckConfig); err != nil {
+					if err := p.LoadCliConfig(config, cfg.ValidatePolicyCheckConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
