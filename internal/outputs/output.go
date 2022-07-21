@@ -18,25 +18,36 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"text/tabwriter"
 
 	"github.com/mitchellh/colorstring"
 )
 
+const (
+	tabWidth    = 0
+	tabPadding  = 2
+	defColWidth = 0
+	tabChar     = ' '
+)
+
 type Output struct {
-	w        io.Writer
-	colorize *colorstring.Colorize
+	w         io.Writer
+	tabWriter *tabwriter.Writer
+	colorize  *colorstring.Colorize
 }
 
 func NewStdOutOutput() *Output {
 	return &Output{
-		w:        os.Stdout,
-		colorize: NewColorize(),
+		w:         os.Stdout,
+		tabWriter: initTabWriter(defColWidth, tabWidth, tabPadding, tabChar),
+		colorize:  NewColorize(),
 	}
 }
 
 func NewSilentOutput() *Output {
 	return &Output{
-		w: io.Discard,
+		w:         io.Discard,
+		tabWriter: initSilentTabWriter(),
 	}
 }
 
@@ -44,8 +55,21 @@ func (o *Output) Printf(format string, a ...interface{}) (n int, err error) {
 	return fmt.Fprintf(o.w, format, a...)
 }
 
+func (o *Output) TabPrintf(format string, a ...interface{}) (n int, err error) {
+	return fmt.Fprintf(o.tabWriter, format, a...)
+}
+
 func (o *Output) ColorPrintf(format string, a ...interface{}) (n int, err error) {
 	return fmt.Fprintf(o.w, o.Color(format), a...)
+}
+
+func (o *Output) InitTabs(minColWidth int) {
+	o.tabWriter.Flush()
+	o.tabWriter = initTabWriter(minColWidth, tabWidth, tabPadding, tabChar)
+}
+
+func (o *Output) TabFlush() (err error) {
+	return o.tabWriter.Flush()
 }
 
 func (o *Output) ErrorPrint(message string, cause error) (n int, err error) {
@@ -67,4 +91,12 @@ func NewColorize() *colorstring.Colorize {
 		Colors: colorstring.DefaultColors,
 		Reset:  true,
 	}
+}
+
+func initTabWriter(minWidth, tabWidth, padding int, padChar byte) *tabwriter.Writer {
+	return tabwriter.NewWriter(os.Stdout, minWidth, tabWidth, padding, padChar, 0)
+}
+
+func initSilentTabWriter() *tabwriter.Writer {
+	return tabwriter.NewWriter(io.Discard, 0, 0, 0, 0, 0)
 }

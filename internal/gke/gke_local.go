@@ -17,65 +17,42 @@ package gke
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
 	"os"
-
-	containerpb "google.golang.org/genproto/googleapis/container/v1"
 )
 
-type GKELocalClient struct {
-	ctx      context.Context
-	dumpFile string
+type gkeLocalClient struct {
+	readFileFunc func(name string) ([]byte, error)
+	dumpFile     string
 }
 
-func NewGKELocalClient(ctx context.Context, dumpFile string) (*GKELocalClient, error) {
-	return &GKELocalClient{ctx: ctx, dumpFile: dumpFile}, nil
-}
-
-// GetClusterName() returns ClusterName from the file
-func (c *GKELocalClient) GetClusterName() (string, error) {
-	var err error
-	var cluster containerpb.Cluster
-
-	clusterData, err := openData(c.dumpFile)
-	if err != nil {
-		return "", err
+func NewGKELocalClient(ctx context.Context, dumpFile string) GKEClient {
+	return &gkeLocalClient{
+		readFileFunc: os.ReadFile,
+		dumpFile:     dumpFile,
 	}
-
-	err = json.Unmarshal(clusterData, &cluster)
-	if err != nil {
-		return "", err
-	}
-	return cluster.Name, err
 }
 
 // GetCluster() returns cluster data gathered from file
-func (c *GKELocalClient) GetCluster() (*Cluster, error) {
-	var err error
-	var cluster Cluster
-
-	clusterData, err := openData(c.dumpFile)
+func (c *gkeLocalClient) GetCluster(name string) (*Cluster, error) {
+	var clusters []*Cluster
+	clusterData, err := c.readFileFunc(c.dumpFile)
 	if err != nil {
-		return &cluster, err
+		return nil, err
 	}
 
-	err = json.Unmarshal(clusterData, &cluster)
+	err = json.Unmarshal(clusterData, &clusters)
 	if err != nil {
-		return &cluster, err
+		return nil, err
 	}
-	return &cluster, err
+	for _, cluster := range clusters {
+		if cluster.Name == name {
+			return cluster, nil
+		}
+	}
+	return nil, fmt.Errorf("cluster %s not found in a dump file", name)
 }
 
-func openData(fileName string) ([]byte, error) {
-	clusterDumpFile, err := os.Open(fileName)
-	if err != nil {
-		return nil, err
-	}
-	defer clusterDumpFile.Close()
-
-	byteValue, err := ioutil.ReadAll(clusterDumpFile)
-	if err != nil {
-		return nil, err
-	}
-	return byteValue, nil
+func (c *gkeLocalClient) Close() error {
+	return nil
 }

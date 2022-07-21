@@ -152,7 +152,7 @@ func filterMapSeachResults(results []*assetpb.ResourceSearchResult) []string {
 		}
 		id, err := getIDFromName(result.Name)
 		if err != nil {
-			log.Warnf("skipping cluster asset search result due to ivalid name: %s", err)
+			log.Warnf("skipping cluster asset search result due to invalid name: %s", err)
 			continue
 		}
 		identifiers = append(identifiers, id)
@@ -162,12 +162,12 @@ func filterMapSeachResults(results []*assetpb.ResourceSearchResult) []string {
 
 //getIDFromName returns cluster identifier from full cluster asset name.
 func getIDFromName(name string) (string, error) {
-	r := regexp.MustCompile(`//container\.googleapis\.com/(projects/.+/locations/.+/clusters/.+)`)
+	r := regexp.MustCompile(`//container\.googleapis\.com/(projects/.+/(locations|zones)/.+/clusters/.+)`)
 	if !r.MatchString(name) {
-		return "", fmt.Errorf("given name does not match GKE cluster name pattern")
+		return "", fmt.Errorf("given name %q does not match GKE cluster name pattern", name)
 	}
 	matches := r.FindStringSubmatch(name)
-	if len(matches) != 2 {
+	if len(matches) != 3 {
 		return "", fmt.Errorf("invalid number of regexp matches")
 	}
 	return matches[1], nil

@@ -17,6 +17,12 @@
 # description: GKE cluster should use encryption for kubernetes application secrets
 # custom:
 #   group: Security
+#   severity: Medium
+#   sccCategory: SECRETS_ENCRYPTION_DISABLED
+#   cis:
+#     version: "1.2"
+#     id: "5.3.1"
+
 package gke.policy.secret_encryption
 
 default valid = false

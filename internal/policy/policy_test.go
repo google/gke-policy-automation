@@ -16,117 +16,14 @@ package policy
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 	"testing"
 
+	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 )
-
-func TestNewPolicyEvaluationResults(t *testing.T) {
-	r := NewPolicyEvaluationResult()
-	if r.Valid == nil {
-		t.Errorf("valid is nil; want map")
-	}
-	if r.Violated == nil {
-		t.Errorf("violated is nil; want map")
-	}
-	if r.Errored == nil {
-		t.Errorf("errored is nil; want map")
-	}
-}
-
-func TestEvaluationResultsGroups(t *testing.T) {
-	groupOne := "test-one"
-	groupTwo := "test-two"
-	groupThree := "test-three"
-	r := NewPolicyEvaluationResult()
-	r.AddPolicy(&Policy{Group: groupOne, Valid: true})
-	r.AddPolicy(&Policy{Group: groupOne, Valid: false})
-	r.AddPolicy(&Policy{Group: groupTwo, Valid: true})
-	r.AddPolicy(&Policy{Group: groupTwo, Valid: false})
-	r.AddPolicy(&Policy{Group: groupThree, Valid: false})
-	groups := r.Groups()
-	if len(groups) != 3 {
-		t.Fatalf("number of groups = %v; want %v", len(groups), 3)
-	}
-}
-
-func TestAddPolicy(t *testing.T) {
-	groupOneName := "groupOne"
-	inputs := []*Policy{
-		{Group: groupOneName, Valid: true},
-		{Group: groupOneName, Valid: true},
-		{Group: groupOneName, Valid: false, Violations: []string{"error"}},
-		{Group: groupOneName, ProcessingErrors: []error{errors.New("error")}},
-	}
-	r := NewPolicyEvaluationResult()
-	for i := range inputs {
-		r.AddPolicy(inputs[i])
-	}
-	if len(r.Valid[groupOneName]) != 2 {
-		t.Errorf("number of valid policies in group %v = %v; want %v", groupOneName, len(r.Valid[groupOneName]), 2)
-	}
-	if len(r.Violated[groupOneName]) != 1 {
-		t.Errorf("number of violated policies in group %v = %v; want %v", groupOneName, len(r.Violated["groupOneName"]), 1)
-	}
-	if len(r.Errored) != 1 {
-		t.Errorf("number of errored policies = %v; want %v", len(r.Errored), 1)
-	}
-}
-
-func TestViolatedCount(t *testing.T) {
-	inputs := []*Policy{
-		{Group: "groupOne", Valid: false, Violations: []string{"error"}},
-		{Group: "groupOne", Valid: false, Violations: []string{"error"}},
-		{Group: "groupTwo", Valid: false, Violations: []string{"error"}},
-		{Group: "groupThree", Valid: false, Violations: []string{"error"}},
-	}
-	r := NewPolicyEvaluationResult()
-	for i := range inputs {
-		r.AddPolicy(inputs[i])
-	}
-	violatedCount := r.ViolatedCount()
-	if violatedCount != len(inputs) {
-		t.Errorf("violatedCount = %v; want %v", violatedCount, len(inputs))
-	}
-}
-
-func TestValidCount(t *testing.T) {
-	inputs := []*Policy{
-		{Group: "groupOne", Valid: true},
-		{Group: "groupOne", Valid: true},
-		{Group: "groupTwo", Valid: true},
-		{Group: "groupTwo", Valid: true},
-		{Group: "groupThree", Valid: true},
-	}
-	r := NewPolicyEvaluationResult()
-	for i := range inputs {
-		r.AddPolicy(inputs[i])
-	}
-	validCount := r.ValidCount()
-	if validCount != len(inputs) {
-		t.Errorf("validCount = %v; want %v", validCount, len(inputs))
-	}
-}
-
-func TestErroredCount(t *testing.T) {
-	inputs := []*Policy{
-		{Group: "groupOne", ProcessingErrors: []error{errors.New("error")}},
-		{Group: "groupTwo", ProcessingErrors: []error{errors.New("error")}},
-		{Group: "groupThree", ProcessingErrors: []error{errors.New("error")}},
-	}
-	r := NewPolicyEvaluationResult()
-	for i := range inputs {
-		r.AddPolicy(inputs[i])
-	}
-	erroredCount := r.ErroredCount()
-	if erroredCount != len(inputs) {
-		t.Errorf("erroredCount = %v; want %v", erroredCount, len(inputs))
-	}
-}
 
 func TestCompile(t *testing.T) {
 	policyFiles := []*PolicyFile{
@@ -142,14 +39,18 @@ p = 2`}}
 	if err != nil {
 		t.Fatalf("err = %q; want nil", err)
 	}
-	if pa.compiler == nil {
+	gkePa, ok := pa.(*GKEPolicyAgent)
+	if !ok {
+		t.Fatalf("policy agent type is not *GKEPolicyAgent")
+	}
+	if gkePa.compiler == nil {
 		t.Fatalf("compiler = nil; want compiler")
 	}
-	if len(pa.compiler.Modules) != len(policyFiles) {
-		t.Errorf("number of compiled policies = %d; want %d", len(pa.compiler.Modules), len(policyFiles))
+	if len(gkePa.compiler.Modules) != len(policyFiles) {
+		t.Errorf("number of compiled policies = %d; want %d", len(gkePa.compiler.Modules), len(policyFiles))
 	}
 	for _, file := range policyFiles {
-		if _, ok := pa.compiler.Modules[file.FullName]; !ok {
+		if _, ok := gkePa.compiler.Modules[file.FullName]; !ok {
 			t.Errorf("compiler has no module for file %s", file)
 		}
 	}
@@ -159,7 +60,7 @@ func TestCompile_parseError(t *testing.T) {
 	policyFiles := []*PolicyFile{
 		{"test_one.rego", "folder/test_one.rego", `
 bla bla`}}
-	pa := PolicyAgent{}
+	pa := GKEPolicyAgent{}
 	err := pa.Compile(policyFiles)
 	if err == nil {
 		t.Errorf("err is nil; want error")
@@ -173,6 +74,8 @@ func TestParseCompiled(t *testing.T) {
 		"# description: TestDescription\n"+
 		"# custom:\n"+
 		"#   group: TestGroup\n"+
+		"#   severity: High\n"+
+		"#   sccCategory: Category\n"+
 		"package %s\n"+
 		"p = 1", goodPackage)
 	policyContentBadMeta := `# METADATA
@@ -190,7 +93,7 @@ p = 1`
 		{"test_two.rego", "folder/test_two.rego", policyContentBadMeta},
 		{"test_three.rego", "folder/test_three.rego", policyContentBadMetaTwo},
 	}
-	pa := PolicyAgent{}
+	pa := GKEPolicyAgent{}
 	if err := pa.Compile(policyFiles); err != nil {
 		t.Fatalf("err is %s; expected nil", err)
 	}
@@ -207,46 +110,55 @@ p = 1`
 }
 
 func TestParseCompiled_noCompiler(t *testing.T) {
-	pa := PolicyAgent{}
+	pa := GKEPolicyAgent{}
 	if err := pa.ParseCompiled(); err == nil {
 		t.Fatalf("err is nil; want error")
 	}
 }
 
 func TestWithFiles(t *testing.T) {
-	packageOne := regoPolicyPackage + ".package_one"
+	ignoredPkg := "gke.invalid"
+	packageOne := "gke.policy.package_one"
 	titleOne := "TitleOne"
 	contentOne := fmt.Sprintf("# METADATA\n"+
 		"# title: %s\n"+
 		"# description: Test\n"+
 		"# custom:\n"+
 		"#   group: Test\n"+
+		"#   severity: High\n"+
+		"#   sccCategory: Category\n"+
 		"package %s\n"+
 		"p = 1", titleOne, packageOne)
-	packageTwo := regoPolicyPackage + ".package_three"
+	packageTwo := "gke.scalability.package_two"
 	titleTwo := "TitleTwo"
 	contentTwo := fmt.Sprintf("# METADATA\n"+
 		"# title: %s\n"+
 		"# description: Test\n"+
 		"# custom:\n"+
 		"#   group: Test\n"+
+		"#   severity: High\n"+
+		"#   sccCategory: Category\n"+
 		"package %s\n"+
 		"p = 1", titleTwo, packageTwo)
-	contentThree := fmt.Sprintf("# METADATA\n" +
-		"# title: TitleThree\n" +
-		"# description: Test\n" +
-		"# custom:\n" +
-		"#   group: Test\n" +
-		"package gke.something.invalid\n" +
-		"p = 1")
+	contentThree := fmt.Sprintf("# METADATA\n"+
+		"# title: TitleThree\n"+
+		"# description: Test\n"+
+		"# custom:\n"+
+		"#   group: Test\n"+
+		"package %s\n"+
+		"p = 1", ignoredPkg+".test")
 	policyFiles := []*PolicyFile{
 		{"test_one.rego", "folder/test_one.rego", contentOne},
 		{"test_two.rego", "folder/test_two.rego", contentTwo},
 		{"test_three.rego", "folder/test_three.rego", contentThree},
 		{"test_one_test.rego", "folder/test_one_test.rego", contentThree},
 	}
-	pa := PolicyAgent{}
-	if err := pa.WithFiles(policyFiles); err != nil {
+	policyExclusions := &cfg.ConfigPolicyExclusions{
+		Policies:     []string{"gke.policy.enable_ilb_subsetting"},
+		PolicyGroups: []string{"security"},
+	}
+	pa := GKEPolicyAgent{parserIgnoredPkgs: []string{ignoredPkg}}
+	if err := pa.WithFiles(policyFiles, *policyExclusions); err != nil {
 		t.Fatalf("error = %v; want nil", err)
 	}
 	if len(pa.policies) != 2 {
@@ -255,8 +167,9 @@ func TestWithFiles(t *testing.T) {
 }
 
 func TestProcessRegoResultSet(t *testing.T) {
+	regoPackageBase := "gke.policy"
 	policyOneCompiled := &Policy{
-		Name:        regoPolicyPackage + ".policy_one",
+		Name:        regoPackageBase + ".policy_one",
 		File:        "rego/policy_one.rego",
 		Title:       "Policy One test",
 		Description: "This is just for test",
@@ -274,7 +187,7 @@ func TestProcessRegoResultSet(t *testing.T) {
 		},
 	}
 	policyTwoCompiled := &Policy{
-		Name:        regoPolicyPackage + ".policy_two",
+		Name:        regoPackageBase + ".policy_two",
 		File:        "rego/policy_two.rego",
 		Title:       "Policy Two test",
 		Description: "This is just for test",
@@ -292,7 +205,7 @@ func TestProcessRegoResultSet(t *testing.T) {
 		},
 	}
 	policyThreeCompiled := &Policy{
-		Name:        regoPolicyPackage + ".policy_three",
+		Name:        regoPackageBase + ".policy_three",
 		File:        "rego/policy_three.rego",
 		Title:       "Policy Three test",
 		Description: "This is just for test",
@@ -308,21 +221,15 @@ func TestProcessRegoResultSet(t *testing.T) {
 		},
 	}
 	resultSet := []rego.Result{policyOneResult, policyTwoResult, policyThreeResult}
-	pa := PolicyAgent{}
+	pa := GKEPolicyAgent{}
 	pa.policies = []*Policy{policyOneCompiled, policyTwoCompiled, policyThreeCompiled}
 
-	result, err := pa.processRegoResultSet(resultSet)
+	result, err := pa.processRegoResultSet(regoPackageBase, resultSet)
 	if err != nil {
 		t.Fatalf("got error; expected nil")
 	}
-	if _, ok := result.Valid["policy_one"]; !ok {
-		t.Errorf("valid policy not grouped under %v key", "policy_one")
-	}
-	if _, ok := result.Violated["policy_two"]; !ok {
-		t.Errorf("violated policy not grouped under %v key", "policy_two")
-	}
-	if len(result.Errored) != 1 {
-		t.Fatalf("number of errored policies = %v; want %v", len(result.Errored), 1)
+	if len(result.Policies) != 3 {
+		t.Errorf("result policies number = %v; want %v", len(result.Policies), 3)
 	}
 	if len(pa.evalCache) != len(pa.policies) {
 		t.Fatalf("number of policies in eval cache = %v; want %v", len(pa.evalCache), len(pa.policies))
@@ -330,18 +237,18 @@ func TestProcessRegoResultSet(t *testing.T) {
 }
 
 func TestInitEvalCache(t *testing.T) {
-	pa := &PolicyAgent{}
+	pa := &GKEPolicyAgent{}
 	pa.policies = []*Policy{
 		{
-			Name:  regoPolicyPackage + ".policy_one",
+			Name:  "gke.scalability.policy_one",
 			Title: "policy one",
 		},
 		{
-			Name:  regoPolicyPackage + ".policy_twp",
+			Name:  "gke.scalability.policy_twp",
 			Title: "policy two",
 		},
 		{
-			Name:  regoPolicyPackage + ".policy_three",
+			Name:  "gke.scalability.policy_three",
 			Title: "policy two",
 		},
 	}
@@ -469,21 +376,30 @@ func TestMapModule(t *testing.T) {
 	title := "This is title"
 	desc := "This is long description"
 	group := "TestGroup"
+	severity := "Low"
+	category := "TEST"
+	cisVersion := "1.2"
+	cisID := "4.1.3"
 
 	content := fmt.Sprintf("# METADATA\n"+
 		"# title: %s\n"+
 		"# description: %s\n"+
 		"# custom:\n"+
 		"#   group: %s\n"+
+		"#   severity: %s\n"+
+		"#   sccCategory: %s\n"+
+		"#   cis:\n"+
+		"#     version: %q\n"+
+		"#     id: %q\n"+
 		"package %s\n"+
-		"p = 1", title, desc, group, pkg)
+		"p = 1", title, desc, group, severity, category, cisVersion, cisID, pkg)
 
 	modules := map[string]string{file: content}
 	compiler := ast.MustCompileModulesWithOpts(modules,
 		ast.CompileOpts{ParserOptions: ast.ParserOptions{ProcessAnnotation: true}})
 	module := compiler.Modules[file]
 	policy := Policy{}
-	policy.MapModule(module)
+	policy.mapModule(module)
 
 	if policy.Name != pkg {
 		t.Errorf("name = %v; want %v", policy.Name, pkg)
@@ -500,20 +416,38 @@ func TestMapModule(t *testing.T) {
 	if policy.Group != group {
 		t.Errorf("group = %v; want %v", policy.Group, group)
 	}
+	if policy.Severity != severity {
+		t.Errorf("severity = %v; want %v", policy.Severity, severity)
+	}
+	if policy.Category != category {
+		t.Errorf("category = %v; want %v", policy.Category, category)
+	}
+	if policy.CisVersion != cisVersion {
+		t.Errorf("cis version = %v; want %v", policy.CisVersion, cisVersion)
+	}
+	if policy.CisID != cisID {
+		t.Errorf("cis id = %v; want %v", policy.CisID, cisID)
+	}
 }
 
 func TestMetadataErrors(t *testing.T) {
 	input := []Policy{
+		{Title: "title", Description: "description", Group: "group", Severity: "High", Category: "TEST"},
+		{Title: "title", Description: "description", Group: "group", Severity: "High"},
 		{Title: "title", Description: "description", Group: "group"},
-		{Title: "title", Description: "description"},
 		{Title: "title"},
 		{},
+		{Title: "title", Description: "description", Group: "group", Severity: "High", Category: "TEST", CisVersion: "1.0"},
+		{Title: "title", Description: "description", Group: "group", Severity: "High", Category: "TEST", CisID: "1.1.1"},
 	}
 	expErrCnt := []int{
 		0,
 		1,
 		2,
-		3,
+		4,
+		5,
+		1,
+		1,
 	}
 	for i := range input {
 		errors := input[i].MetadataErrors()
@@ -573,5 +507,92 @@ func TestGetStringListFromInterfaceMap_negative(t *testing.T) {
 		if err == nil {
 			t.Errorf("err = nil; want error")
 		}
+	}
+}
+
+//
+func TestInitPolicyExcludeCache(t *testing.T) {
+	pa := &GKEPolicyAgent{}
+	pa.excludes.Policies = []string{"policy_one", "policy_two"}
+	policyExcludeCache := pa.initPolicyExcludeCache()
+	if len(policyExcludeCache) != len(pa.excludes.Policies) {
+		t.Fatalf("number of policies in exclude cache = %v; want %v", len(policyExcludeCache), len(pa.excludes.Policies))
+	}
+	for _, policy := range pa.excludes.Policies {
+		_, ok := policyExcludeCache["data."+policy]
+		if !ok {
+			t.Fatalf("policy with name %v missing in exclude cache", policy)
+		}
+	}
+}
+
+func TestInitGroupExcludeCache(t *testing.T) {
+	pa := &GKEPolicyAgent{}
+	pa.excludes.PolicyGroups = []string{"group_one", "group_two"}
+	groupExcludeCache := pa.initGroupExcludeCache()
+	if len(groupExcludeCache) != len(pa.excludes.PolicyGroups) {
+		t.Fatalf("number of policy groups in exclude cache = %v; want %v", len(groupExcludeCache), len(pa.excludes.PolicyGroups))
+	}
+	for _, group := range pa.excludes.PolicyGroups {
+		_, ok := groupExcludeCache[group]
+		if !ok {
+			t.Fatalf("group with name %v missing in exclude cache", group)
+		}
+	}
+}
+
+func TestIsExcluded(t *testing.T) {
+	inputName := "test"
+	inputMap := map[string]bool{"test": true}
+	expected := true
+
+	result, err := isExcluded(inputName, inputMap)
+	if err != nil {
+		t.Errorf("err = %q; want nil", err)
+	}
+	if result != expected {
+		t.Errorf("result = %v; want %v", result, expected)
+	}
+}
+
+func TestIsExcluded_negative(t *testing.T) {
+	inputName := "missing"
+	inputMap := map[string]bool{"test": true}
+	expected := false
+
+	result, err := isExcluded(inputName, inputMap)
+	if err == nil {
+		t.Errorf("err = nil; want error")
+	}
+	if result != expected {
+		t.Errorf("result = %v; want %v", result, expected)
+	}
+}
+
+func TestGetRegoQueryForPackageBase(t *testing.T) {
+	base := "gke.scalability"
+	query := getRegoQueryForPackageBase(base)
+	expected := "data." + base + "[name]"
+	if query != expected {
+		t.Fatalf("query = %v; want %v", query, expected)
+	}
+}
+
+func TestGetStringFromInterfaceMap(t *testing.T) {
+	m := map[string]interface{}{
+		"keyOne": "value",
+		"keyTwo": 12,
+	}
+	if v, ok := getStringFromInterfaceMap("keyOne", m); !ok {
+		t.Errorf("ok for keyOne is false; want true")
+
+	} else if v != m["keyOne"] {
+		t.Errorf("value for keyOne = %v; want %v", v, m["keyOne"])
+	}
+	if _, ok := getStringFromInterfaceMap("keyTwo", m); ok {
+		t.Errorf("ok for keyOne is true; want false")
+	}
+	if _, ok := getStringFromInterfaceMap("missing", m); ok {
+		t.Errorf("ok for missing is true; want false")
 	}
 }

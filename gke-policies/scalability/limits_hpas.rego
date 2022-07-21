@@ -13,20 +13,26 @@
 # limitations under the License.
 
 # METADATA
-# title: Control Plane redundancy
-# description: GKE node pools should be regional for maximum availability of a node pool during zonal outages
+# title: GKE HPAs Limit
+# description: GKE HPAs Limit
 # custom:
-#   group: Availability
-package gke.policy.node_pool_redundancy
+#   group: Scalability
+#   severity: High
+#   sccCategory: HPAS_LIMIT
+
+package gke.scalability.hpas
 
 default valid = false
 
+default hpas_limit = 2 #the value is ONLY for demo purpose, does not reflect a real limit
+
 valid {
-  count(violation) == 0
+	count(violation) == 0
 }
 
 violation[msg] {
-  some nodepool
-  data.gke.rule.nodepool.location.zonal[nodepool]
-  msg := sprintf("invalid locations for GKE node pool %q (not regional)", [nodepool.name])
+	hpas := {object | object := input.Resources[_]; object.Data.kind == "HorizontalPodAutoscaler"}
+	count(hpas) > hpas_limit
+	msg := sprintf("HPAs found: %d higher than the limit: %d", [count(hpas), hpas_limit])
+	print(msg)
 }

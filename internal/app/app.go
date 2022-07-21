@@ -16,7 +16,6 @@ package app
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -24,7 +23,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/google/gke-policy-automation/internal/config"
+	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/outputs"
@@ -32,43 +31,72 @@ import (
 	"github.com/google/gke-policy-automation/internal/outputs/storage"
 	"github.com/google/gke-policy-automation/internal/policy"
 	"github.com/google/gke-policy-automation/internal/version"
+	"golang.org/x/exp/maps"
+)
+
+const (
+	regoPackageBaseBestPractices = "gke.policy"
+	regoPackageBaseScalability   = "gke.scalability"
 )
 
 var errNoPolicies = errors.New("no policies to check against")
 
 type PolicyAutomation interface {
-	LoadCliConfig(cliConfig *CliConfig, validateFn ValidateConfig) error
+	LoadCliConfig(cliConfig *CliConfig, validateFn cfg.ValidateConfig) error
 	Close() error
-	ClusterReview() error
-	ClusterOfflineReview() error
+	Check() error
+	CheckBestPractices() error
+	CheckScalability() error
 	ClusterJSONData() error
 	Version() error
 	PolicyCheck() error
 	PolicyGenerateDocumentation(generator outputs.DocumentationBuilder, w io.Writer) error
+	ConfigureSCC(orgNumber string) error
+}
+
+type evaluationResults struct {
+	m map[string]*policy.PolicyEvaluationResult
+}
+
+func (r *evaluationResults) Add(result *policy.PolicyEvaluationResult) *evaluationResults {
+	if r.m == nil {
+		r.m = make(map[string]*policy.PolicyEvaluationResult)
+	}
+	currentResult, ok := r.m[result.ClusterID]
+	if !ok {
+		r.m[result.ClusterID] = result
+		return r
+	}
+	currentResult.Policies = append(currentResult.Policies, result.Policies...)
+	return r
+}
+
+func (r *evaluationResults) List() []*policy.PolicyEvaluationResult {
+	return maps.Values(r.m)
 }
 
 type PolicyAutomationApp struct {
-	ctx        context.Context
-	config     *Config
-	out        *outputs.Output
-	collectors []outputs.ValidationResultCollector
-	gke        *gke.GKEClient
-	gkeLocal   *gke.GKELocalClient
-	discovery  gke.DiscoveryClient
+	ctx                   context.Context
+	config                *cfg.Config
+	out                   *outputs.Output
+	collectors            []outputs.ValidationResultCollector
+	clusterDumpCollectors []outputs.ClusterDumpCollector
+	gke                   gke.GKEClient
+	discovery             gke.DiscoveryClient
 }
 
 func NewPolicyAutomationApp() PolicyAutomation {
 	out := outputs.NewSilentOutput()
 	return &PolicyAutomationApp{
 		ctx:        context.Background(),
-		config:     &Config{},
+		config:     &cfg.Config{},
 		out:        out,
 		collectors: []outputs.ValidationResultCollector{outputs.NewConsoleResultCollector(out)},
 	}
 }
 
-func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, validateFn ValidateConfig) error {
-	var config *Config
+func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, validateFn cfg.ValidateConfig) error {
+	var config *cfg.Config
 	var err error
 	if cliConfig.ConfigFile != "" {
 		if config, err = newConfigFromFile(cliConfig.ConfigFile); err != nil {
@@ -77,7 +105,7 @@ func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, validateFn Val
 	} else {
 		config = newConfigFromCli(cliConfig)
 	}
-	setConfigDefaults(config)
+	cfg.SetConfigDefaults(config)
 	if validateFn != nil {
 		if err := validateFn(*config); err != nil {
 			return err
@@ -86,25 +114,33 @@ func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, validateFn Val
 	return p.LoadConfig(config)
 }
 
-func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
+func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 	p.config = config
 	if !p.config.SilentMode {
 		p.out = outputs.NewStdOutOutput()
 		p.collectors = []outputs.ValidationResultCollector{outputs.NewConsoleResultCollector(p.out)}
+		p.clusterDumpCollectors = append(p.clusterDumpCollectors, outputs.NewOutputClusterDumpCollector(p.out))
 	}
 	if p.config.DumpFile != "" {
-		// read file and instantiate the configuration
-		p.gkeLocal, err = gke.NewGKELocalClient(p.ctx, p.config.DumpFile)
-		return
-	}
-	if p.config.CredentialsFile != "" {
-		p.gke, err = gke.NewClientWithCredentialsFile(p.ctx, p.config.K8SCheck, p.config.CredentialsFile)
+		p.gke = gke.NewGKELocalClient(p.ctx, p.config.DumpFile)
 	} else {
-		p.gke, err = gke.NewClient(p.ctx, p.config.K8SCheck)
+		builder := gke.NewGKEApiClientBuilder(p.ctx)
+		if p.config.CredentialsFile != "" {
+			builder = builder.WithCredentialsFile(p.config.CredentialsFile)
+		}
+		if p.config.K8SCheck {
+			builder = builder.WithK8SClient(cfg.APIVERSIONS)
+		}
+		p.gke, err = builder.Build()
+		if err != nil {
+			return
+		}
 	}
+
 	for _, o := range p.config.Outputs {
 		if o.FileName != "" {
 			p.collectors = append(p.collectors, outputs.NewJSONResultToFileCollector(o.FileName))
+			p.clusterDumpCollectors = append(p.clusterDumpCollectors, outputs.NewFileClusterDumpCollector(o.FileName))
 		}
 		if o.CloudStorage.Bucket != "" && o.CloudStorage.Path != "" {
 
@@ -121,7 +157,7 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 				storagePath = addDatetimePrefix(storagePath, time.Now())
 			}
 
-			storageCollector, err := outputs.NewCloudStorageResultCollector(storageClient, outputs.MapEvaluationResultsToJsonWithTime, o.CloudStorage.Bucket, storagePath)
+			storageCollector, err := outputs.NewCloudStorageResultCollector(storageClient, o.CloudStorage.Bucket, storagePath)
 			if err != nil {
 				return err
 			}
@@ -138,6 +174,9 @@ func (p *PolicyAutomationApp) LoadConfig(config *Config) (err error) {
 				return err
 			}
 			p.collectors = append(p.collectors, outputs.NewPubSubResultCollector(client, o.PubSub.Project, o.PubSub.Topic))
+		}
+		if err := p.configureSccOutput(o.SecurityCommandCenter, p.config.CredentialsFile); err != nil {
+			return err
 		}
 	}
 	return
@@ -163,7 +202,19 @@ func (p *PolicyAutomationApp) Close() error {
 	return nil
 }
 
-func (p *PolicyAutomationApp) ClusterReview() error {
+func (p *PolicyAutomationApp) Check() error {
+	return p.evaluateClusters([]string{regoPackageBaseBestPractices})
+}
+
+func (p *PolicyAutomationApp) CheckBestPractices() error {
+	return p.evaluateClusters([]string{regoPackageBaseBestPractices})
+}
+
+func (p *PolicyAutomationApp) CheckScalability() error {
+	return p.evaluateClusters([]string{regoPackageBaseScalability})
+}
+
+func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error {
 	log.Info("Cluster review starting")
 	files, err := p.loadPolicyFiles()
 	if err != nil {
@@ -174,10 +225,12 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 		log.Errorf("No policies to check against")
 		return errNoPolicies
 	}
+	// create a PolicyAgent client instance
 	pa := policy.NewPolicyAgent(p.ctx)
-	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
-	log.Info("Parsing REGO policies")
-	if err := pa.WithFiles(files); err != nil {
+	p.out.ColorPrintf("%s [light_gray][bold]Parsing REGO policies...\n", outputs.ICON_INFO)
+	log.Info("Parsing rego policies")
+	// parsing policies before running checks
+	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
 		p.out.ErrorPrint("could not parse policy files", err)
 		log.Errorf("could not parse policy files: %s", err)
 		return err
@@ -189,113 +242,49 @@ func (p *PolicyAutomationApp) ClusterReview() error {
 		log.Errorf("could not get clusters: %s", err)
 		return nil
 	}
-	evalResults := make([]*policy.PolicyEvaluationResult, 0)
+	evalResults := &evaluationResults{}
 	for _, clusterId := range clusterIds {
 		log.Infof("Fetching GKE cluster %s", clusterId)
-		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [%s]\n", clusterId)
-		cluster, err := p.gke.GetCluster(clusterId, p.config.K8SCheck, config.APIVERSIONS)
+		p.out.ColorPrintf("%s [light_gray][bold]Fetching GKE cluster details... [%s]\n", outputs.ICON_INFO, clusterId)
+		cluster, err := p.gke.GetCluster(clusterId)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
 			return err
 		}
-		p.out.ColorPrintf("[light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
-			cluster.Id)
+		p.out.ColorPrintf("%s [light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
+			outputs.ICON_INFO, clusterId)
 		log.Infof("Evaluating policies against GKE cluster %s", clusterId)
-		evalResult, err := pa.Evaluate(cluster)
-		if err != nil {
-			p.out.ErrorPrint("failed to evaluate policies", err)
-			log.Errorf("could not evaluate rego policies on cluster %s: %s", cluster.Id, err)
-			return err
+		for _, pkgBase := range regoPackageBases {
+			evalResult, err := pa.Evaluate(cluster, pkgBase)
+			if err != nil {
+				p.out.ErrorPrint("failed to evaluate policies", err)
+				log.Errorf("could not evaluate rego policies on cluster %s: %s", cluster.Id, err)
+				return err
+			}
+			evalResult.ClusterID = clusterId
+			evalResults.Add(evalResult)
 		}
-		evalResult.ClusterName = clusterId
-		evalResults = append(evalResults, evalResult)
 	}
 
 	for _, c := range p.collectors {
-		log.Debugf("Collector %s registering the results", reflect.TypeOf(c).String())
-		err = c.RegisterResult(evalResults)
-		if err != nil {
+		collectorType := reflect.TypeOf(c).String()
+		log.Debugf("Collector %s registering the results", collectorType)
+		p.out.ColorPrintf("%s [light_gray][bold]Writing evaluation results ... [%s]\n", outputs.ICON_INFO, c.Name())
+		if err = c.RegisterResult(evalResults.List()); err != nil {
 			p.out.ErrorPrint("failed to register evaluation results", err)
 			log.Errorf("could not register evaluation results: %s", err)
 			return err
 		}
-	}
-
-	for _, c := range p.collectors {
-		err = c.Close()
-		if err != nil {
+		if err = c.Close(); err != nil {
 			p.out.ErrorPrint("failed to close results registration", err)
 			log.Errorf("could not finalize registering evaluation results: %s", err)
 			return err
 		}
-		log.Debugf("Collector %s processing closed", reflect.TypeOf(c).String())
+		log.Debugf("Collector %s processing closed", collectorType)
 	}
 	log.Info("Cluster review finished")
-	return nil
-}
-
-func (p *PolicyAutomationApp) ClusterOfflineReview() error {
-	// Loading the policies
-	files, err := p.loadPolicyFiles()
-	if err != nil {
-		return err
-	}
-	// Creating the Policy Agent instance and check the policies
-	pa := policy.NewPolicyAgent(p.ctx)
-	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
-	log.Info("Parsing rego policies")
-	if err := pa.WithFiles(files); err != nil {
-		p.out.ErrorPrint("could not parse policy files", err)
-		log.Errorf("could not parse policy files: %s", err)
-		return err
-	}
-
-	clusterName, err := p.gkeLocal.GetClusterName()
-	if err != nil {
-		p.out.ErrorPrint("could not create cluster path", err)
-		log.Errorf("could not create cluster path: %s", err)
-		return err
-	}
-	p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [Name: %s]\n",
-		clusterName)
-
-	evalResults := make([]*policy.PolicyEvaluationResult, 0)
-	cluster, err := p.gkeLocal.GetCluster()
-	if err != nil {
-		p.out.ErrorPrint("could not fetch the cluster details", err)
-		log.Errorf("could not fetch cluster details: %s", err)
-		return err
-	}
-	p.out.ColorPrintf("[light_gray][bold]Evaluating policies against GKE cluster... [ID: %s]\n",
-		cluster.Id)
-	evalResult, err := pa.Evaluate(cluster)
-	if err != nil {
-		p.out.ErrorPrint("failed to evalute policies", err)
-		return err
-	}
-	evalResult.ClusterName = clusterName
-	evalResults = append(evalResults, evalResult)
-
-	for _, c := range p.collectors {
-		err = c.RegisterResult(evalResults)
-
-		if err != nil {
-			p.out.ErrorPrint("failed to register evaluation results", err)
-			log.Errorf("could not register evaluation results: %s", err)
-			return err
-		}
-	}
-
-	for _, c := range p.collectors {
-		err = c.Close()
-		if err != nil {
-			p.out.ErrorPrint("failed to close results registration", err)
-			log.Errorf("could not finalize registering evaluation results: %s", err)
-			return err
-		}
-		log.Infof("Collector %s processing closed", reflect.TypeOf(c).Name())
-	}
+	p.out.ColorPrintf("\u2139 [light_gray][bold]Cluster review finished\n")
 	return nil
 }
 
@@ -306,18 +295,25 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 		log.Errorf("could not get clusters: %s", err)
 	}
 	for _, clusterId := range clusterIds {
-		cluster, err := p.gke.GetCluster(clusterId, p.config.K8SCheck, config.APIVERSIONS)
+		cluster, err := p.gke.GetCluster(clusterId)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
 			return err
 		}
-		data, error := prettyJson(cluster)
-		if error != nil {
-			log.Errorf("could not print cluster data: %s", err)
+		for _, dumpCollector := range p.clusterDumpCollectors {
+			log.Debugf("registering cluster data with cluster dump collector %s", reflect.TypeOf(dumpCollector).String())
+			dumpCollector.RegisterCluster(cluster)
+		}
+	}
+	for _, dumpCollector := range p.clusterDumpCollectors {
+		colType := reflect.TypeOf(dumpCollector).String()
+		log.Debugf("closing cluster dump collector %s", colType)
+		p.out.ColorPrintf("%s [light_gray][bold]Writing evaluation results ...\n", outputs.ICON_INFO)
+		if err := dumpCollector.Close(); err != nil {
+			log.Errorf("failed to close cluster dump collector %s due to %s", colType, err)
 			return err
 		}
-		p.out.Printf("%s\n", (data))
 	}
 	return nil
 }
@@ -335,12 +331,12 @@ func (p *PolicyAutomationApp) PolicyCheck() error {
 		return err
 	}
 	pa := policy.NewPolicyAgent(p.ctx)
-	if err := pa.WithFiles(files); err != nil {
+	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
 		p.out.ErrorPrint("could not parse policy files", err)
 		log.Errorf("could not parse policy files: %s", err)
 		return err
 	}
-	p.out.ColorPrintf("[bold][green] All policies validated correctly \n")
+	p.out.ColorPrintf("%s [bold][green] All policies validated correctly\n", outputs.ICON_INFO)
 	log.Info("All policies validated correctly")
 	return nil
 }
@@ -384,7 +380,7 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 				policyConfig.GitBranch,
 				policyConfig.GitDirectory)
 		}
-		p.out.ColorPrintf("[light_gray][bold]Reading policy files... [%s]\n", policySrc)
+		p.out.ColorPrintf("%s [light_gray][bold]Reading policy files... [%s]\n", outputs.ICON_INFO, policySrc)
 		log.Infof("Reading policy files from %s", policySrc)
 		files, err := policySrc.GetPolicyFiles()
 		if err != nil {
@@ -400,6 +396,11 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 //getClusters retrieves lists of a clusters for further processing
 //from the sources that are defined in a configuration.
 func (p *PolicyAutomationApp) getClusters() ([]string, error) {
+	if p.config.DumpFile != "" {
+		log.Debugf("using local cluster discovery client on a file %s", p.config.DumpFile)
+		dc := gke.NewLocalDiscoveryClient(p.config.DumpFile)
+		return dc.GetClustersInOrg("doesn't-matter-for-local-discovery")
+	}
 	if p.config.ClusterDiscovery.Enabled {
 		var dc gke.DiscoveryClient
 		var err error
@@ -430,14 +431,14 @@ func (p *PolicyAutomationApp) getClusters() ([]string, error) {
 //discoverClusters discovers clusters according to the cluster discovery configuration.
 func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 	if p.config.ClusterDiscovery.Organization != "" {
-		log.Infof("Discovering clusters for organization %s", p.config.ClusterDiscovery.Organization)
-		p.out.ColorPrintf("[light_gray][bold]Discovering clusters in for an organization... [%s]\n", p.config.ClusterDiscovery.Organization)
+		log.Infof("Discovering clusters in organization %s", p.config.ClusterDiscovery.Organization)
+		p.out.ColorPrintf("%s [light_gray][bold]Discovering clusters in for organization... [%s]\n", outputs.ICON_INFO, p.config.ClusterDiscovery.Organization)
 		return p.discovery.GetClustersInOrg(p.config.ClusterDiscovery.Organization)
 	}
 	clusters := make([]string, 0)
 	for _, folder := range p.config.ClusterDiscovery.Folders {
-		log.Infof("Discovering clusters in a folder %s", folder)
-		p.out.ColorPrintf("[light_gray][bold]Discovering clusters in a folder... [%s]\n", folder)
+		log.Infof("Discovering clusters in folder %s", folder)
+		p.out.ColorPrintf("%s [light_gray][bold]Discovering clusters in folder... [%s]\n", outputs.ICON_INFO, folder)
 		results, err := p.discovery.GetClustersInFolder(folder)
 		if err != nil {
 			return nil, err
@@ -445,8 +446,8 @@ func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 		clusters = append(clusters, results...)
 	}
 	for _, project := range p.config.ClusterDiscovery.Projects {
-		log.Infof("Discovering clusters in a project %s", project)
-		p.out.ColorPrintf("[light_gray][bold]Discovering clusters in a project... [%s]\n", project)
+		log.Infof("Discovering clusters in project %s", project)
+		p.out.ColorPrintf("%s [light_gray][bold]Discovering clusters in project... [%s]\n", outputs.ICON_INFO, project)
 		results, err := p.discovery.GetClustersInProject(project)
 		if err != nil {
 			return nil, err
@@ -457,35 +458,54 @@ func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 	return clusters, nil
 }
 
+func (p *PolicyAutomationApp) configureSccOutput(config cfg.SecurityCommandCenterOutput, credsFile string) error {
+	if config.OrganizationNumber == "" {
+		return nil
+	}
+	log.Infof("Loading Security Command Center output")
+	collector, err := outputs.NewSccCollector(p.ctx, config.OrganizationNumber, config.ProvisionSource, credsFile)
+	if err != nil {
+		return err
+	}
+	p.collectors = append(p.collectors, collector)
+	return nil
+}
+
 func addDatetimePrefix(value string, time time.Time) string {
 	return fmt.Sprintf("%s_%s", time.Format("20060102_1504"), value)
 }
 
-func newConfigFromFile(path string) (*Config, error) {
-	return ReadConfig(path, os.ReadFile)
+func newConfigFromFile(path string) (*cfg.Config, error) {
+	return cfg.ReadConfig(path, os.ReadFile)
 }
 
-func newConfigFromCli(cliConfig *CliConfig) *Config {
-	config := &Config{}
+func newConfigFromCli(cliConfig *CliConfig) *cfg.Config {
+	config := &cfg.Config{}
 	config.SilentMode = cliConfig.SilentMode
 	config.K8SCheck = cliConfig.K8SCheck
 	config.CredentialsFile = cliConfig.CredentialsFile
 	config.DumpFile = cliConfig.DumpFile
-	if cliConfig.ClusterName != "" || cliConfig.ClusterLocation != "" || cliConfig.ProjectName != "" {
-		config.Clusters = []ConfigCluster{
-			{
-				Name:     cliConfig.ClusterName,
-				Location: cliConfig.ClusterLocation,
-				Project:  cliConfig.ProjectName,
-			},
+	if cliConfig.DiscoveryEnabled {
+		config.ClusterDiscovery.Enabled = true
+		if cliConfig.ProjectName != "" {
+			config.ClusterDiscovery.Projects = []string{cliConfig.ProjectName}
+		}
+	} else {
+		if cliConfig.ClusterName != "" || cliConfig.ClusterLocation != "" || cliConfig.ProjectName != "" {
+			config.Clusters = []cfg.ConfigCluster{
+				{
+					Name:     cliConfig.ClusterName,
+					Location: cliConfig.ClusterLocation,
+					Project:  cliConfig.ProjectName,
+				},
+			}
 		}
 	}
-	config.Outputs = append(config.Outputs, ConfigOutput{
+	config.Outputs = append(config.Outputs, cfg.ConfigOutput{
 		FileName: cliConfig.OutputFile,
 	})
-
 	if cliConfig.LocalDirectory != "" || cliConfig.GitRepository != "" {
-		config.Policies = append(config.Policies, ConfigPolicy{
+		config.Policies = append(config.Policies, cfg.ConfigPolicy{
 			LocalDirectory: cliConfig.LocalDirectory,
 			GitRepository:  cliConfig.GitRepository,
 			GitBranch:      cliConfig.GitBranch,
@@ -495,7 +515,7 @@ func newConfigFromCli(cliConfig *CliConfig) *Config {
 	return config
 }
 
-func getClusterName(c ConfigCluster) (string, error) {
+func getClusterName(c cfg.ConfigCluster) (string, error) {
 	if c.ID != "" {
 		return c.ID, nil
 	}
@@ -503,12 +523,4 @@ func getClusterName(c ConfigCluster) (string, error) {
 		return gke.GetClusterName(c.Project, c.Location, c.Name), nil
 	}
 	return "", fmt.Errorf("cluster mandatory parameters not set (project, name, location)")
-}
-
-func prettyJson(data interface{}) (string, error) {
-	val, err := json.MarshalIndent(data, "", "    ")
-	if err != nil {
-		return "", err
-	}
-	return string(val), nil
 }

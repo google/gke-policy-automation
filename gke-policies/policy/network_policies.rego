@@ -17,6 +17,12 @@
 # description: GKE cluster should have Network Policies or Dataplane V2 enabled
 # custom:
 #   group: Security
+#   severity: High
+#   sccCategory: NETWORK_POLICIES_DISABLED
+#   cis:
+#     version: "1.2"
+#     id: "5.6.7"
+
 package gke.policy.network_policies_engine
 
 default valid = false

@@ -12,16 +12,17 @@ The GKE Policy Automation is a command line tool that validates GKE clusters aga
   * [Source code](#source-code)
 * [Authentication](#authentication)
   * [Required IAM roles](#required-iam-roles)
-* [Cluster commands](#cluster-commands)
+* [Checking clusters](#checking-clusters)
   * [Specifying single cluster](#specifying-single-cluster)
   * [Specifying multiple clusters](#specifying-multiple-clusters)
   * [Cluster discovery](#cluster-discovery)
-  * [Reviewing clusters](#reviewing-clusters)
-  * [Printing cluster data](#printing-cluster-data)
-* [Policy Commands](#policy-commands)
+  * [Specifying cluster file](#specifying-cluster-file)
+* [Dumping cluster data](#dumping-cluster-data)
+* [Configuring policies](#configuring-policies)
   * [Specifying GIT policy source](#specifying-git-policy-source)
   * [Specifying local policy source](#specifying-local-policy-source)
   * [Validating policies](#validating-policies)
+  * [Excluding policies](#excluding-policies)
 * [Outputs](#outputs)
   * [Local JSON file](#local-json-file)
   * [Cloud Storage bucket](#cloud-storage-bucket)
@@ -40,7 +41,7 @@ for a list of all tags and versions.
 
 ```sh
 docker pull ghcr.io/google/gke-policy-automation:latest
-docker run --rm ghcr.io/google/gke-policy-automation cluster review \
+docker run --rm ghcr.io/google/gke-policy-automation check \
 -project my-project -location europe-west2 -name my-cluster
 ```
 
@@ -58,7 +59,7 @@ for more details.
 git clone https://github.com/google/gke-policy-automation.git
 cd gke-policy-automation
 make build
-./gke-policy cluster review \
+./gke-policy check \
 --project my-project --location europe-west2 --name my-cluster
 ```
 
@@ -82,18 +83,22 @@ role
 * For Cloud Storage output, the `roles/storage.objectCreator` role is needed on a target bucket
 * For Pub/Sub output, the `roles/pubsub.publisher` role is needed on a target topic
 
-## Cluster commands
+## Checking clusters
 
-The cluster commands perform operations in a context of a GKE clusters.
+The check command checks GKE clusters against the best practices.
+
+In addition, It is possible to supplement the check command with a subcommands to adjust
+the scope of policies or targets that will be checked:
 
 ```sh
 USAGE:
-   gke-policy cluster command [command options] [arguments...]
+   gke-policy check command [command options] [arguments...]
 
 COMMANDS:
-   print    Print cluster api raw json data
-   review   Evaluate policies against given GKE cluster
-   help, h  Shows a list of commands or help for one command
+   best-practices  Check GKE clusters against best practices
+   scalability     Check GKE clusters against scalability limits
+   policies        Validates policy files from the defined source
+   help, h         Shows a list of commands or help for one command
 ```
 
 ### Specifying single cluster
@@ -104,6 +109,11 @@ The cluster details can be set using command line flags or in a [configuration f
 * `--location` is a location of a cluster, either GCP zone or a GCP region
 * `--name` is a cluster's name
 
+```sh
+./gke-policy check \
+--project my-project --location europe-west2 --name my-cluster
+```
+
 When using configuration file, it is also possible to reference cluster using `id` attribute
 that is combination of the above in a format:
 `projects/<project>/locations/<location>/clusters/<name>`
@@ -111,6 +121,10 @@ that is combination of the above in a format:
 ### Specifying multiple clusters
 
 Setting details of a multiple clusters is possible using [configuration file](#configuration-file) only.
+
+```sh
+./gke-policy check -c config.yaml
+```
 
 The example `config.yaml` file with a three clusters:
 
@@ -162,60 +176,45 @@ clusterDiscovery:
 
 **NOTE**: it might take some time for a GKE clusters to appear in a Cloud Asset Inventory search results.
 
-### Reviewing clusters
+### Specifying cluster file
 
-Run `./gke-policy cluster review` command to check one or more GKE clusters against the set of REGO policies.
+The GKE Policy Automation tool can read the cluster data from a given JSON dump file.
+This approach can be used for offline reviews and in conjunction with [cluster data dump feature](#dumping-cluster-data).
 
-By default, given cluster(s) will be reviewed against default set of GKE best practices fetched
-from the GKE Policy Automation repository. The default policy source can be altered
-by [specifying custom policy source](#specifying-git-policy-source) details.
-
-Single cluster review example:
+In order to use dump file, specify `-d dump_file.json` flag.
 
 ```sh
-./gke-policy cluster review \
---project my-project --location europe-west2 --name my-cluster
+./gke-policy check -d dump_file.json
 ```
 
-Multiple clusters review example:
+## Dumping cluster data
+
+Run `./gke-policy dump cluster` followed by cluster details or reference to the configuration file
+to dump GKE cluster data in a JSON format.
 
 ```sh
-./gke-policy cluster review -c config.yaml
+./gke-policy dump cluster \
+-p my-project -l europe-west2 -n my-cluster -f cluster_data.json
 ```
 
-The `config.yaml` file:
+The cluster data dump command works with a configuration file as well. It is possible to dump
+data of a multiple clusters i.e. discovered with a [cluster discovery](#cluster-discovery) mechanism.
+
+```sh
+./gke-policy dump cluster -c config.yaml
+```
+
+The example `config.yaml`:
 
 ```yaml
-clusters:
-  - name: prod-central
-    project: my-project-one
-    location: europe-central2
-  - id: projects/my-project-two/locations/europe-west2/clusters/prod-west
+clusterDiscovery:
+  enabled: true
+  organization: "123456789012"
+outputs:
+  - file: cluster_data.json
 ```
 
-### Printing cluster data
-
-Run `./gke-policy cluster print` to dump GKE cluster data in a JSON format.
-
-Example:
-
-```sh
-./gke-policy cluster print \
---project my-project --location europe-west2 --name my-cluster
-```
-
-## Policy commands
-
-The policy commands perform operations in a context of a REGO policies.
-
-```sh
-USAGE:
-   gke-policy policy command [command options] [arguments...]
-
-COMMANDS:
-   check    Validates policy files from defined source
-   help, h  Shows a list of commands or help for one command
-```
+## Configuring policies
 
 ### Specifying GIT policy source
 
@@ -228,10 +227,10 @@ The custom GIT policy source can be specified with a command line flags or in a 
 The GKE Policy Automation tool scans for files with `rego` extension. Refer to the
 [policy authoring guide](../gke-policies/README.md) for more details about policies for this tool.
 
-Example of a cluster review command with a custom policy repository:
+Example of a check command with a custom policy repository:
 
   ```sh
-  ./gke-policy cluster review \
+  ./gke-policy check \
   --project my-project --location europe-west2 --name my-cluster \
   --git-policy-repo "https://github.com/google/gke-policy-automation" \
   --git-policy-branch "main" \
@@ -248,13 +247,28 @@ The local policy source directory can be specified with a command line flags or 
 
 ### Validating policies
 
-Run `./gke-policy policy check` to validate Rego policies from a given policy source.
+Run `./gke-policy check policies` to validate Rego policies from a given policy source.
 The policies are validated against the Rego syntax.
 
 Example:
 
 ```sh
-./gke-policy policy check --local-policy-dir ./gke-policies
+./gke-policy check policies --local-policy-dir ./gke-policies
+```
+
+### Excluding policies
+
+Specific policies or policy groups may be excluded during cluster review. Policy exclusion can only
+be configured using a [configuration file](#configuration-file). The below example skips all REGO
+policies in the `Scalability` group as well as the specific policy
+`gke.policy.cluster_binary_authorization`.
+
+```yaml
+policyExclusions:
+  policies:
+    - gke.policy.cluster_binary_authorization
+  policyGroups:
+    - Scalability
 ```
 
 ## Outputs
@@ -270,7 +284,7 @@ Local file output can be enabled using either command line flag or in a [configu
 Example of enabling local file output in a command line:
 
 ```sh
-  ./gke-policy cluster review \
+  ./gke-policy check \
   --project my-project --location europe-west2 --name my-cluster \
   --out-file my-cluster-results.json
 ```
@@ -334,7 +348,7 @@ enabling silent mode is not stopping [detailed logging](#debugging) if that is c
 Example of execution with silent mode and logging enabled:
 
 ```sh
-GKE_POLICY_LOG=DEBUG ./gke-policy cluster review --silent \
+GKE_POLICY_LOG=DEBUG ./gke-policy check --silent \
 --location europe-central2 --name prod-central --project my-project 
 ```
 
@@ -343,7 +357,7 @@ GKE_POLICY_LOG=DEBUG ./gke-policy cluster review --silent \
 Use `-c <config.yaml>` after the command to use configuration file instead of command line flags. Example:
 
 ```sh
-./gke-policy cluster review -c config.yaml
+./gke-policy check -c config.yaml
 ```
 
 The below example `config.yaml` shows all available configuration options.
@@ -370,6 +384,11 @@ policies:
     branch: main
     directory: gke-policies
   - local: ./my-policies
+policyExclusions:
+  policies:
+    - gke.policy.enable_ilb_subsetting
+  policyGroups:
+    - Scalability
 outputs:
   - file: output-file.json
   - pubsub:
@@ -397,6 +416,6 @@ must to set in order for logging to be enabled.
 Below is an example of running the application with `DEBUG` logging enabled.
 
 ```sh
-GKE_POLICY_LOG=DEBUG ./gke-policy cluster review \
+GKE_POLICY_LOG=DEBUG ./gke-policy check \
 --project my-project --location europe-west2 --name my-cluster
 ```

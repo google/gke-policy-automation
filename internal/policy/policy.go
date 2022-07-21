@@ -20,20 +20,27 @@ import (
 	"reflect"
 	"strings"
 
+	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 )
 
-const regoPolicyPackage = "gke.policy"
-const regoQuery = "data." + regoPolicyPackage + "[name]"
 const regoTestFileSuffix = "_test.rego"
 
-type PolicyAgent struct {
-	ctx       context.Context
-	compiler  *ast.Compiler
-	policies  []*Policy
-	evalCache map[string]*Policy
+type PolicyAgent interface {
+	Compile(files []*PolicyFile) error
+	WithFiles(files []*PolicyFile, excludes cfg.ConfigPolicyExclusions) error
+	Evaluate(input interface{}, packageBase string) (*PolicyEvaluationResult, error)
+}
+
+type GKEPolicyAgent struct {
+	ctx               context.Context
+	compiler          *ast.Compiler
+	policies          []*Policy
+	evalCache         map[string]*Policy
+	excludes          cfg.ConfigPolicyExclusions
+	parserIgnoredPkgs []string
 }
 
 type Policy struct {
@@ -42,16 +49,18 @@ type Policy struct {
 	Title            string
 	Description      string
 	Group            string
+	Severity         string
+	Category         string
 	Valid            bool
 	Violations       []string
 	ProcessingErrors []error
+	CisVersion       string
+	CisID            string
 }
 
 type PolicyEvaluationResult struct {
-	ClusterName string
-	Valid       map[string][]*Policy
-	Violated    map[string][]*Policy
-	Errored     []*Policy
+	ClusterID string
+	Policies  []*Policy
 }
 
 type RegoEvaluationResult struct {
@@ -60,77 +69,21 @@ type RegoEvaluationResult struct {
 	Violations []string
 }
 
-func NewPolicyAgent(ctx context.Context) *PolicyAgent {
-	return &PolicyAgent{
-		ctx:       ctx,
-		policies:  make([]*Policy, 0),
-		evalCache: make(map[string]*Policy),
+func NewPolicyAgent(ctx context.Context) PolicyAgent {
+	return &GKEPolicyAgent{
+		ctx:               ctx,
+		policies:          make([]*Policy, 0),
+		evalCache:         make(map[string]*Policy),
+		parserIgnoredPkgs: []string{"gke.rule"},
 	}
 }
 
-func NewPolicyEvaluationResult() *PolicyEvaluationResult {
-	return &PolicyEvaluationResult{
-		Valid:    make(map[string][]*Policy),
-		Violated: make(map[string][]*Policy),
-		Errored:  make([]*Policy, 0),
-	}
-}
-
-func (r *PolicyEvaluationResult) Groups() []string {
-	groupMap := make(map[string]bool)
-	for k := range r.Valid {
-		groupMap[k] = true
-	}
-	for k := range r.Violated {
-		groupMap[k] = true
-	}
-	groups := make([]string, len(groupMap))
-	i := 0
-	for k := range groupMap {
-		groups[i] = k
-		i++
-	}
-	return groups
-}
-
-func (r *PolicyEvaluationResult) AddPolicy(policy *Policy) {
-	if len(policy.ProcessingErrors) > 0 {
-		r.Errored = append(r.Errored, policy)
-		return
-	}
-	if policy.Valid {
-		r.Valid[policy.Group] = append(r.Valid[policy.Group], policy)
-	} else {
-		r.Violated[policy.Group] = append(r.Violated[policy.Group], policy)
-	}
-}
-
-func (r *PolicyEvaluationResult) ValidCount() int {
-	cnt := 0
-	for _, v := range r.Valid {
-		cnt += len(v)
-	}
-	return cnt
-}
-
-func (r *PolicyEvaluationResult) ViolatedCount() int {
-	cnt := 0
-	for _, v := range r.Violated {
-		cnt += len(v)
-	}
-	return cnt
-}
-
-func (r *PolicyEvaluationResult) ErroredCount() int {
-	return len(r.Errored)
-}
-
-func (pa *PolicyAgent) Compile(files []*PolicyFile) error {
+func (pa *GKEPolicyAgent) Compile(files []*PolicyFile) error {
 	modules := make(map[string]string)
 	for _, file := range files {
 		modules[file.FullName] = file.Content
 	}
-	compiler, err := ast.CompileModulesWithOpt(modules,
+	compiler, err := pa.compileModulesWithOpt(modules,
 		ast.CompileOpts{ParserOptions: ast.ParserOptions{ProcessAnnotation: true}})
 	if err != nil {
 		return err
@@ -139,16 +92,92 @@ func (pa *PolicyAgent) Compile(files []*PolicyFile) error {
 	return nil
 }
 
-func (pa *PolicyAgent) ParseCompiled() []error {
+func (pa *GKEPolicyAgent) initPolicyExcludeCache() map[string]bool {
+	cache := make(map[string]bool)
+	for _, policy := range pa.excludes.Policies {
+		cache["data."+policy] = true
+	}
+	return cache
+}
+
+func (pa *GKEPolicyAgent) initGroupExcludeCache() map[string]bool {
+	cache := make(map[string]bool)
+	for _, g := range pa.excludes.PolicyGroups {
+		cache[g] = true
+	}
+	return cache
+}
+
+func isExcluded(s string, m map[string]bool) (bool, error) {
+	result, ok := m[s]
+	if !ok {
+		return false, fmt.Errorf("cache does not contain key: %q", s)
+	}
+	return result, nil
+}
+
+func (pa *GKEPolicyAgent) compileModulesWithOpt(modules map[string]string, opts ast.CompileOpts) (*ast.Compiler, error) {
+
+	parsed := make(map[string]*ast.Module, len(modules))
+
+	policyExcludeCache := pa.initPolicyExcludeCache()
+	groupExcludeCache := pa.initGroupExcludeCache()
+
+module:
+	for f, module := range modules {
+		// Filter out tests
+		if strings.HasSuffix(f, regoTestFileSuffix) {
+			log.Debugf("Skipped policy test file %s", f)
+			continue
+		}
+		var pm *ast.Module
+		var err error
+		if pm, err = ast.ParseModuleWithOpts(f, module, opts.ParserOptions); err != nil {
+			return nil, err
+		}
+
+		// Check if the policy is excluded
+		if _, err := isExcluded(pm.Package.Path.String(), policyExcludeCache); err == nil {
+			continue
+		}
+
+		// Check if the group is excluded
+		for _, annot := range pm.Annotations {
+			if group, ok := annot.Custom["group"]; ok {
+				if _, err := isExcluded(fmt.Sprint(group), groupExcludeCache); err == nil {
+					continue module
+				}
+			}
+		}
+		parsed[f] = pm
+	}
+
+	compiler := ast.NewCompiler().WithEnablePrintStatements(opts.EnablePrintStatements)
+	compiler.Compile(parsed)
+
+	if compiler.Failed() {
+		return nil, compiler.Errors
+	}
+
+	return compiler, nil
+}
+
+func (pa *GKEPolicyAgent) ParseCompiled() []error {
 	if pa.compiler == nil {
 		return []error{fmt.Errorf("compiler is nil")}
 	}
 	errors := make([]error, 0)
+module:
 	for _, m := range pa.compiler.Modules {
 		policy := Policy{}
-		policy.MapModule(m)
-		if !strings.HasPrefix(policy.Name, regoPolicyPackage) || strings.HasSuffix(policy.File, regoTestFileSuffix) {
+		policy.mapModule(m)
+		if strings.HasSuffix(policy.File, regoTestFileSuffix) {
 			continue
+		}
+		for _, ignored := range pa.parserIgnoredPkgs {
+			if strings.HasPrefix(policy.Name, ignored) {
+				continue module
+			}
 		}
 		metaErrs := policy.MetadataErrors()
 		if len(metaErrs) > 0 {
@@ -160,7 +189,8 @@ func (pa *PolicyAgent) ParseCompiled() []error {
 	return errors
 }
 
-func (pa *PolicyAgent) WithFiles(files []*PolicyFile) error {
+func (pa *GKEPolicyAgent) WithFiles(files []*PolicyFile, excludes cfg.ConfigPolicyExclusions) error {
+	pa.excludes = excludes
 	if err := pa.Compile(files); err != nil {
 		return err
 	}
@@ -174,36 +204,38 @@ func (pa *PolicyAgent) WithFiles(files []*PolicyFile) error {
 	return nil
 }
 
-func (pa *PolicyAgent) Evaluate(input interface{}) (*PolicyEvaluationResult, error) {
+func (pa *GKEPolicyAgent) Evaluate(input interface{}, packageBase string) (*PolicyEvaluationResult, error) {
+	query := getRegoQueryForPackageBase(packageBase)
 	var rgo *rego.Rego
 	if pa.compiler == nil {
 		rgo = rego.New(
 			rego.Input(input),
-			rego.Query(regoQuery))
+			rego.Query(query))
 	} else {
 		rgo = rego.New(
 			rego.Compiler(pa.compiler),
 			rego.Input(input),
-			rego.Query(regoQuery))
+			rego.Query(query))
 	}
 	results, err := rgo.Eval(pa.ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to evaluate rego: %s", err)
 	}
-	return pa.processRegoResultSet(results)
+	return pa.processRegoResultSet(packageBase, results)
 }
 
 func (pa *PolicyAgent) GetPolicies() []*Policy {
 	return pa.policies
 }
 
-func (pa *PolicyAgent) processRegoResultSet(results rego.ResultSet) (*PolicyEvaluationResult, error) {
+func (pa *GKEPolicyAgent) processRegoResultSet(packageBase string, results rego.ResultSet) (*PolicyEvaluationResult, error) {
 	pa.initEvalCache()
-	evalResults := NewPolicyEvaluationResult()
-	for _, result := range results {
+	evalResults := &PolicyEvaluationResult{}
+	for i, result := range results {
 		value, bindings, err := getResultDataForEval(result)
 		if err != nil {
-			evalResults.AddPolicy(NewPolicyFromEvalResult(&RegoEvaluationResult{}, []error{err}))
+			log.Debugf("failed to get data from Rego result at index %d: %s", i, err)
+			evalResults.Policies = append(evalResults.Policies, NewPolicyFromEvalResult(&RegoEvaluationResult{}, []error{err}))
 			continue
 		}
 		regoEvalResult := RegoEvaluationResult{}
@@ -215,7 +247,7 @@ func (pa *PolicyAgent) processRegoResultSet(results rego.ResultSet) (*PolicyEval
 			regoEvalResultErrors = append(regoEvalResultErrors, err)
 		}
 		policy := NewPolicyFromEvalResult(&regoEvalResult, regoEvalResultErrors)
-		policyName := regoPolicyPackage + "." + regoEvalResult.Name
+		policyName := packageBase + "." + regoEvalResult.Name
 		if compiledPolicy, ok := pa.evalCache[policyName]; ok {
 			compiledPolicy.Valid = policy.Valid
 			compiledPolicy.Violations = policy.Violations
@@ -224,12 +256,12 @@ func (pa *PolicyAgent) processRegoResultSet(results rego.ResultSet) (*PolicyEval
 		} else {
 			log.Warnf("rego policy %q has no match with any compiled policy", policyName)
 		}
-		evalResults.AddPolicy(policy)
+		evalResults.Policies = append(evalResults.Policies, policy)
 	}
 	return evalResults, nil
 }
 
-func (pa *PolicyAgent) initEvalCache() {
+func (pa *GKEPolicyAgent) initEvalCache() {
 	pa.evalCache = make(map[string]*Policy)
 	for _, policy := range pa.policies {
 		policyCopy := *policy
@@ -305,7 +337,7 @@ func NewPolicyFromEvalResult(result *RegoEvaluationResult, errors []error) *Poli
 	return policy
 }
 
-func (p *Policy) MapModule(module *ast.Module) {
+func (p *Policy) mapModule(module *ast.Module) {
 	p.Name = module.Package.String()[8:]
 	p.File = module.Package.Location.File
 	for _, annot := range module.Annotations {
@@ -314,9 +346,23 @@ func (p *Policy) MapModule(module *ast.Module) {
 		}
 		p.Title = annot.Title
 		p.Description = annot.Description
-		if group, ok := annot.Custom["group"]; ok {
-			if groupS, okS := group.(string); okS {
-				p.Group = groupS
+		if group, ok := getStringFromInterfaceMap("group", annot.Custom); ok {
+			p.Group = group
+		}
+		if severity, ok := getStringFromInterfaceMap("severity", annot.Custom); ok {
+			p.Severity = severity
+		}
+		if category, ok := getStringFromInterfaceMap("sccCategory", annot.Custom); ok {
+			p.Category = category
+		}
+		if cis, ok := annot.Custom["cis"]; ok {
+			if cisMap, ok := cis.(map[string]interface{}); ok {
+				if cisVersion, ok := getStringFromInterfaceMap("version", cisMap); ok {
+					p.CisVersion = cisVersion
+				}
+				if cisID, ok := getStringFromInterfaceMap("id", cisMap); ok {
+					p.CisID = cisID
+				}
 			}
 		}
 	}
@@ -332,6 +378,18 @@ func (p Policy) MetadataErrors() []string {
 	}
 	if p.Group == "" {
 		errs = append(errs, "group is not set")
+	}
+	if p.Severity == "" {
+		errs = append(errs, "severity is not set")
+	}
+	if p.Category == "" {
+		errs = append(errs, "category is not set")
+	}
+	if p.CisVersion != "" && p.CisID == "" {
+		errs = append(errs, "CIS version is set without CIS identifier")
+	}
+	if p.CisID != "" && p.CisVersion == "" {
+		errs = append(errs, "CIS identifier is set without CIS version")
 	}
 	return errs
 }
@@ -366,4 +424,16 @@ func getStringListFromInterfaceMap(name string, m map[string]interface{}) ([]str
 		vStringList[i] = vStringListItem
 	}
 	return vStringList, nil
+}
+
+func getRegoQueryForPackageBase(packageBase string) string {
+	return "data." + packageBase + "[name]"
+}
+
+func getStringFromInterfaceMap(key string, m map[string]interface{}) (string, bool) {
+	if value, ok := m[key]; ok {
+		valueString, ok := value.(string)
+		return valueString, ok
+	}
+	return "", false
 }
