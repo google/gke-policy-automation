@@ -231,17 +231,6 @@ func TestProcessRegoResultSet(t *testing.T) {
 	if len(result.Policies) != 3 {
 		t.Errorf("result policies number = %v; want %v", len(result.Policies), 3)
 	}
-	/*
-		if _, ok := result.Valid["policy_one"]; !ok {
-			t.Errorf("valid policy not grouped under %v key", "policy_one")
-		}
-		if _, ok := result.Violated["policy_two"]; !ok {
-			t.Errorf("violated policy not grouped under %v key", "policy_two")
-		}
-		if len(result.Errored) != 1 {
-			t.Fatalf("number of errored policies = %v; want %v", len(result.Errored), 1)
-		}
-	*/
 	if len(pa.evalCache) != len(pa.policies) {
 		t.Fatalf("number of policies in eval cache = %v; want %v", len(pa.evalCache), len(pa.policies))
 	}
