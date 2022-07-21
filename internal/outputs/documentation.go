@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package policy
+package outputs
 
 import (
 	"fmt"
 	"strings"
+
+	"github.com/google/gke-policy-automation/internal/policy"
 )
 
 type PolicyDocumentation interface {
@@ -24,12 +26,12 @@ type PolicyDocumentation interface {
 }
 
 type MarkdownPolicyDocumentation struct {
-	policies []*Policy
+	policies []*policy.Policy
 }
 
-type DocumentationBuilder func(policies []*Policy) PolicyDocumentation
+type DocumentationBuilder func(policies []*policy.Policy) PolicyDocumentation
 
-func NewMarkdownPolicyDocumentation(policies []*Policy) PolicyDocumentation {
+func NewMarkdownPolicyDocumentation(policies []*policy.Policy) PolicyDocumentation {
 	return &MarkdownPolicyDocumentation{policies}
 }
 

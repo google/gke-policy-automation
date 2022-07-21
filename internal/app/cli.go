@@ -17,7 +17,7 @@ package app
 import (
 	"os"
 
-	"github.com/google/gke-policy-automation/internal/policy"
+	"github.com/google/gke-policy-automation/internal/outputs"
 	cli "github.com/urfave/cli/v2"
 )
 
@@ -160,7 +160,7 @@ func CreatePolicyCheckCommand(p PolicyAutomation) *cli.Command {
 					defer w.Close()
 
 					// it's possible to wire different policy generators for console, json, etc
-					p.PolicyGenerateDocumentation(policy.NewMarkdownPolicyDocumentation, w)
+					p.PolicyGenerateDocumentation(outputs.NewMarkdownPolicyDocumentation, w)
 
 					return nil
 				},

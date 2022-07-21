@@ -12,16 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package policy
+package outputs
 
 import (
 	"strings"
 	"testing"
+
+	"github.com/google/gke-policy-automation/internal/policy"
 )
 
-func buildPoliciesMetadata() []*Policy {
+func buildPoliciesMetadata() []*policy.Policy {
 
-	return []*Policy{
+	return []*policy.Policy{
 		{
 			Title:       "First policy",
 			Description: "First description",

@@ -44,7 +44,7 @@ type PolicyAutomation interface {
 	ClusterJSONData() error
 	Version() error
 	PolicyCheck() error
-	PolicyGenerateDocumentation(generator policy.DocumentationBuilder, w io.Writer) error
+	PolicyGenerateDocumentation(generator outputs.DocumentationBuilder, w io.Writer) error
 }
 
 type PolicyAutomationApp struct {
@@ -345,7 +345,7 @@ func (p *PolicyAutomationApp) PolicyCheck() error {
 	return nil
 }
 
-func (p *PolicyAutomationApp) PolicyGenerateDocumentation(generator policy.DocumentationBuilder, w io.Writer) error {
+func (p *PolicyAutomationApp) PolicyGenerateDocumentation(generator outputs.DocumentationBuilder, w io.Writer) error {
 
 	files, err := p.loadPolicyFiles()
 	if err != nil {

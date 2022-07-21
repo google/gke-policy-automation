@@ -402,7 +402,7 @@ func TestPolicyGenerateDocumentation(t *testing.T) {
 	content := "documentation content"
 	var buffer bytes.Buffer
 
-	pa.PolicyGenerateDocumentation(func(policies []*policy.Policy) policy.PolicyDocumentation {
+	pa.PolicyGenerateDocumentation(func(policies []*policy.Policy) outputs.PolicyDocumentation {
 		return &MockDocumentation{content}
 	}, &buffer)
 
