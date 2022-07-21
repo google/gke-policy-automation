@@ -80,7 +80,7 @@ func (c *sccCollector) RegisterResult(results []*policy.PolicyEvaluationResult) 
 	eventTime := time.Now()
 	for _, result := range results {
 		for _, policy := range result.Policies {
-			finding := mapPolicyToFinding(result.ClusterName, eventTime, policy)
+			finding := mapPolicyToFinding(result.ClusterID, eventTime, policy)
 			c.findings = append(c.findings, finding)
 		}
 	}

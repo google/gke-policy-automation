@@ -58,7 +58,7 @@ func TestCloudStorageCollector(t *testing.T) {
 	object := "myobject"
 	mappedResult := []byte("result")
 
-	policyResult := &policy.PolicyEvaluationResult{ClusterName: "cluster-one"}
+	policyResult := &policy.PolicyEvaluationResult{ClusterID: "cluster-one"}
 	policyResult.Policies = append(policyResult.Policies, &policy.Policy{
 		Name:             "policy-one",
 		Title:            "title",

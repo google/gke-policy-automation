@@ -75,7 +75,7 @@ func TestGetReport(t *testing.T) {
 	mapper := NewValidationReportMapper()
 	mapper.AddResults([]*policy.PolicyEvaluationResult{
 		{
-			ClusterName: clusterOneName,
+			ClusterID: clusterOneName,
 			Policies: []*policy.Policy{
 				{
 					Name:        policies[0].Name,
@@ -94,7 +94,7 @@ func TestGetReport(t *testing.T) {
 			},
 		},
 		{
-			ClusterName: clusterTwoName,
+			ClusterID: clusterTwoName,
 			Policies: []*policy.Policy{
 				{
 					Name:        policies[0].Name,

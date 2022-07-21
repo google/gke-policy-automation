@@ -112,14 +112,14 @@ func TestProcessFindings(t *testing.T) {
 func TestSccCollectorRegisterResult(t *testing.T) {
 	results := []*policy.PolicyEvaluationResult{
 		{
-			ClusterName: "testOne",
+			ClusterID: "testOne",
 			Policies: []*policy.Policy{
 				{Valid: true, Category: "categoryOne", Severity: "LOW", Description: "description"},
 				{Violations: []string{"violation"}, Category: "categoryTwo", Severity: "LOW", Description: "description"},
 			},
 		},
 		{
-			ClusterName: "testTwo",
+			ClusterID: "testTwo",
 			Policies: []*policy.Policy{
 				{Valid: true, Category: "categoryOne", Severity: "LOW", Description: "description"},
 				{Violations: []string{"violation"}, Category: "categoryTwo", Severity: "LOW", Description: "description"},

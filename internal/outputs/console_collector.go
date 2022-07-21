@@ -40,7 +40,7 @@ func (p *consoleResultCollector) Close() error {
 	p.out.Printf("\n")
 	p.out.InitTabs(95)
 	for _, policy := range report.Policies {
-		p.out.ColorPrintf("\U0001f50e [bold][white][%s][yellow] %s[reset]: %s\n", policy.PolicyGroup, policy.PolicyName, policy.PolicyTitle)
+		p.out.ColorPrintf("%s [bold][light_gray][%s][yellow] %s[reset]: %s\n", ICON_MAGNIFIER, policy.PolicyGroup, policy.PolicyName, policy.PolicyTitle)
 		for _, evaluation := range policy.ClusterEvaluations {
 			statusString := "[ \033[1m\033[32mOK\033[0m ]"
 			if !evaluation.Valid {
@@ -56,7 +56,7 @@ func (p *consoleResultCollector) Close() error {
 		p.out.TabFlush()
 		p.out.Printf("\n")
 	}
-	p.out.ColorPrintf("\u2139 [white][bold]Evaluated %d policies on %d clusters\n", len(report.Policies), len(report.ClusterStats))
+	p.out.ColorPrintf("%s [light_gray][bold]Evaluated %d policies on %d clusters\n", ICON_INFO, len(report.Policies), len(report.ClusterStats))
 	p.out.InitTabs(0)
 	for _, stat := range report.ClusterStats {
 		p.out.TabPrintf("  - %s:\t\033[32m%d valid, \033[31m%d violated, \033[33m%d errored\033[0m\n", stat.ClusterID, stat.ValidPoliciesCount, stat.ViolatedPoliciesCount, stat.ErroredPoliciesCount)
