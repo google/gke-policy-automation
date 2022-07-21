@@ -57,3 +57,7 @@ func (p *pubSubResultCollector) Close() error {
 	log.Info("Validation results published to Pub/Sub topic [", p.topic, "] with message id [", id, "]")
 	return p.client.Close()
 }
+
+func (p *pubSubResultCollector) Name() string {
+	return p.topic + " Pub/Sub topic"
+}

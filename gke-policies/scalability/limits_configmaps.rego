@@ -17,6 +17,9 @@
 # description: GKE ConfigMaps Limit
 # custom:
 #   group: Scalability
+#   severity: High
+#   sccCategory: CONFIGMAPS_LIMIT
+
 package gke.scalability.configmaps
 
 default valid = false

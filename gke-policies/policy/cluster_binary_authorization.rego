@@ -17,6 +17,11 @@
 # description: GKE cluster should enable for deploy-time security control that ensures only trusted container images are deployed to gain tighter control over your container environment.
 # custom:
 #   group: Management
+#   severity: Low
+#   sccCategory: BINARY_AUTHORIZATION_DISABLED
+#   cis:
+#     version: "1.2"
+#     id: "5.10.5"
 
 package gke.policy.cluster_binary_authorization
 

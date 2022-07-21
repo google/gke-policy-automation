@@ -17,6 +17,9 @@
 # description: GKE HPAs Limit
 # custom:
 #   group: Scalability
+#   severity: High
+#   sccCategory: HPAS_LIMIT
+
 package gke.scalability.hpas
 
 default valid = false

@@ -74,6 +74,8 @@ func TestParseCompiled(t *testing.T) {
 		"# description: TestDescription\n"+
 		"# custom:\n"+
 		"#   group: TestGroup\n"+
+		"#   severity: High\n"+
+		"#   sccCategory: Category\n"+
 		"package %s\n"+
 		"p = 1", goodPackage)
 	policyContentBadMeta := `# METADATA
@@ -123,6 +125,8 @@ func TestWithFiles(t *testing.T) {
 		"# description: Test\n"+
 		"# custom:\n"+
 		"#   group: Test\n"+
+		"#   severity: High\n"+
+		"#   sccCategory: Category\n"+
 		"package %s\n"+
 		"p = 1", titleOne, packageOne)
 	packageTwo := "gke.scalability.package_two"
@@ -132,6 +136,8 @@ func TestWithFiles(t *testing.T) {
 		"# description: Test\n"+
 		"# custom:\n"+
 		"#   group: Test\n"+
+		"#   severity: High\n"+
+		"#   sccCategory: Category\n"+
 		"package %s\n"+
 		"p = 1", titleTwo, packageTwo)
 	contentThree := fmt.Sprintf("# METADATA\n"+
@@ -225,17 +231,6 @@ func TestProcessRegoResultSet(t *testing.T) {
 	if len(result.Policies) != 3 {
 		t.Errorf("result policies number = %v; want %v", len(result.Policies), 3)
 	}
-	/*
-		if _, ok := result.Valid["policy_one"]; !ok {
-			t.Errorf("valid policy not grouped under %v key", "policy_one")
-		}
-		if _, ok := result.Violated["policy_two"]; !ok {
-			t.Errorf("violated policy not grouped under %v key", "policy_two")
-		}
-		if len(result.Errored) != 1 {
-			t.Fatalf("number of errored policies = %v; want %v", len(result.Errored), 1)
-		}
-	*/
 	if len(pa.evalCache) != len(pa.policies) {
 		t.Fatalf("number of policies in eval cache = %v; want %v", len(pa.evalCache), len(pa.policies))
 	}
@@ -381,14 +376,23 @@ func TestMapModule(t *testing.T) {
 	title := "This is title"
 	desc := "This is long description"
 	group := "TestGroup"
+	severity := "Low"
+	category := "TEST"
+	cisVersion := "1.2"
+	cisID := "4.1.3"
 
 	content := fmt.Sprintf("# METADATA\n"+
 		"# title: %s\n"+
 		"# description: %s\n"+
 		"# custom:\n"+
 		"#   group: %s\n"+
+		"#   severity: %s\n"+
+		"#   sccCategory: %s\n"+
+		"#   cis:\n"+
+		"#     version: %q\n"+
+		"#     id: %q\n"+
 		"package %s\n"+
-		"p = 1", title, desc, group, pkg)
+		"p = 1", title, desc, group, severity, category, cisVersion, cisID, pkg)
 
 	modules := map[string]string{file: content}
 	compiler := ast.MustCompileModulesWithOpts(modules,
@@ -412,20 +416,38 @@ func TestMapModule(t *testing.T) {
 	if policy.Group != group {
 		t.Errorf("group = %v; want %v", policy.Group, group)
 	}
+	if policy.Severity != severity {
+		t.Errorf("severity = %v; want %v", policy.Severity, severity)
+	}
+	if policy.Category != category {
+		t.Errorf("category = %v; want %v", policy.Category, category)
+	}
+	if policy.CisVersion != cisVersion {
+		t.Errorf("cis version = %v; want %v", policy.CisVersion, cisVersion)
+	}
+	if policy.CisID != cisID {
+		t.Errorf("cis id = %v; want %v", policy.CisID, cisID)
+	}
 }
 
 func TestMetadataErrors(t *testing.T) {
 	input := []Policy{
+		{Title: "title", Description: "description", Group: "group", Severity: "High", Category: "TEST"},
+		{Title: "title", Description: "description", Group: "group", Severity: "High"},
 		{Title: "title", Description: "description", Group: "group"},
-		{Title: "title", Description: "description"},
 		{Title: "title"},
 		{},
+		{Title: "title", Description: "description", Group: "group", Severity: "High", Category: "TEST", CisVersion: "1.0"},
+		{Title: "title", Description: "description", Group: "group", Severity: "High", Category: "TEST", CisID: "1.1.1"},
 	}
 	expErrCnt := []int{
 		0,
 		1,
 		2,
-		3,
+		4,
+		5,
+		1,
+		1,
 	}
 	for i := range input {
 		errors := input[i].MetadataErrors()
@@ -553,5 +575,24 @@ func TestGetRegoQueryForPackageBase(t *testing.T) {
 	expected := "data." + base + "[name]"
 	if query != expected {
 		t.Fatalf("query = %v; want %v", query, expected)
+	}
+}
+
+func TestGetStringFromInterfaceMap(t *testing.T) {
+	m := map[string]interface{}{
+		"keyOne": "value",
+		"keyTwo": 12,
+	}
+	if v, ok := getStringFromInterfaceMap("keyOne", m); !ok {
+		t.Errorf("ok for keyOne is false; want true")
+
+	} else if v != m["keyOne"] {
+		t.Errorf("value for keyOne = %v; want %v", v, m["keyOne"])
+	}
+	if _, ok := getStringFromInterfaceMap("keyTwo", m); ok {
+		t.Errorf("ok for keyOne is true; want false")
+	}
+	if _, ok := getStringFromInterfaceMap("missing", m); ok {
+		t.Errorf("ok for missing is true; want false")
 	}
 }

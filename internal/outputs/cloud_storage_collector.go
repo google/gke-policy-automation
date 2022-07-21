@@ -67,3 +67,7 @@ func (p *cloudStorageResultCollector) Close() error {
 	log.Infof("Validation results stored in [%s] object in [%s] Cloud Storage bucket", p.objectName, p.bucketName)
 	return p.client.Close()
 }
+
+func (p *cloudStorageResultCollector) Name() string {
+	return "Cloud Storage bucket " + p.bucketName
+}

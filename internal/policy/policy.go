@@ -49,9 +49,13 @@ type Policy struct {
 	Title            string
 	Description      string
 	Group            string
+	Severity         string
+	Category         string
 	Valid            bool
 	Violations       []string
 	ProcessingErrors []error
+	CisVersion       string
+	CisID            string
 }
 
 type PolicyEvaluationResult struct {
@@ -338,9 +342,23 @@ func (p *Policy) mapModule(module *ast.Module) {
 		}
 		p.Title = annot.Title
 		p.Description = annot.Description
-		if group, ok := annot.Custom["group"]; ok {
-			if groupS, okS := group.(string); okS {
-				p.Group = groupS
+		if group, ok := getStringFromInterfaceMap("group", annot.Custom); ok {
+			p.Group = group
+		}
+		if severity, ok := getStringFromInterfaceMap("severity", annot.Custom); ok {
+			p.Severity = severity
+		}
+		if category, ok := getStringFromInterfaceMap("sccCategory", annot.Custom); ok {
+			p.Category = category
+		}
+		if cis, ok := annot.Custom["cis"]; ok {
+			if cisMap, ok := cis.(map[string]interface{}); ok {
+				if cisVersion, ok := getStringFromInterfaceMap("version", cisMap); ok {
+					p.CisVersion = cisVersion
+				}
+				if cisID, ok := getStringFromInterfaceMap("id", cisMap); ok {
+					p.CisID = cisID
+				}
 			}
 		}
 	}
@@ -356,6 +374,18 @@ func (p Policy) MetadataErrors() []string {
 	}
 	if p.Group == "" {
 		errs = append(errs, "group is not set")
+	}
+	if p.Severity == "" {
+		errs = append(errs, "severity is not set")
+	}
+	if p.Category == "" {
+		errs = append(errs, "category is not set")
+	}
+	if p.CisVersion != "" && p.CisID == "" {
+		errs = append(errs, "CIS version is set without CIS identifier")
+	}
+	if p.CisID != "" && p.CisVersion == "" {
+		errs = append(errs, "CIS identifier is set without CIS version")
 	}
 	return errs
 }
@@ -394,4 +424,12 @@ func getStringListFromInterfaceMap(name string, m map[string]interface{}) ([]str
 
 func getRegoQueryForPackageBase(packageBase string) string {
 	return "data." + packageBase + "[name]"
+}
+
+func getStringFromInterfaceMap(key string, m map[string]interface{}) (string, bool) {
+	if value, ok := m[key]; ok {
+		valueString, ok := value.(string)
+		return valueString, ok
+	}
+	return "", false
 }
