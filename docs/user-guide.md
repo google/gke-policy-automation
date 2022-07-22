@@ -378,8 +378,8 @@ as a SCC Source. This is one-time action that requires `roles/securitycenter.sou
 Once GKE Policy Automation is configured as a source in Security Command Center, it requires `roles/securitycenter.findingsEditor`
 IAM role (or equivalent) in order to create findings in SCC.
 
-The below configuration example runs GKE Policy Automation with organization wide clusters discover and
-Security Command Center output:
+The below configuration example runs GKE Policy Automation with organization wide clusters discovery
+and Security Command Center output:
 
 ```yaml
 clusterDiscovery:
