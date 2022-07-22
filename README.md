@@ -103,9 +103,19 @@ clusterDiscovery:
   organization: "123456789012"
 ```
 
+It is possible to use cluster discovery on a given project using command line flags only:
+
+```sh
+./gke-policy check --discovery -p my-project-id
+```
+
 ### Defining outputs
 
-Specify the desired outputs for validation results.
+The cluster validation results can be published to multiple outputs, including JSON file, Pub/Sub topic,
+Cloud Storage bucket or Security Command Center. Check [Outputs user guide](./docs/user-guide.md#outputs)
+for more details.
+
+Examples:
 
 * JSON file output with command line flags
 
@@ -115,7 +125,7 @@ Specify the desired outputs for validation results.
   --out-file output.json
   ```
 
-* JSON file, GCS bucket or PubSub topic with configuration file
+* All outputs enabled in a configuration file
 
   ```yaml
   clusters:
@@ -130,6 +140,8 @@ Specify the desired outputs for validation results.
     - cloudStorage:
         bucket: bucket-name
         path: path/to/write
+    - securityCommandCenter:
+        organization: "153963171798"
   ```
 
 ### Custom Policy repository
@@ -160,7 +172,7 @@ Specify custom repository with the GKE cluster best practices and check the clus
       project: my-project
       location: europe-west2
   policies:
-    - repository: https://github.com/google/gke-policy-automation
+    - repository: https://domain.com/your/custom/repository
       branch: main
       directory: gke-policies
   ```
@@ -177,7 +189,8 @@ default credentials
 * To use credentials from service account key file pass `--creds` parameter with a path to the file.
 
 The minimum required IAM role is `roles/container.clusterViewer`
-on a cluster projects. Additional roles may be needed, depending on configured [outputs](./docs/user-guide.md#outputs).
+on a cluster projects. Additional roles may be needed, depending on configured outputs
+\- check [authentication section](./docs/user-guide.md#authentication) in the user guide.
 
 ### Serverless execution
 
