@@ -15,6 +15,7 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -27,6 +28,7 @@ import (
 	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/outputs"
+	"github.com/google/gke-policy-automation/internal/policy"
 )
 
 type DiscoveryClientMock struct {
@@ -384,6 +386,31 @@ func TestPolicyAutomationAppClose_negative(t *testing.T) {
 	}
 	if err != closeErr {
 		t.Errorf("error is %v; want %v", err, closeErr)
+	}
+}
+
+type MockDocumentation struct {
+	content string
+}
+
+func (m *MockDocumentation) GenerateDocumentation() string {
+	return m.content
+}
+
+func TestPolicyGenerateDocumentation(t *testing.T) {
+	pa := NewPolicyAutomationApp()
+
+	content := "documentation content"
+	var buffer bytes.Buffer
+
+	pa.PolicyGenerateDocumentation(func(policies []*policy.Policy) outputs.PolicyDocumentation {
+		return &MockDocumentation{content}
+	}, &buffer)
+
+	line, _ := buffer.ReadString('\n')
+
+	if line != content {
+		t.Fatalf("content is not equal to expected; %s != %s", line, content)
 	}
 }
 

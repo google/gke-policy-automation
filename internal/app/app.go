@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"time"
@@ -49,6 +50,7 @@ type PolicyAutomation interface {
 	ClusterJSONData() error
 	Version() error
 	PolicyCheck() error
+	PolicyGenerateDocumentation(generator outputs.DocumentationBuilder, w io.Writer) error
 	ConfigureSCC(orgNumber string) error
 }
 
@@ -336,6 +338,33 @@ func (p *PolicyAutomationApp) PolicyCheck() error {
 	}
 	p.out.ColorPrintf("%s [bold][green] All policies validated correctly\n", outputs.ICON_INFO)
 	log.Info("All policies validated correctly")
+	return nil
+}
+
+func (p *PolicyAutomationApp) PolicyGenerateDocumentation(generator outputs.DocumentationBuilder, w io.Writer) error {
+
+	files, err := p.loadPolicyFiles()
+	if err != nil {
+		p.out.ErrorPrint("loading policy files failed: ", err)
+		log.Errorf("loading policy files failed: %s", err)
+		return err
+	}
+
+	pa := policy.NewPolicyAgent(p.ctx)
+	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
+		p.out.ErrorPrint("could not parse policy files", err)
+		log.Errorf("could not parse policy files: %s", err)
+		return err
+	}
+
+	documentationGenerator := generator(pa.GetPolicies())
+
+	if _, err := w.Write([]byte(documentationGenerator.GenerateDocumentation())); err != nil {
+		p.out.ErrorPrint("could not write documentation file", err)
+		log.Errorf("could not write documentation file: %s", err)
+		return err
+	}
+
 	return nil
 }
 

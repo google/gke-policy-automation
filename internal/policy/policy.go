@@ -32,6 +32,7 @@ type PolicyAgent interface {
 	Compile(files []*PolicyFile) error
 	WithFiles(files []*PolicyFile, excludes cfg.ConfigPolicyExclusions) error
 	Evaluate(input interface{}, packageBase string) (*PolicyEvaluationResult, error)
+	GetPolicies() []*Policy
 }
 
 type GKEPolicyAgent struct {
@@ -222,6 +223,10 @@ func (pa *GKEPolicyAgent) Evaluate(input interface{}, packageBase string) (*Poli
 		return nil, fmt.Errorf("failed to evaluate rego: %s", err)
 	}
 	return pa.processRegoResultSet(packageBase, results)
+}
+
+func (pa *GKEPolicyAgent) GetPolicies() []*Policy {
+	return pa.policies
 }
 
 func (pa *GKEPolicyAgent) processRegoResultSet(packageBase string, results rego.ResultSet) (*PolicyEvaluationResult, error) {
