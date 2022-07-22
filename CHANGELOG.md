@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.2.0 (Jul 22, 2022)
+
+FEATURES:
+
+* Security Command Center output [#100](https://github.com/google/gke-policy-automation/pull/100)
+
+IMPROVEMENTS:
+
+* Cluster discovery triggered from CLI [#92](https://github.com/google/gke-policy-automation/pull/92)
+* New console output, cluster evaluations are now policy oriented [#90](https://github.com/google/gke-policy-automation/pull/90)
+* Tool can generate markdown documentation from policies [#86](https://github.com/google/gke-policy-automation/pull/86)
+
+BUG FIXES:
+
+* Cluster discovery skipped zonal clusters due to name pattern mismatch[#91](https://github.com/google/gke-policy-automation/pull/91)
+
 ## 1.1.0 (Jul 1, 2022)
 
 FEATURES:
