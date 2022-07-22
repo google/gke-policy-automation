@@ -389,7 +389,6 @@ outputs:
       organization: "123456789012"
 ```
 
-
 ## Serverless execution
 
 The GKE Policy Automation tool can be executed in a serverless way to perform automatic evaluations
