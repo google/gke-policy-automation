@@ -27,6 +27,7 @@ The GKE Policy Automation is a command line tool that validates GKE clusters aga
   * [Local JSON file](#local-json-file)
   * [Cloud Storage bucket](#cloud-storage-bucket)
   * [Pub/Sub topic](#pubsub-topic)
+  * [Security Command Center](#security-command-center)
 * [Serverless execution](#serverless-execution)
 * [Silent mode](#silent-mode)
 * [Configuration file](#configuration-file)
@@ -77,11 +78,19 @@ default credentials
 ### Required IAM roles
 
 * The minimum required IAM role is `roles/container.clusterViewer` on a cluster projects
-* For cluster discovery the `cloudasset.assets.searchAllResources` permission is needed on a target
+* For **cluster discovery** the `cloudasset.assets.searchAllResources` permission is needed on a target
 projects, folders or organization. This permission is included, among others, in a `roles/cloudasset.viewer`
 role
-* For Cloud Storage output, the `roles/storage.objectCreator` role is needed on a target bucket
-* For Pub/Sub output, the `roles/pubsub.publisher` role is needed on a target topic
+* For [Cloud Storage](https://cloud.google.com/storage) output, the `roles/storage.objectCreator` role
+  is needed on a target bucket
+* For [Pub/Sub](https://cloud.google.com/pubsub) output, the `roles/pubsub.publisher`
+  role is needed on a target topic
+* For [Security Command Center](https://cloud.google.com/security-command-center) output, the following
+  roles are required on the **organization** level:
+  * to create GKE Policy Automation in Security Command Center, `roles/securitycenter.sourcesAdmin`
+    or equivalent is required. This is one time action and can be triggered manually.
+  * once GKE Policy Automation is created, the `roles/securitycenter.findingsEditor` is needed to
+    create SCC findings based on cluster evaluations
 
 ## Checking clusters
 
@@ -332,6 +341,54 @@ outputs:
       project: my-pubsub-project
 ```
 
+### Security Command Center
+
+The validation results can be pushed to [Security Command Center](https://cloud.google.com/security-command-center)
+as findings. The SCC integration works on organization level with SCC Standard Tier (free).
+
+We recommend Security Command Center integration along with a cluster discovery and automatic,
+serverless execution of a tool. This will ensure that all GKE clusters in the organization are audited
+and results are immediately visible in a GCP native tool.
+
+Example of GKE Policy Automation findings in a Security Command Center:
+
+![GKE Policy Automation Demo](../assets/gke-policy-automation-scc-findings.png)
+
+In order to use GKE Policy Automation with Security Command Center, the tool need to register itself
+as a SCC Source. This is one-time action that requires `roles/securitycenter.sourcesAdmin`
+(or equivalent) IAM role and can be done in two ways:
+
+* Manually using the command line (i.e. by security admin before using the tool)
+
+  ```sh
+  ./gke-policy configure scc --organization 123456789012
+  ```
+
+* Automatically during the tool runtime (given that tool has required privileges)
+  
+  Set `provisionSource: true` in Security Command Center output configuration:
+
+  ```yaml
+  outputs:
+  - securityCommandCenter:
+      provisionSource: true
+      organization: "123456789012"
+  ```
+
+Once GKE Policy Automation is configured as a source in Security Command Center, it requires `roles/securitycenter.findingsEditor`
+IAM role (or equivalent) in order to create findings in SCC.
+
+The below configuration example runs GKE Policy Automation with organization wide clusters discovery
+and Security Command Center output:
+
+```yaml
+clusterDiscovery:
+  organization: "123456789012"
+outputs:
+  - securityCommandCenter:
+      organization: "123456789012"
+```
+
 ## Serverless execution
 
 The GKE Policy Automation tool can be executed in a serverless way to perform automatic evaluations
@@ -399,7 +456,11 @@ outputs:
   - cloudStorage:
       bucket: bucket-name
       path: path/to/write
-      skipDatePrefix: true
+      skipDatePrefix: true 
+  - securityCommandCenter:
+      provisionSource: true
+      organization: "123456789012" #organization number
+
 
 ```
 
