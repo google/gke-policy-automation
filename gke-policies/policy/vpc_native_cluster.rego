@@ -17,6 +17,9 @@
 # description: GKE cluster nodepool should be VPC-native as per our best-practices
 # custom:
 #   group: Management
+#   severity: CRITICAL
+#   sccCategory: VPC_NATIVE_ROUTING_DISABLED
+
 package gke.policy.vpc_native_cluster
 
 default valid = false

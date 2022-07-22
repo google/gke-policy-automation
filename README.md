@@ -12,6 +12,8 @@ clusters against configuration best practices.
 [![GoDoc](https://godoc.org/github.com/google/gke-policy-automation?status.svg)](https://godoc.org/github.com/google/gke-policy-automation)
 ![GitHub](https://img.shields.io/github/license/google/gke-policy-automation)
 
+![GKE Policy Automation Demo](./assets/gke-policy-automation-demo.gif)
+
 ---
 
 ## Table of Contents
@@ -41,7 +43,7 @@ Binaries for Linux, Windows and Mac are available as tarballs in the
 
 ### Source code
 
-Go [v1.17](https://go.dev/doc/install) or newer is required. Check the [development guide](./DEVELOPMENT.md)
+Go [v1.18](https://go.dev/doc/install) or newer is required. Check the [development guide](./DEVELOPMENT.md)
 for more details.
 
 ```sh

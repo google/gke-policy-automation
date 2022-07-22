@@ -17,6 +17,9 @@
 # description: GKE cluster should be regional for maximum availability of control plane during upgrades and zonal outages
 # custom:
 #   group: Availability
+#   severity: High
+#   sccCategory: CONTROL_PLANE_ZONAL
+
 package gke.policy.control_plane_redundancy
 
 import data.gke.rule.cluster.location.regional

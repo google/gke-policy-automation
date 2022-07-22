@@ -62,20 +62,28 @@ type ConfigCluster struct {
 }
 
 type ConfigOutput struct {
-	FileName     string             `yaml:"file"`
-	PubSub       PubSubOutput       `yaml:"pubsub"`
-	CloudStorage CloudStorageOutput `yaml:"cloudStorage"`
+	FileName              string                      `yaml:"file"`
+	PubSub                PubSubOutput                `yaml:"pubsub"`
+	CloudStorage          CloudStorageOutput          `yaml:"cloudStorage"`
+	SecurityCommandCenter SecurityCommandCenterOutput `yaml:"securityCommandCenter"`
 }
 
 type PubSubOutput struct {
 	Project string `yaml:"project"`
 	Topic   string `yaml:"topic"`
 }
+
 type CloudStorageOutput struct {
 	Bucket         string `yaml:"bucket"`
 	Path           string `yaml:"path"`
 	SkipDatePrefix bool   `yaml:"skipDatePrefix"`
 }
+
+type SecurityCommandCenterOutput struct {
+	OrganizationNumber string `yaml:"organization"`
+	ProvisionSource    bool   `yaml:"provisionSource"`
+}
+
 type ClusterDiscovery struct {
 	Enabled      bool     `yaml:"enabled"`
 	Organization string   `yaml:"organization"`

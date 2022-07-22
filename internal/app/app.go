@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"time"
@@ -49,6 +50,8 @@ type PolicyAutomation interface {
 	ClusterJSONData() error
 	Version() error
 	PolicyCheck() error
+	PolicyGenerateDocumentation(generator outputs.DocumentationBuilder, w io.Writer) error
+	ConfigureSCC(orgNumber string) error
 }
 
 type evaluationResults struct {
@@ -59,12 +62,12 @@ func (r *evaluationResults) Add(result *policy.PolicyEvaluationResult) *evaluati
 	if r.m == nil {
 		r.m = make(map[string]*policy.PolicyEvaluationResult)
 	}
-	currentResult, ok := r.m[result.ClusterName]
+	currentResult, ok := r.m[result.ClusterID]
 	if !ok {
-		r.m[result.ClusterName] = result
+		r.m[result.ClusterID] = result
 		return r
 	}
-	currentResult.Merge(result)
+	currentResult.Policies = append(currentResult.Policies, result.Policies...)
 	return r
 }
 
@@ -154,7 +157,7 @@ func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 				storagePath = addDatetimePrefix(storagePath, time.Now())
 			}
 
-			storageCollector, err := outputs.NewCloudStorageResultCollector(storageClient, outputs.MapEvaluationResultsToJsonWithTime, o.CloudStorage.Bucket, storagePath)
+			storageCollector, err := outputs.NewCloudStorageResultCollector(storageClient, o.CloudStorage.Bucket, storagePath)
 			if err != nil {
 				return err
 			}
@@ -171,6 +174,9 @@ func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 				return err
 			}
 			p.collectors = append(p.collectors, outputs.NewPubSubResultCollector(client, o.PubSub.Project, o.PubSub.Topic))
+		}
+		if err := p.configureSccOutput(o.SecurityCommandCenter, p.config.CredentialsFile); err != nil {
+			return err
 		}
 	}
 	return
@@ -221,7 +227,7 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 	}
 	// create a PolicyAgent client instance
 	pa := policy.NewPolicyAgent(p.ctx)
-	p.out.ColorPrintf("[light_gray][bold]Parsing REGO policies...\n")
+	p.out.ColorPrintf("%s [light_gray][bold]Parsing REGO policies...\n", outputs.ICON_INFO)
 	log.Info("Parsing rego policies")
 	// parsing policies before running checks
 	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
@@ -239,16 +245,15 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 	evalResults := &evaluationResults{}
 	for _, clusterId := range clusterIds {
 		log.Infof("Fetching GKE cluster %s", clusterId)
-		p.out.ColorPrintf("[light_gray][bold]Fetching GKE cluster details... [%s]\n", clusterId)
+		p.out.ColorPrintf("%s [light_gray][bold]Fetching GKE cluster details... [%s]\n", outputs.ICON_INFO, clusterId)
 		cluster, err := p.gke.GetCluster(clusterId)
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
 			return err
 		}
-		p.out.ColorPrintf("[light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
-			clusterId)
-
+		p.out.ColorPrintf("%s [light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
+			outputs.ICON_INFO, clusterId)
 		log.Infof("Evaluating policies against GKE cluster %s", clusterId)
 		for _, pkgBase := range regoPackageBases {
 			evalResult, err := pa.Evaluate(cluster, pkgBase)
@@ -257,7 +262,7 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 				log.Errorf("could not evaluate rego policies on cluster %s: %s", cluster.Id, err)
 				return err
 			}
-			evalResult.ClusterName = clusterId
+			evalResult.ClusterID = clusterId
 			evalResults.Add(evalResult)
 		}
 	}
@@ -265,6 +270,7 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 	for _, c := range p.collectors {
 		collectorType := reflect.TypeOf(c).String()
 		log.Debugf("Collector %s registering the results", collectorType)
+		p.out.ColorPrintf("%s [light_gray][bold]Writing evaluation results ... [%s]\n", outputs.ICON_INFO, c.Name())
 		if err = c.RegisterResult(evalResults.List()); err != nil {
 			p.out.ErrorPrint("failed to register evaluation results", err)
 			log.Errorf("could not register evaluation results: %s", err)
@@ -278,6 +284,7 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 		log.Debugf("Collector %s processing closed", collectorType)
 	}
 	log.Info("Cluster review finished")
+	p.out.ColorPrintf("\u2139 [light_gray][bold]Cluster review finished\n")
 	return nil
 }
 
@@ -302,6 +309,7 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 	for _, dumpCollector := range p.clusterDumpCollectors {
 		colType := reflect.TypeOf(dumpCollector).String()
 		log.Debugf("closing cluster dump collector %s", colType)
+		p.out.ColorPrintf("%s [light_gray][bold]Writing evaluation results ...\n", outputs.ICON_INFO)
 		if err := dumpCollector.Close(); err != nil {
 			log.Errorf("failed to close cluster dump collector %s due to %s", colType, err)
 			return err
@@ -328,8 +336,35 @@ func (p *PolicyAutomationApp) PolicyCheck() error {
 		log.Errorf("could not parse policy files: %s", err)
 		return err
 	}
-	p.out.ColorPrintf("[bold][green] All policies validated correctly \n")
+	p.out.ColorPrintf("%s [bold][green] All policies validated correctly\n", outputs.ICON_INFO)
 	log.Info("All policies validated correctly")
+	return nil
+}
+
+func (p *PolicyAutomationApp) PolicyGenerateDocumentation(generator outputs.DocumentationBuilder, w io.Writer) error {
+
+	files, err := p.loadPolicyFiles()
+	if err != nil {
+		p.out.ErrorPrint("loading policy files failed: ", err)
+		log.Errorf("loading policy files failed: %s", err)
+		return err
+	}
+
+	pa := policy.NewPolicyAgent(p.ctx)
+	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
+		p.out.ErrorPrint("could not parse policy files", err)
+		log.Errorf("could not parse policy files: %s", err)
+		return err
+	}
+
+	documentationGenerator := generator(pa.GetPolicies())
+
+	if _, err := w.Write([]byte(documentationGenerator.GenerateDocumentation())); err != nil {
+		p.out.ErrorPrint("could not write documentation file", err)
+		log.Errorf("could not write documentation file: %s", err)
+		return err
+	}
+
 	return nil
 }
 
@@ -345,7 +380,7 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 				policyConfig.GitBranch,
 				policyConfig.GitDirectory)
 		}
-		p.out.ColorPrintf("[light_gray][bold]Reading policy files... [%s]\n", policySrc)
+		p.out.ColorPrintf("%s [light_gray][bold]Reading policy files... [%s]\n", outputs.ICON_INFO, policySrc)
 		log.Infof("Reading policy files from %s", policySrc)
 		files, err := policySrc.GetPolicyFiles()
 		if err != nil {
@@ -396,14 +431,14 @@ func (p *PolicyAutomationApp) getClusters() ([]string, error) {
 //discoverClusters discovers clusters according to the cluster discovery configuration.
 func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 	if p.config.ClusterDiscovery.Organization != "" {
-		log.Infof("Discovering clusters for organization %s", p.config.ClusterDiscovery.Organization)
-		p.out.ColorPrintf("[light_gray][bold]Discovering clusters in for an organization... [%s]\n", p.config.ClusterDiscovery.Organization)
+		log.Infof("Discovering clusters in organization %s", p.config.ClusterDiscovery.Organization)
+		p.out.ColorPrintf("%s [light_gray][bold]Discovering clusters in for organization... [%s]\n", outputs.ICON_INFO, p.config.ClusterDiscovery.Organization)
 		return p.discovery.GetClustersInOrg(p.config.ClusterDiscovery.Organization)
 	}
 	clusters := make([]string, 0)
 	for _, folder := range p.config.ClusterDiscovery.Folders {
-		log.Infof("Discovering clusters in a folder %s", folder)
-		p.out.ColorPrintf("[light_gray][bold]Discovering clusters in a folder... [%s]\n", folder)
+		log.Infof("Discovering clusters in folder %s", folder)
+		p.out.ColorPrintf("%s [light_gray][bold]Discovering clusters in folder... [%s]\n", outputs.ICON_INFO, folder)
 		results, err := p.discovery.GetClustersInFolder(folder)
 		if err != nil {
 			return nil, err
@@ -411,8 +446,8 @@ func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 		clusters = append(clusters, results...)
 	}
 	for _, project := range p.config.ClusterDiscovery.Projects {
-		log.Infof("Discovering clusters in a project %s", project)
-		p.out.ColorPrintf("[light_gray][bold]Discovering clusters in a project... [%s]\n", project)
+		log.Infof("Discovering clusters in project %s", project)
+		p.out.ColorPrintf("%s [light_gray][bold]Discovering clusters in project... [%s]\n", outputs.ICON_INFO, project)
 		results, err := p.discovery.GetClustersInProject(project)
 		if err != nil {
 			return nil, err
@@ -421,6 +456,19 @@ func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 	}
 	log.Debugf("discovered %v clusters in projects and folders", len(clusters))
 	return clusters, nil
+}
+
+func (p *PolicyAutomationApp) configureSccOutput(config cfg.SecurityCommandCenterOutput, credsFile string) error {
+	if config.OrganizationNumber == "" {
+		return nil
+	}
+	log.Infof("Loading Security Command Center output")
+	collector, err := outputs.NewSccCollector(p.ctx, config.OrganizationNumber, config.ProvisionSource, credsFile)
+	if err != nil {
+		return err
+	}
+	p.collectors = append(p.collectors, collector)
+	return nil
 }
 
 func addDatetimePrefix(value string, time time.Time) string {

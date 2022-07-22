@@ -17,6 +17,9 @@
 # description: GKE cluster should use GKE L4 ILB Subsetting if nodes > 250
 # custom:
 #   group: Scalability
+#   severity: High
+#   sccCategory: ILB_SUBSETTING_DISABLED
+
 package gke.policy.enable_ilb_subsetting
 
 default valid = false

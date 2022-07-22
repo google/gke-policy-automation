@@ -17,6 +17,12 @@
 # description: GKE node pools should use Container-Optimized OS which is maintained by Google and optimized for running Docker containers with security and efficiency.
 # custom:
 #   group: Security
+#   severity: High
+#   sccCategory: NODEPOOL_COS_UNUSED
+#   cis:
+#     version: "1.2"
+#     id: "5.5.1"
+
 package gke.policy.node_pool_use_cos
 
 import future.keywords.in

@@ -14,18 +14,7 @@
 
 package outputs
 
-import (
-	"github.com/google/gke-policy-automation/internal/gke"
-	"github.com/google/gke-policy-automation/internal/policy"
+const (
+	ICON_MAGNIFIER = "\U0001f50e"
+	ICON_INFO      = "\u2139"
 )
-
-type ValidationResultCollector interface {
-	RegisterResult(results []*policy.PolicyEvaluationResult) error
-	Close() error
-	Name() string
-}
-
-type ClusterDumpCollector interface {
-	RegisterCluster(cluster *gke.Cluster)
-	Close() error
-}

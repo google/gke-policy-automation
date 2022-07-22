@@ -17,6 +17,9 @@
 # description: GKE Unused HPAs Limit
 # custom:
 #   group: Scalability
+#   severity: Low
+#   sccCategory: HPAS_UNUSED
+
 package gke.scalability.unused_hpas
 
 default valid = false

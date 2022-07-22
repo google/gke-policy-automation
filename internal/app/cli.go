@@ -15,25 +15,30 @@
 package app
 
 import (
+	"os"
+
 	cfg "github.com/google/gke-policy-automation/internal/config"
+	"github.com/google/gke-policy-automation/internal/outputs"
 	cli "github.com/urfave/cli/v2"
 )
 
 type CliConfig struct {
-	ConfigFile       string
-	SilentMode       bool
-	K8SCheck         bool
-	CredentialsFile  string
-	DumpFile         string
-	ClusterName      string
-	ClusterLocation  string
-	ProjectName      string
-	GitRepository    string
-	GitBranch        string
-	GitDirectory     string
-	LocalDirectory   string
-	OutputFile       string
-	DiscoveryEnabled bool
+	ConfigFile          string
+	SilentMode          bool
+	K8SCheck            bool
+	CredentialsFile     string
+	DumpFile            string
+	ClusterName         string
+	ClusterLocation     string
+	ProjectName         string
+	GitRepository       string
+	GitBranch           string
+	GitDirectory        string
+	LocalDirectory      string
+	OutputFile          string
+	DocumentationOutput string
+	DiscoveryEnabled    bool
+	SccOrgNumber        string
 }
 
 func NewPolicyAutomationCli(p PolicyAutomation) *cli.App {
@@ -43,7 +48,9 @@ func NewPolicyAutomationCli(p PolicyAutomation) *cli.App {
 		Commands: []*cli.Command{
 			createCheckCommand(p),
 			createDumpCommand(p),
+			createConfigureCommand(p),
 			createVersionCommand(p),
+			createGenerateCommand(p),
 		},
 	}
 	return app
@@ -125,6 +132,72 @@ func createDumpCommand(p PolicyAutomation) *cli.Command {
 						return err
 					}
 					return p.ClusterJSONData()
+				},
+			},
+		},
+	}
+}
+
+func createConfigureCommand(p PolicyAutomation) *cli.Command {
+	config := &CliConfig{}
+	return &cli.Command{
+		Name:  "configure",
+		Usage: "Configure GKE Policy Automation environment",
+		Subcommands: []*cli.Command{
+			{
+				Name:  "scc",
+				Usage: "Configure GKE Policy Automation in Security Command Center",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:        "organization",
+						Aliases:     []string{"o"},
+						Usage:       "Organization number",
+						Destination: &config.SccOrgNumber,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					defer p.Close()
+					if err := p.LoadCliConfig(config, nil); err != nil {
+						cli.ShowSubcommandHelp(c)
+						return err
+					}
+					return p.ConfigureSCC(config.SccOrgNumber)
+				},
+			},
+		},
+	}
+}
+
+func createGenerateCommand(p PolicyAutomation) *cli.Command {
+	config := &CliConfig{}
+	return &cli.Command{
+		Name:  "generate",
+		Usage: "Generate GKE Policy outputs.",
+		Subcommands: []*cli.Command{
+			{
+				Name:  "policy-docs",
+				Usage: "Generate documentation for policy files",
+				Flags: (getPolicyDocumentationFlags(config)),
+				Action: func(c *cli.Context) error {
+					defer p.Close()
+					if err := p.LoadCliConfig(config, cfg.ValidatePolicyCheckConfig); err != nil {
+						cli.ShowSubcommandHelp(c)
+						return err
+					}
+
+					// Required output file to write documentation text
+					w, err := os.OpenFile(config.DocumentationOutput, os.O_CREATE|os.O_WRONLY, 0644)
+
+					if err != nil {
+						return err
+					}
+
+					defer w.Close()
+
+					// it's possible to wire different policy generators for console, json, etc
+					p.PolicyGenerateDocumentation(outputs.NewMarkdownPolicyDocumentation, w)
+
+					return nil
 				},
 			},
 		},
@@ -236,6 +309,18 @@ func getPolicySourceFlags(config *CliConfig) []cli.Flag {
 			Destination: &config.GitDirectory,
 		},
 	}
+}
+
+func getPolicyDocumentationFlags(config *CliConfig) []cli.Flag {
+	return append(getPolicySourceFlags(config),
+		&cli.StringFlag{
+			Name:        "output",
+			Aliases:     []string{"o"},
+			Usage:       "Path to output the documentation file",
+			Required:    true,
+			Destination: &config.DocumentationOutput,
+		},
+	)
 }
 
 func getCheckFlags(config *CliConfig) []cli.Flag {

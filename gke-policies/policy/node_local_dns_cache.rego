@@ -17,6 +17,9 @@
 # description: GKE cluster should use node local DNS cache
 # custom:
 #   group: Scalability
+#   severity: Medium
+#   sccCategory: DNS_CACHE_DISABLED
+
 package gke.policy.node_local_dns_cache
 
 default valid = false
