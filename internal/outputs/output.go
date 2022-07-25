@@ -39,7 +39,7 @@ type Output struct {
 func NewStdOutOutput() *Output {
 	return &Output{
 		w:         os.Stdout,
-		tabWriter: initTabWriter(defColWidth, tabWidth, tabPadding, tabChar),
+		tabWriter: initTabWriter(os.Stdout, defColWidth, tabWidth, tabPadding, tabChar),
 		colorize:  NewColorize(),
 	}
 }
@@ -47,7 +47,7 @@ func NewStdOutOutput() *Output {
 func NewSilentOutput() *Output {
 	return &Output{
 		w:         io.Discard,
-		tabWriter: initSilentTabWriter(),
+		tabWriter: initTabWriter(io.Discard, 0, 0, 0, 0),
 	}
 }
 
@@ -65,7 +65,7 @@ func (o *Output) ColorPrintf(format string, a ...interface{}) (n int, err error)
 
 func (o *Output) InitTabs(minColWidth int) {
 	o.tabWriter.Flush()
-	o.tabWriter = initTabWriter(minColWidth, tabWidth, tabPadding, tabChar)
+	o.tabWriter = initTabWriter(o.w, minColWidth, tabWidth, tabPadding, tabChar)
 }
 
 func (o *Output) TabFlush() (err error) {
@@ -93,10 +93,6 @@ func NewColorize() *colorstring.Colorize {
 	}
 }
 
-func initTabWriter(minWidth, tabWidth, padding int, padChar byte) *tabwriter.Writer {
-	return tabwriter.NewWriter(os.Stdout, minWidth, tabWidth, padding, padChar, 0)
-}
-
-func initSilentTabWriter() *tabwriter.Writer {
-	return tabwriter.NewWriter(io.Discard, 0, 0, 0, 0, 0)
+func initTabWriter(output io.Writer, minWidth, tabWidth, padding int, padChar byte) *tabwriter.Writer {
+	return tabwriter.NewWriter(output, minWidth, tabWidth, padding, padChar, 0)
 }
