@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-locals {
-  apis = ["container.googleapis.com", "run.googleapis.com", "cloudscheduler.googleapis.com", "secretmanager.googleapis.com", "artifactregistry.googleapis.com"]
+resource "null_resource" "script" {
+  count = var.run_script ? 1 : 0
+  provisioner "local-exec" {
+    command     = "./cloudrun-config.sh"
+    interpreter = ["bash"]
+    environment = {
+      REGION       = var.region
+      PROJECT_ID   = data.google_project.project.project_id
+      JOB_NAME     = var.job_name
+      SA_EMAIL     = google_service_account.sa.email
+      SM_CONFIG_ID = google_secret_manager_secret.config.id
+    }
+  }
 }
-
-data "google_project" "project" {
-  project_id = var.project_id
-}
-
-resource "google_project_service" "project" {
-  for_each           = toset(local.apis)
-  project            = data.google_project.project.project_id
-  service            = each.key
-  disable_on_destroy = false
-}
-

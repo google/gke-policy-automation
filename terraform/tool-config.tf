@@ -15,15 +15,11 @@
  */
 
 resource "google_secret_manager_secret" "config" {
-
-  project = var.project_id
-
-  secret_id = "gke-policy-review-config"
-
+  project   = data.google_project.project.project_id
+  secret_id = "gke-policy-automation"
   replication {
     automatic = true
   }
-
   depends_on = [
     google_project_service.project
   ]
@@ -32,8 +28,9 @@ resource "google_secret_manager_secret" "config" {
 data "template_file" "config-template" {
   template = file("${var.config_file_path}")
   vars = {
-    PROJECT_ID  = var.project_id
-    BUCKET_NAME = google_storage_bucket.report_bucket.name
+    DISCOVERY_PROJECT_ID   = data.google_project.project.project_id
+    DISCOVERY_ORGANIZATION = can(var.discovery.organization) ? var.discovery.organization : null
+    SCC_ORGANIZATION       = can(var.output_scc.organization) ? var.output_scc.organization : null
   }
 }
 
@@ -46,5 +43,5 @@ resource "google_secret_manager_secret_version" "config" {
 resource "google_secret_manager_secret_iam_member" "job-sa" {
   secret_id = google_secret_manager_secret.config.id
   role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.service_account_cr.email}" # or serviceAccount:my-app@...
+  member    = "serviceAccount:${google_service_account.sa.email}"
 }

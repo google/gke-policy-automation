@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-locals {
-  apis = ["container.googleapis.com", "run.googleapis.com", "cloudscheduler.googleapis.com", "secretmanager.googleapis.com", "artifactregistry.googleapis.com"]
+output "region" {
+  value = var.region
 }
 
-data "google_project" "project" {
-  project_id = var.project_id
+output "project_id" {
+  value = data.google_project.project.project_id
 }
 
-resource "google_project_service" "project" {
-  for_each           = toset(local.apis)
-  project            = data.google_project.project.project_id
-  service            = each.key
-  disable_on_destroy = false
+output "job_name" {
+  value = var.job_name
 }
 
+output "sa_email" {
+  value = google_service_account.sa.email
+}
+
+output "config_secret_id" {
+  value = google_secret_manager_secret.config.secret_id
+}
