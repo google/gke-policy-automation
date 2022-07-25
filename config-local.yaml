@@ -1,0 +1,12 @@
+clusters:
+  - name: prod-central
+    project: mstefaniak-service
+    location: europe-central2
+  - name: prod-west
+    project: mstefaniak-service
+    location: europe-west2
+  - name: prod-north
+    project: mstefaniak-team-a
+    location: europe-north1
+policies:
+  - local: ./gke-policies

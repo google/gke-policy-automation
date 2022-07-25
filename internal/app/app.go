@@ -240,7 +240,7 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 	if err != nil {
 		p.out.ErrorPrint("could not get clusters", err)
 		log.Errorf("could not get clusters: %s", err)
-		return nil
+		return err
 	}
 	evalResults := &evaluationResults{}
 	for _, clusterId := range clusterIds {
