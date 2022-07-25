@@ -15,6 +15,7 @@
 package outputs
 
 import (
+	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/policy"
 )
 
@@ -52,6 +53,7 @@ func (p *consoleResultCollector) Close() error {
 					p.out.TabPrintf("    \033[1m\033[31m%s\033[0m\t\n", violation)
 				}
 			}
+			log.Infof("Policy: %s, Cluster: %s, Valid: %v", policy.PolicyName, evaluation.ClusterID, evaluation.Valid)
 		}
 		p.out.TabFlush()
 		p.out.Printf("\n")

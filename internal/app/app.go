@@ -268,8 +268,7 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 	}
 
 	for _, c := range p.collectors {
-		collectorType := reflect.TypeOf(c).String()
-		log.Debugf("Collector %s registering the results", collectorType)
+		log.Infof("Collector %s registering the results", c.Name())
 		p.out.ColorPrintf("%s [light_gray][bold]Writing evaluation results ... [%s]\n", outputs.ICON_INFO, c.Name())
 		if err = c.RegisterResult(evalResults.List()); err != nil {
 			p.out.ErrorPrint("failed to register evaluation results", err)
@@ -281,7 +280,7 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 			log.Errorf("could not finalize registering evaluation results: %s", err)
 			return err
 		}
-		log.Debugf("Collector %s processing closed", collectorType)
+		log.Infof("Collector %s processing closed", c.Name())
 	}
 	log.Info("Cluster review finished")
 	p.out.ColorPrintf("\u2139 [light_gray][bold]Cluster review finished\n")
