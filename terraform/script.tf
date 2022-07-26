@@ -24,7 +24,13 @@ resource "null_resource" "script" {
       PROJECT_ID   = data.google_project.project.project_id
       JOB_NAME     = var.job_name
       SA_EMAIL     = google_service_account.sa.email
-      SM_CONFIG_ID = google_secret_manager_secret.config.id
+      SECRET_NAME  = google_secret_manager_secret.config.secret_id
     }
   }
+  depends_on = [
+    data.google_project.project,
+    google_service_account.sa,
+    google_artifact_registry_repository.mirror,
+    google_secret_manager_secret.config
+  ]
 }

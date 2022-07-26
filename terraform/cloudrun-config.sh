@@ -39,8 +39,8 @@ varCheck() {
     echo -e "${RED}[ERROR] SA_EMAIL variable is not set${NC}"
     return 1
   fi
-  if [ -z "$SM_CONFIG_ID" ]; then
-    echo -e "${RED}[ERROR] SM_CONFIG_ID variable is not set${NC}"
+  if [ -z "$SECRET_NAME" ]; then
+    echo -e "${RED}[ERROR] SECRET_NAME variable is not set${NC}"
     return 1
   fi
 }
@@ -100,7 +100,7 @@ runAndCheck "gcloud beta run jobs create ${JOB_NAME} \
   --image ${REGION}-docker.pkg.dev/${PROJECT_ID}/gke-policy-automation/gke-policy-automation:latest \
   --command=/gke-policy,check \
   --args=-c,/etc/secrets/config.yaml \
-  --set-secrets /etc/secrets/config.yaml=${SM_CONFIG_ID}:latest \
+  --set-secrets /etc/secrets/config.yaml=${SECRET_NAME}:latest \
   --service-account=${SA_EMAIL} \
   --set-env-vars=GKE_POLICY_LOG=INFO \
   --region=${REGION} \
