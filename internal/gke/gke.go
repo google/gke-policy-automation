@@ -19,6 +19,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
+	"sync"
 
 	container "cloud.google.com/go/container/apiv1"
 	"github.com/google/gke-policy-automation/internal/log"
@@ -142,7 +143,6 @@ func (c *GKEApiClient) Close() error {
 
 //getResources returns an array of k8s resources that the tool has been able to fetch after the auth
 func getResources(client KubernetesClient, apiVersions []string) ([]*Resource, error) {
-	var resources []*Resource
 	namespaces, err := client.GetNamespaces()
 	if err != nil {
 		return nil, err
@@ -162,16 +162,26 @@ func getResources(client KubernetesClient, apiVersions []string) ([]*Resource, e
 		}
 	}
 
-	for ns := range namespaces {
-		for rt := range toBeFetched {
-			res, err := client.GetNamespacedResources(*toBeFetched[rt], namespaces[ns])
-			resources = append(resources, res...)
-			if err != nil {
-				return nil, err
-			}
+	return client.GetResources(toBeFetched, namespaces)
+}
+
+func FetchNamespace(wg *sync.WaitGroup, client KubernetesClient, toBeFetched []*ResourceType, namespace string, results chan []*Resource, errors chan error) {
+	var namespaceResources []*Resource
+	log.Debugf("fetchNamespace goroutine for namespace: %s starting", namespace)
+
+	for rt := range toBeFetched {
+		res, err := client.GetNamespacedResources(*toBeFetched[rt], namespace)
+		namespaceResources = append(namespaceResources, res...)
+		if err != nil {
+			log.Errorf("unable to get namespace resources: %s", err)
+			errors <- err
+			wg.Done()
+			return
 		}
 	}
-	return resources, nil
+	results <- namespaceResources
+	log.Debugf("fetchNamespace goroutine for namespace: %s finished", namespace)
+	wg.Done()
 }
 
 //GetClusterName returns the cluster's self-link in gcp

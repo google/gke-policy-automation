@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/google/gke-policy-automation/internal/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +32,7 @@ import (
 type KubernetesClient interface {
 	GetNamespaces() ([]string, error)
 	GetFetchableResourceTypes() ([]*ResourceType, error)
+	GetResources(toBeFetched []*ResourceType, namespaces []string) ([]*Resource, error)
 	GetNamespacedResources(resourceType ResourceType, namespace string) ([]*Resource, error)
 }
 
@@ -136,6 +138,57 @@ func (c *kubernetesClient) GetFetchableResourceTypes() ([]*ResourceType, error) 
 	}
 	log.Infof("discovered %d fetchable resource types", len(resourceTypes))
 	return resourceTypes, nil
+}
+
+func (c *kubernetesClient) GetResources(toBeFetched []*ResourceType, namespaces []string) ([]*Resource, error) {
+	var resources []*Resource
+
+	namespaceCounter := len(namespaces)
+	log.Debugf("Starting %d fetchNamespace goroutines", namespaceCounter)
+
+	wg := new(sync.WaitGroup)
+	wg.Add(namespaceCounter)
+	resultsChannel := make(chan []*Resource, namespaceCounter)
+	errorsChannel := make(chan error, namespaceCounter)
+
+	for ns := range namespaces {
+		go c.getNamespaceResourcesByResourceTypeAsync(wg, toBeFetched, namespaces[ns], resultsChannel, errorsChannel)
+	}
+	log.Debugf("waiting for fetchNamespace goroutines to finish")
+	wg.Wait()
+	log.Debugf("all fetchNamespace goroutines finished")
+
+	close(resultsChannel)
+	close(errorsChannel)
+	if len(errorsChannel) > 0 {
+		err := <-errorsChannel
+		log.Errorf("unable to get resources: %s", err)
+		return nil, err
+	}
+	for result := range resultsChannel {
+		resources = append(resources, result...)
+	}
+	return resources, nil
+}
+
+func (c *kubernetesClient) getNamespaceResourcesByResourceTypeAsync(wg *sync.WaitGroup, toBeFetched []*ResourceType, namespace string, results chan []*Resource, errors chan error) {
+	var namespaceResources []*Resource
+	log.Debugf("fetchNamespace goroutine for namespace: %s starting", namespace)
+
+	for rt := range toBeFetched {
+		res, err := c.GetNamespacedResources(*toBeFetched[rt], namespace)
+		namespaceResources = append(namespaceResources, res...)
+		if err != nil {
+			log.Errorf("unable to get namespace resources: %s", err)
+			errors <- err
+			wg.Done()
+			return
+		}
+	}
+	results <- namespaceResources
+	log.Debugf("fetchNamespace goroutine for namespace: %s finished", namespace)
+	wg.Done()
+
 }
 
 func (c *kubernetesClient) GetNamespacedResources(resourceType ResourceType, namespace string) ([]*Resource, error) {
