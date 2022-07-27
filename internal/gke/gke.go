@@ -19,7 +19,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
-	"sync"
 
 	container "cloud.google.com/go/container/apiv1"
 	"github.com/google/gke-policy-automation/internal/log"
@@ -163,25 +162,6 @@ func getResources(client KubernetesClient, apiVersions []string) ([]*Resource, e
 	}
 
 	return client.GetResources(toBeFetched, namespaces)
-}
-
-func FetchNamespace(wg *sync.WaitGroup, client KubernetesClient, toBeFetched []*ResourceType, namespace string, results chan []*Resource, errors chan error) {
-	var namespaceResources []*Resource
-	log.Debugf("fetchNamespace goroutine for namespace: %s starting", namespace)
-
-	for rt := range toBeFetched {
-		res, err := client.GetNamespacedResources(*toBeFetched[rt], namespace)
-		namespaceResources = append(namespaceResources, res...)
-		if err != nil {
-			log.Errorf("unable to get namespace resources: %s", err)
-			errors <- err
-			wg.Done()
-			return
-		}
-	}
-	results <- namespaceResources
-	log.Debugf("fetchNamespace goroutine for namespace: %s finished", namespace)
-	wg.Done()
 }
 
 //GetClusterName returns the cluster's self-link in gcp
