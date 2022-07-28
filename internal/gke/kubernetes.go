@@ -143,16 +143,23 @@ func (c *kubernetesClient) GetFetchableResourceTypes() ([]*ResourceType, error) 
 func (c *kubernetesClient) GetResources(toBeFetched []*ResourceType, namespaces []string) ([]*Resource, error) {
 	var resources []*Resource
 
+	maxGoroutines := 10
 	namespaceCounter := len(namespaces)
-	log.Debugf("Starting %d fetchNamespace goroutines", namespaceCounter)
+	namespaceChannel := make(chan string, namespaceCounter)
 
+	for _, ns := range namespaces {
+		namespaceChannel <- ns
+	}
+	close(namespaceChannel)
 	wg := new(sync.WaitGroup)
-	wg.Add(namespaceCounter)
+	wg.Add(maxGoroutines)
+
 	resultsChannel := make(chan []*Resource, namespaceCounter)
 	errorsChannel := make(chan error, namespaceCounter)
 
-	for ns := range namespaces {
-		go c.getNamespaceResourcesByResourceTypeAsync(wg, toBeFetched, namespaces[ns], resultsChannel, errorsChannel)
+	for gr := 0; gr < maxGoroutines; gr++ {
+		log.Debugf("Starting fetchNamespace goroutine")
+		go c.getNamespaceResourcesByResourceTypeAsync(wg, toBeFetched, namespaceChannel, resultsChannel, errorsChannel)
 	}
 	log.Debugf("waiting for fetchNamespace goroutines to finish")
 	wg.Wait()
@@ -171,24 +178,25 @@ func (c *kubernetesClient) GetResources(toBeFetched []*ResourceType, namespaces 
 	return resources, nil
 }
 
-func (c *kubernetesClient) getNamespaceResourcesByResourceTypeAsync(wg *sync.WaitGroup, toBeFetched []*ResourceType, namespace string, results chan []*Resource, errors chan error) {
+func (c *kubernetesClient) getNamespaceResourcesByResourceTypeAsync(wg *sync.WaitGroup, toBeFetched []*ResourceType, namespaces chan string, results chan []*Resource, errors chan error) {
 	var namespaceResources []*Resource
-	log.Debugf("fetchNamespace goroutine for namespace: %s starting", namespace)
+	for namespace := range namespaces {
+		log.Debugf("fetchNamespace goroutine for namespace: %s starting", namespace)
 
-	for rt := range toBeFetched {
-		res, err := c.GetNamespacedResources(*toBeFetched[rt], namespace)
-		namespaceResources = append(namespaceResources, res...)
-		if err != nil {
-			log.Errorf("unable to get namespace resources: %s", err)
-			errors <- err
-			wg.Done()
-			return
+		for rt := range toBeFetched {
+			res, err := c.GetNamespacedResources(*toBeFetched[rt], namespace)
+			namespaceResources = append(namespaceResources, res...)
+			if err != nil {
+				log.Errorf("unable to get namespace resources: %s", err)
+				errors <- err
+				wg.Done()
+				return
+			}
 		}
+		results <- namespaceResources
+		log.Debugf("fetchNamespace goroutine for namespace: %s finished", namespace)
 	}
-	results <- namespaceResources
-	log.Debugf("fetchNamespace goroutine for namespace: %s finished", namespace)
 	wg.Done()
-
 }
 
 func (c *kubernetesClient) GetNamespacedResources(resourceType ResourceType, namespace string) ([]*Resource, error) {
