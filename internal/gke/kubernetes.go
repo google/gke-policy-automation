@@ -180,8 +180,11 @@ func (c *kubernetesClient) GetResources(toBeFetched []*ResourceType, namespaces 
 
 func (c *kubernetesClient) getNamespaceResourcesByResourceTypeAsync(wg *sync.WaitGroup, toBeFetched []*ResourceType, namespaces <-chan string, results chan<- []*Resource, errors chan<- error) {
 	var namespaceResources []*Resource
+	fmt.Println("Goroutine started")
+	log.Warnf("Goroutine started")
 	for namespace := range namespaces {
-		log.Debugf("fetchNamespace goroutine for namespace: %s starting", namespace)
+		log.Warnf("ufetchNamespace goroutine for namespace: %s starting", namespace)
+		fmt.Printf("fetchNamespace goroutine for namespace: %s starting", namespace)
 
 		for rt := range toBeFetched {
 			res, err := c.GetNamespacedResources(*toBeFetched[rt], namespace)
