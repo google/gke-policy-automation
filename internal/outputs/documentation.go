@@ -16,8 +16,10 @@ package outputs
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
+	"github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/policy"
 )
 
@@ -36,13 +38,16 @@ func NewMarkdownPolicyDocumentation(policies []*policy.Policy) PolicyDocumentati
 }
 
 func (m *MarkdownPolicyDocumentation) GenerateDocumentation() string {
-
+	sort.SliceStable(m.policies, func(i, j int) bool {
+		return m.policies[i].Group < m.policies[j].Group
+	})
 	var sb strings.Builder
 
-	sb.WriteString("# Available Policies\n\n|Title|Description|Group|File|\n|-|-|-|-|")
+	sb.WriteString("# Available Policies\n\n|Group|`Title|Description|File|\n|-|-|-|-|")
 
 	for _, p := range m.policies {
-		sb.WriteString(fmt.Sprintf("\n |%s|%s|%s|%s|", p.Title, p.Description, p.Group, p.File))
+		policyFileURL := fmt.Sprintf("%s/blob/%s/%s", config.DefaultGitRepository, config.DefaultGitBranch, p.File)
+		sb.WriteString(fmt.Sprintf("\n |%s|%s|%s|[%s](%s)|", p.Group, p.Title, p.Description, p.File, policyFileURL))
 	}
 
 	return sb.String()
