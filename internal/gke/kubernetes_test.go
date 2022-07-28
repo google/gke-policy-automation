@@ -330,6 +330,15 @@ func TestGetResources(t *testing.T) {
 		t.Fatalf("err is not nil; want nil; err = %s", err)
 	}
 
+	t.Logf("results:")
+	for _, r := range results {
+		t.Logf("%v", r)
+	}
+	t.Logf("expected:")
+	for _, e := range expected {
+		t.Logf("%v", e)
+	}
+
 	if len(results) != len(expected) {
 		t.Fatalf("number of results is %d; want %d", len(results), len(expected))
 	}
