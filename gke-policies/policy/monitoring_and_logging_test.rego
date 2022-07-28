@@ -20,28 +20,26 @@
 package gke.policy.logging_and_monitoring
 
 test_enabled_logging_and_monitoring {
-	valid with input as 
-	{
+	valid with input as {
 	  "name": "test-cluster",
 	  "logging_config": {
 		"component_config": {
 			"enable_components": "SYSTEM_COMPONENTS", 
 			"enable_components": "WORKLOADS"
         }
-	  }
+	  },
 	  "monitoring_config": {
 		"component_config": {
 			"enable_components": "SYSTEM_COMPONENTS"
-		  }
+		}
       }
 	}
 }
 
 test_disabled_logging {
-	not valid with input as 
-	{
+	not valid with input as {
 	  "name": "test-cluster",
-	  "logging_config": {"component_config": {}}
+	  "logging_config": {"component_config": {}},
 	  "monitoring_config": {
 		"component_config": {
 			"enable_components": "SYSTEM_COMPONENTS"
@@ -51,15 +49,14 @@ test_disabled_logging {
 }
 
 test_disabled_monitoring {
-	not valid with input as 
-	{
+	not valid with input as {
 	  "name": "test-cluster",
 	  "logging_config": {
 		"component_config": {
 			"enable_components": "SYSTEM_COMPONENTS", 
 			"enable_components": "WORKLOADS"
         }
-	  }
+	  },
 	  "monitoring_config": {"component_config": {}}
 	}
 }
