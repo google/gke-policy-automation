@@ -178,7 +178,7 @@ func (c *kubernetesClient) GetResources(toBeFetched []*ResourceType, namespaces 
 	return resources, nil
 }
 
-func (c *kubernetesClient) getNamespaceResourcesByResourceTypeAsync(wg *sync.WaitGroup, toBeFetched []*ResourceType, namespaces chan string, results chan []*Resource, errors chan error) {
+func (c *kubernetesClient) getNamespaceResourcesByResourceTypeAsync(wg *sync.WaitGroup, toBeFetched []*ResourceType, namespaces <-chan string, results chan<- []*Resource, errors chan<- error) {
 	var namespaceResources []*Resource
 	for namespace := range namespaces {
 		log.Debugf("fetchNamespace goroutine for namespace: %s starting", namespace)
