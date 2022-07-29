@@ -15,17 +15,28 @@
  */
 
 locals {
-  apis = ["container.googleapis.com", "run.googleapis.com", "cloudscheduler.googleapis.com", "secretmanager.googleapis.com", "artifactregistry.googleapis.com"]
+  scc_apis = try(var.output_scc.enabled) ? ["securitycenter.googleapis.com"] : []
 }
 
-data "google_project" "project" {
-  project_id = var.project_id
-}
-
-resource "google_project_service" "project" {
-  for_each           = toset(local.apis)
+resource "google_project_service" "scc-out" {
+  for_each           = toset(local.scc_apis)
   project            = data.google_project.project.project_id
   service            = each.key
   disable_on_destroy = false
 }
 
+resource "google_organization_iam_member" "scc-out-findings" {
+  count  = try(var.output_scc.enabled) ? 1 : 0
+  org_id = var.output_scc.organization
+  role   = "roles/securitycenter.findingsEditor"
+  member = "serviceAccount:${google_service_account.sa.email}"
+}
+
+/*
+resource "google_organization_iam_member" "scc-out-sources" {
+  count  = try(var.output_scc.enabled) ? 1 : 0
+  org_id = var.output_scc.organization
+  role   = "roles/securitycenter.sourcesAdmin"
+  member = "serviceAccount:${google_service_account.sa.email}"
+}
+*/

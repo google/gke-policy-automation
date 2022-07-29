@@ -14,14 +14,37 @@
  * limitations under the License.
  */
 
-resource "random_id" "random_id" {
+locals {
+  storage_apis = try(var.output_storage.enabled) ? ["storage.googleapis.com"] : []
+}
+
+resource "google_project_service" "storage-out" {
+  for_each           = toset(local.storage_apis)
+  project            = data.google_project.project.project_id
+  service            = each.key
+  disable_on_destroy = false
+}
+
+resource "random_id" "storage-out" {
+  count       = try(var.output_storage.enabled) ? 1 : 0
   byte_length = 8
 }
 
-resource "google_storage_bucket" "report_bucket" {
-  name                        = "gke-policy-review-reports-${random_id.random_id.hex}"
-  location                    = "EU"
-  project                     = var.project_id
+resource "google_storage_bucket" "storage-out" {
+  count                       = try(var.output_storage.enabled) ? 1 : 0
+  project                     = data.google_project.project.project_id
+  name                        = "${var.output_storage.bucket_name}-${random_id.storage-out[count.index].hex}"
+  location                    = var.output_storage.bucket_location
   force_destroy               = true
   uniform_bucket_level_access = true
+  depends_on = [
+    google_project_service.storage-out
+  ]
+}
+
+resource "google_storage_bucket_iam_member" "storage-out" {
+  count  = try(var.output_storage.enabled) ? 1 : 0
+  bucket = google_storage_bucket.storage-out[count.index].name
+  role   = "roles/storage.objectCreator"
+  member = "serviceAccount:${google_service_account.sa.email}"
 }

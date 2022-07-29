@@ -14,26 +14,30 @@
  * limitations under the License.
  */
 
-resource "google_service_account" "sa" {
-  project      = data.google_project.project.project_id
-  account_id   = "gke-policy-automation"
-  display_name = "Service Account for GKE Policy Automation Cloud Run Service"
+locals {
+  pubsub_apis = try(var.output_pubsub.enabled) ? ["pubsub.googleapis.com"] : []
 }
 
-resource "google_artifact_registry_repository" "mirror" {
-  project       = data.google_project.project.project_id
-  location      = var.region
-  repository_id = "gke-policy-automation"
-  description   = "Repository for mirroring GKE policy automation image"
-  format        = "docker"
+resource "google_project_service" "pubsub-out" {
+  for_each           = toset(local.pubsub_apis)
+  project            = data.google_project.project.project_id
+  service            = each.key
+  disable_on_destroy = false
+}
 
+resource "google_pubsub_topic" "pubsub-out" {
+  count   = try(var.output_pubsub.enabled) ? 1 : 0
+  project = data.google_project.project.project_id
+  name    = var.output_pubsub.topic
   depends_on = [
-    google_project_service.project
+    google_project_service.pubsub-out
   ]
 }
 
-resource "google_project_iam_member" "run_invoker" {
+resource "google_pubsub_topic_iam_member" "pubsub-out" {
+  count   = try(var.output_pubsub.enabled) ? 1 : 0
   project = data.google_project.project.project_id
-  role    = "roles/run.invoker"
+  topic   = google_pubsub_topic.pubsub-out[count.index].name
+  role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${google_service_account.sa.email}"
 }

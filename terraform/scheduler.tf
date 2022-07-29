@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-resource "google_cloud_scheduler_job" "policy_review_job" {
-  name             = "gke-policy-review-job"
+resource "google_cloud_scheduler_job" "job" {
+  name             = "gke-policy-automation"
   schedule         = var.cron_interval
-  description      = "Job triggering GKE policy review"
+  description      = "Job triggering GKE Policy Automation"
   time_zone        = "Europe/London"
   attempt_deadline = "320s"
-  project          = var.project_id
+  project          = data.google_project.project.project_id
   region           = var.region
 
   retry_config {
@@ -29,9 +29,9 @@ resource "google_cloud_scheduler_job" "policy_review_job" {
 
   http_target {
     http_method = "POST"
-    uri         = "https://${var.job_region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/jobs/${var.job_name}:run"
+    uri         = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${data.google_project.project.project_id}/jobs/${var.job_name}:run"
     oauth_token {
-      service_account_email = google_service_account.service_account_cr.email
+      service_account_email = google_service_account.sa.email
     }
   }
 

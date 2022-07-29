@@ -16,8 +16,7 @@ silent: true
 clusterDiscovery:
   enabled: true
   projects:
-    - ${PROJECT_ID}
+    - ${DISCOVERY_PROJECT_ID}
 outputs:
-  - cloudStorage:
-      bucket: ${BUCKET_NAME}
-      path: reports/report.json
+  - securityCommandCenter:
+      organization: ${SCC_ORGANIZATION}
