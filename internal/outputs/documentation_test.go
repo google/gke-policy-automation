@@ -41,7 +41,7 @@ func buildPoliciesMetadata() []*policy.Policy {
 
 func TestMarkdownDocumention(t *testing.T) {
 
-	expected := "\n |First policy|First description|Group 1|file1.rego|\n |Second policy|Second description|Group 2|file2.rego|"
+	expected := "\n |Group 1|First policy|First description|[file1.rego](https://github.com/google/gke-policy-automation/blob/main/file1.rego)|\n |Group 2|Second policy|Second description|[file2.rego](https://github.com/google/gke-policy-automation/blob/main/file2.rego)|"
 
 	generator := NewMarkdownPolicyDocumentation(buildPoliciesMetadata())
 	documentation := generator.GenerateDocumentation()
