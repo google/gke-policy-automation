@@ -14,17 +14,28 @@
  * limitations under the License.
  */
 
+resource "local_file" "envs" {
+  filename = "cloudrun-config-env.sh"
+  content = <<EOT
+  REGION      = var.region
+  PROJECT_ID  = data.google_project.project.project_id
+  JOB_NAME    = var.job_name
+  SA_EMAIL    = google_service_account.sa.email
+  SECRET_NAME = google_secret_manager_secret.config.secret_id
+  EOT
+}
+
 resource "null_resource" "script" {
   count = var.run_script ? 1 : 0
   provisioner "local-exec" {
     command     = "./cloudrun-config.sh"
     interpreter = ["bash"]
     environment = {
-      REGION       = var.region
-      PROJECT_ID   = data.google_project.project.project_id
-      JOB_NAME     = var.job_name
-      SA_EMAIL     = google_service_account.sa.email
-      SECRET_NAME  = google_secret_manager_secret.config.secret_id
+      REGION      = var.region
+      PROJECT_ID  = data.google_project.project.project_id
+      JOB_NAME    = var.job_name
+      SA_EMAIL    = google_service_account.sa.email
+      SECRET_NAME = google_secret_manager_secret.config.secret_id
     }
   }
   depends_on = [
