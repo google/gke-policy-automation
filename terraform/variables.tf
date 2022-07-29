@@ -37,7 +37,7 @@ variable "config_file_path" {
 }
 
 variable "cron_interval" {
-  default     = "*/4 * * * *"
+  default     = "0 1 * * *"
   type        = string
   description = "CRON interval for triggering the GKE Policy Automation job."
 }
