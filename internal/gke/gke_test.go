@@ -114,6 +114,15 @@ func (mockK8Client) GetNamespacedResources(resourceType ResourceType, namespace 
 	}, nil
 }
 
+func (mockK8Client) GetResources(resourceType []*ResourceType, namespace []string) ([]*Resource, error) {
+	return []*Resource{
+		{
+			Type: *resourceType[0],
+			Data: nil,
+		},
+	}, nil
+}
+
 func TestGKEApiClientBuilder(t *testing.T) {
 	credFile := "test-fixtures/test_credentials.json"
 	apiVersions := []string{"policy/v1", "networking.k8s.io/v1"}
