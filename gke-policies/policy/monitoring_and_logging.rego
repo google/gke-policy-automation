@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE Monitoring and Logging
+# title: Cloud Monitoring and Logging
 # description: GKE cluster should use Cloud Logging and Monitoring
 # custom:
 #   group: Maintenance
