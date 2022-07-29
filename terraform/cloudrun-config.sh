@@ -23,23 +23,23 @@ NC='\033[0m'
 VARS=( "REGION" )
 
 varCheck() {
-  if [ -z "$REGION" ]; then
+  if [ -z "$GKE_PA_REGION" ]; then
     echo -e "${RED}[ERROR] GKE_PA_REGION variable is not set${NC}"
     return 1
   fi
-  if [ -z "$PROJECT_ID" ]; then
+  if [ -z "$GKE_PA_PROJECT_ID" ]; then
     echo -e "${RED}[ERROR] GKE_PA_PROJECT_ID variable is not set${NC}"
     return 1
   fi
-  if [ -z "$JOB_NAME" ]; then
+  if [ -z "$GKE_PA_JOB_NAME" ]; then
     echo -e "${RED}[ERROR] GKE_PA_JOB_NAME variable is not set${NC}"
     return 1
   fi
-  if [ -z "$SA_EMAIL" ]; then
+  if [ -z "$GKE_PA_SA_EMAIL" ]; then
     echo -e "${RED}[ERROR] GKE_PA_SA_EMAIL variable is not set${NC}"
     return 1
   fi
-  if [ -z "$SECRET_NAME" ]; then
+  if [ -z "$GKE_PA_SECRET_NAME" ]; then
     echo -e "${RED}[ERROR] GKE_PA_SECRET_NAME variable is not set${NC}"
     return 1
   fi
