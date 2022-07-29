@@ -16,41 +16,41 @@
 
 variable "project_id" {
   type        = string
-  description = "GCP project ID of project to deploy the GKE policy review tool into"
+  description = "Identifier of a GCP project for GKE Policy Automation resources."
 }
 
 variable "region" {
   type        = string
-  description = "GCP region in which to deploy the resources"
+  description = "GCP region for GKE Policy Automation resources."
 }
 
 variable "job_name" {
   type        = string
   default     = "gke-policy-automation"
-  description = "Name for the Cloud Run Job"
+  description = "Name of a Cloud Run Job for GKE Policy Automation container."
 }
 
 variable "config_file_path" {
   default     = "config.yaml"
   type        = string
-  description = "Path to the file containing the YAML configuration"
+  description = "Path to the YAML file with GKE Policy Automation configuration."
 }
 
 variable "cron_interval" {
   default     = "*/4 * * * *"
   type        = string
-  description = "CRON interval for triggering the job"
+  description = "CRON interval for triggering the GKE Policy Automation job."
 }
 
 variable "run_script" {
   default     = false
   type        = bool
-  description = "Indicates whether to run script for populating Artifact Regsitry and configuring Cloud Run Jobs"
+  description = "Indicates whether to run script for populating Artifact Registry and Cloud Run Jobs"
 }
 
 variable "discovery" {
   type        = map(any)
-  description = "Configuration of cluster discovery"
+  description = "Configures cluster discovery mechanism."
   default = {
     "enabled" = true
   }

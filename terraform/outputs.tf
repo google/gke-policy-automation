@@ -14,22 +14,17 @@
  * limitations under the License.
  */
 
-output "region" {
-  value = var.region
-}
-
-output "project_id" {
-  value = data.google_project.project.project_id
-}
-
-output "job_name" {
-  value = var.job_name
-}
-
 output "sa_email" {
-  value = google_service_account.sa.email
+  value       = google_service_account.sa.email
+  description = "GKE Policy Automation service account's email address."
+}
+
+output "repository_id" {
+  value       = google_artifact_registry_repository.mirror.id
+  description = "Identifier of a GKE Policy Automation repository."
 }
 
 output "config_secret_id" {
-  value = google_secret_manager_secret.config.secret_id
+  value       = google_secret_manager_secret.config.secret_id
+  description = "Identifier of a GKE Policy Automation configuration secret."
 }
