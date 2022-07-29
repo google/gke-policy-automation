@@ -226,6 +226,7 @@ use, but is ideal for demo purposes.
 | [sa_email](outputs.tf#L17) | GKE Policy Automation service account's email address. |  |
 | [repository_id](outputs.tf#L22) | Identifier of a GKE Policy Automation repository. |  |
 | [config_secret_id](outputs.tf#L27) | Identifier of a GKE Policy Automation configuration secret. |  |
+| [env_variables_file](outputs.tf#L32) | File with environmental variables for Artifact Registry and Cloud Run configuration. |  |
 
 ## Troubleshooting
 

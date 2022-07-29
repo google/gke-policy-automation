@@ -93,7 +93,7 @@ runAndCheck "gcloud auth configure-docker ${GKE_PA_REGION}-docker.pkg.dev"
 
 echo -e "${WHT}[INFO] Pushing GKE Policy Automation image to the Artifact Registry${NC}"
 runAndCheck "docker tag ghcr.io/google/gke-policy-automation:latest ${GKE_PA_REGION}-docker.pkg.dev/${GKE_PA_PROJECT_ID}/gke-policy-automation/gke-policy-automation:latest"
-runAndCheck "docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/gke-policy-automation/gke-policy-automation:latest"
+runAndCheck "docker push ${GKE_PA_REGION}-docker.pkg.dev/${GKE_PA_PROJECT_ID}/gke-policy-automation/gke-policy-automation:latest"
 
 echo -e "${WHT}[INFO] Creating Cloud Run Job${NC}"
 runAndCheck "gcloud beta run jobs create ${GKE_PA_JOB_NAME} \

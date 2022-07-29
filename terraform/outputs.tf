@@ -28,3 +28,8 @@ output "config_secret_id" {
   value       = google_secret_manager_secret.config.secret_id
   description = "Identifier of a GKE Policy Automation configuration secret."
 }
+
+output "env_variables_file" {
+  value       = local_file.envs.filename
+  description = "File with environmental variables for Artifact Registry and Cloud Run configuration."
+}
