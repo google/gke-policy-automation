@@ -41,9 +41,10 @@ type KubernetesDiscoveryClient interface {
 }
 
 type kubernetesClient struct {
-	ctx       context.Context
-	client    dynamic.Interface
-	discovery KubernetesDiscoveryClient
+	ctx           context.Context
+	client        dynamic.Interface
+	discovery     KubernetesDiscoveryClient
+	maxGoroutines int
 }
 
 type ResourceType struct {
@@ -66,7 +67,15 @@ type Resource struct {
 	Data map[string]interface{}
 }
 
+const (
+	defaultMaxGoroutines = 10
+)
+
 func NewKubernetesClient(ctx context.Context, kubeConfig *clientcmdapi.Config) (KubernetesClient, error) {
+	return NewKubernetesClientWithConfiguredGoroutines(ctx, kubeConfig, defaultMaxGoroutines)
+}
+
+func NewKubernetesClientWithConfiguredGoroutines(ctx context.Context, kubeConfig *clientcmdapi.Config, maxGoRoutines int) (KubernetesClient, error) {
 	config, err := clientcmd.BuildConfigFromKubeconfigGetter("", func() (*clientcmdapi.Config, error) {
 		return kubeConfig, nil
 	})
@@ -82,9 +91,10 @@ func NewKubernetesClient(ctx context.Context, kubeConfig *clientcmdapi.Config) (
 		return nil, err
 	}
 	return &kubernetesClient{
-		ctx:       ctx,
-		client:    client,
-		discovery: discovery,
+		ctx:           ctx,
+		client:        client,
+		discovery:     discovery,
+		maxGoroutines: maxGoRoutines,
 	}, nil
 }
 
@@ -143,7 +153,6 @@ func (c *kubernetesClient) GetFetchableResourceTypes() ([]*ResourceType, error) 
 func (c *kubernetesClient) GetResources(toBeFetched []*ResourceType, namespaces []string) ([]*Resource, error) {
 	var resources []*Resource
 
-	maxGoroutines := 10
 	namespaceCounter := len(namespaces)
 	namespaceChannel := make(chan string, namespaceCounter)
 
@@ -152,12 +161,12 @@ func (c *kubernetesClient) GetResources(toBeFetched []*ResourceType, namespaces 
 	}
 	close(namespaceChannel)
 	wg := new(sync.WaitGroup)
-	wg.Add(maxGoroutines)
+	wg.Add(c.maxGoroutines)
 
 	resultsChannel := make(chan []*Resource, namespaceCounter)
 	errorsChannel := make(chan error, namespaceCounter)
 
-	for gr := 0; gr < maxGoroutines; gr++ {
+	for gr := 0; gr < c.maxGoroutines; gr++ {
 		log.Debugf("Starting fetchNamespace goroutine")
 		go c.getNamespaceResourcesByResourceTypeAsync(wg, toBeFetched, namespaceChannel, resultsChannel, errorsChannel)
 	}
