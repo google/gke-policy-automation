@@ -482,12 +482,20 @@ func TestMapFindingCompliances_positive(t *testing.T) {
 	finding := &Finding{CisVersion: "1.0", CisID: "6.1.2"}
 	expected := []*sccpb.Compliance{{Standard: "cis", Version: "1.0", Ids: []string{"6.1.2"}}}
 
-	result := mapFindingCompliances(finding)
-	if len(result) != 1 {
-		t.Errorf("result has %v elements; want %v", len(result), 1)
+	results := mapFindingCompliances(finding)
+	if len(results) != len(expected) {
+		t.Errorf("result has %v elements; want %v", len(results), len(expected))
 	}
-	if !reflect.DeepEqual(*result[0], *expected[0]) {
-		t.Errorf("result element =  %v; want %v", *result[0], *expected[0])
+	for i := range results {
+		res := results[i]
+		exp := expected[i]
+		if res.Standard != exp.Standard {
+			t.Errorf("standard = %v; want %v", res.Standard, exp.Standard)
+		}
+		if res.Version != exp.Version {
+			t.Errorf("version = %v; want %v", res.Version, exp.Version)
+		}
+		assert.ElementsMatch(t, res.Ids, exp.Ids, "IDs match")
 	}
 }
 
