@@ -11,6 +11,7 @@ the below rules in order to be successfully compiled and evaluated by the GKE Po
 3. [GKE Policy package](#gke-policy-package)
 4. [GKE Policy rules](#gke-policy-rules)
 5. [GKE Policy tests](#gke-policy-tests)
+6. [GKE Policy documentation](#gke-policy-documentation)
 
 ---
 
@@ -131,3 +132,15 @@ Each GKE Policy should be covered with unit tests. OPA Rego provides
 * Test files should be stored in same directory as policies
 * Test files should be named same as given policy file and suffixed with `_test.rego`
 * Test rules should be in same package as given policy rules
+
+## GKE Policy documentation
+
+The GKE Policy Automation tool can generate markdown documentation
+for the policies fetched from a given source. This can be used i.e. to update list of policies
+in a [policy library README](README.md).
+
+Example:
+
+```sh
+./gke-policy generate policy-docs --local-policy-dir ./gke-policies -f generated-policy-docs.md
+```
