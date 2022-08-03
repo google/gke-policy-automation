@@ -39,11 +39,14 @@ func NewMarkdownPolicyDocumentation(policies []*policy.Policy) PolicyDocumentati
 
 func (m *MarkdownPolicyDocumentation) GenerateDocumentation() string {
 	sort.SliceStable(m.policies, func(i, j int) bool {
+		if m.policies[i].Group == m.policies[j].Group {
+			return m.policies[i].Title < m.policies[j].Title
+		}
 		return m.policies[i].Group < m.policies[j].Group
 	})
 	var sb strings.Builder
 
-	sb.WriteString("|Group|`Title|Description|File|\n|-|-|-|-|\n")
+	sb.WriteString("|Group|Title|Description|File|\n|-|-|-|-|\n")
 
 	for _, p := range m.policies {
 		policyFileURL := fmt.Sprintf("%s/blob/%s/%s", config.DefaultGitRepository, config.DefaultGitBranch, p.File)

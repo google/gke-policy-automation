@@ -16,7 +16,6 @@
 '''Check that policy documentation in a given file in up to date.
 The tool checks given documentation file against generated documentation.
 '''
-import enum
 import sys
 
 _MARKER = "<!-- BEGIN POLICY-DOC -->"
