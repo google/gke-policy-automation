@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/google/gke-policy-automation/internal/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +32,7 @@ import (
 type KubernetesClient interface {
 	GetNamespaces() ([]string, error)
 	GetFetchableResourceTypes() ([]*ResourceType, error)
+	GetResources(toBeFetched []*ResourceType, namespaces []string) ([]*Resource, error)
 	GetNamespacedResources(resourceType ResourceType, namespace string) ([]*Resource, error)
 }
 
@@ -39,9 +41,10 @@ type KubernetesDiscoveryClient interface {
 }
 
 type kubernetesClient struct {
-	ctx       context.Context
-	client    dynamic.Interface
-	discovery KubernetesDiscoveryClient
+	ctx           context.Context
+	client        dynamic.Interface
+	discovery     KubernetesDiscoveryClient
+	maxGoroutines int
 }
 
 type ResourceType struct {
@@ -64,7 +67,15 @@ type Resource struct {
 	Data map[string]interface{}
 }
 
+const (
+	defaultMaxGoroutines = 10
+)
+
 func NewKubernetesClient(ctx context.Context, kubeConfig *clientcmdapi.Config) (KubernetesClient, error) {
+	return NewKubernetesClientWithConfiguredGoroutines(ctx, kubeConfig, defaultMaxGoroutines)
+}
+
+func NewKubernetesClientWithConfiguredGoroutines(ctx context.Context, kubeConfig *clientcmdapi.Config, maxGoRoutines int) (KubernetesClient, error) {
 	config, err := clientcmd.BuildConfigFromKubeconfigGetter("", func() (*clientcmdapi.Config, error) {
 		return kubeConfig, nil
 	})
@@ -80,9 +91,10 @@ func NewKubernetesClient(ctx context.Context, kubeConfig *clientcmdapi.Config) (
 		return nil, err
 	}
 	return &kubernetesClient{
-		ctx:       ctx,
-		client:    client,
-		discovery: discovery,
+		ctx:           ctx,
+		client:        client,
+		discovery:     discovery,
+		maxGoroutines: maxGoRoutines,
 	}, nil
 }
 
@@ -136,6 +148,63 @@ func (c *kubernetesClient) GetFetchableResourceTypes() ([]*ResourceType, error) 
 	}
 	log.Infof("discovered %d fetchable resource types", len(resourceTypes))
 	return resourceTypes, nil
+}
+
+func (c *kubernetesClient) GetResources(toBeFetched []*ResourceType, namespaces []string) ([]*Resource, error) {
+	var resources []*Resource
+
+	namespaceCounter := len(namespaces)
+	namespaceChannel := make(chan string, namespaceCounter)
+
+	for _, ns := range namespaces {
+		namespaceChannel <- ns
+	}
+	close(namespaceChannel)
+	wg := new(sync.WaitGroup)
+	wg.Add(c.maxGoroutines)
+
+	resultsChannel := make(chan []*Resource, namespaceCounter)
+	errorsChannel := make(chan error, namespaceCounter)
+
+	for gr := 0; gr < c.maxGoroutines; gr++ {
+		log.Debugf("Starting fetchNamespace goroutine")
+		go c.getNamespaceResourcesByResourceTypeAsync(wg, toBeFetched, namespaceChannel, resultsChannel, errorsChannel)
+	}
+	log.Debugf("waiting for fetchNamespace goroutines to finish")
+	wg.Wait()
+	log.Debugf("all fetchNamespace goroutines finished")
+
+	close(resultsChannel)
+	close(errorsChannel)
+	if len(errorsChannel) > 0 {
+		err := <-errorsChannel
+		log.Errorf("unable to get resources: %s", err)
+		return nil, err
+	}
+	for result := range resultsChannel {
+		resources = append(resources, result...)
+	}
+	return resources, nil
+}
+
+func (c *kubernetesClient) getNamespaceResourcesByResourceTypeAsync(wg *sync.WaitGroup, toBeFetched []*ResourceType, namespaces <-chan string, results chan<- []*Resource, errors chan<- error) {
+	for namespace := range namespaces {
+		var namespaceResources []*Resource = make([]*Resource, 0)
+
+		for rt := range toBeFetched {
+			res, err := c.GetNamespacedResources(*toBeFetched[rt], namespace)
+			namespaceResources = append(namespaceResources, res...)
+			if err != nil {
+				log.Errorf("unable to get namespace resources: %s", err)
+				errors <- err
+				wg.Done()
+				return
+			}
+		}
+		results <- namespaceResources
+		log.Debugf("fetchNamespace goroutine for namespace: %s finished", namespace)
+	}
+	wg.Done()
 }
 
 func (c *kubernetesClient) GetNamespacedResources(resourceType ResourceType, namespace string) ([]*Resource, error) {
