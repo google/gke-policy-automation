@@ -36,7 +36,6 @@ def check(documentation, generated):
 
     for i,line in enumerate(docLines):
         if line != genLines[i]:
-            print("Line {} does not match".format(i))
             return False, "line {} does not match".format(i)
 
     return True, None
