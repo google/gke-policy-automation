@@ -32,11 +32,9 @@ resource "google_organization_iam_member" "scc-out-findings" {
   member = "serviceAccount:${google_service_account.sa.email}"
 }
 
-/*
 resource "google_organization_iam_member" "scc-out-sources" {
-  count  = try(var.output_scc.enabled) ? 1 : 0
+  count  = try(var.output_scc.enabled, false) && try(var.output_scc.provision_source, true) ? 1 : 0
   org_id = var.output_scc.organization
   role   = "roles/securitycenter.sourcesAdmin"
   member = "serviceAccount:${google_service_account.sa.email}"
 }
-*/

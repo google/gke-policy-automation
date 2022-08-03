@@ -118,14 +118,15 @@ Push container image to Artifact Registry and create Cloud Run job:
 ## What happens behind the scenes
 
 The Terraform script within this folder enables all required APIs for you and creates necessary
-service accounts and IAM bindings. It also creates the Artifact Registry required by Cloud Run,
-the GCS bucket for storing the reports and a Secret Manager. The Secret Manager is used to provide
-the config.yaml file to the Cloud Run Job, as Cloud Run does not easily support persistent file
-storage.
+service accounts and IAM bindings. Depending on configured cluster discovery options, corresponding
+IAM bindings for GKE Policy Automation Service Account are created on projects, folders or
+organization levels. The code also creates the Artifact Registry required by Cloud Run and
+a the Secret Manager secret for storing tool's configuration file.
 
-Additionally, the script creates a Cloud Scheduler running every 15 minutes. That scheduler will
-ultimately trigger the CLoud Run Job. The 15 minute interval is most likely too frequent for actual
-use, but is ideal for demo purposes.
+Depending on configured outputs, the code will provision corresponding resources and IAM role
+bindings for Cloud Storage, Pub/Sub or Security COmmand Center.
+
+Lastly, the script creates a Cloud Scheduler running once per day to trigger Cloud Run Job.
 
 ## Example configurations
 
@@ -237,6 +238,7 @@ use, but is ideal for demo purposes.
 |---|---|:---:|:---:|:---:|
 | [enabled](variables.tf#L45) | Indicates if resources for Pub/Sub output will be provisioned. | `bool` | ✓ |  |
 | [organization](variables.tf#L45) | The organization number to provision discovery resources for. | `string` | ✓ |  |
+| [provision_source](variables.tf#L45) | Indicates weather to provision `roles/securitycenter.sourcesAdmin` for the tool, so it will be able to automatically register itself as a source. If not enabled, then this has to be done [manually beforehand](../docs/user-guide.md#security-command-center). | `bool` |  | `true` |
 
 ## Outputs
 
