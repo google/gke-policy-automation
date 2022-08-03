@@ -1,4 +1,4 @@
-# GKE Policy Automation deployment
+# GKE Policy Automation serverless deployment
 
 A Terraform code for deploying GKE Policy Automation as an automatic serverless solution
 on Google Cloud Platform.
@@ -37,6 +37,25 @@ Provision infrastructure with Terraform:
 
 1. Set Terraform configuration variables *(check [examples](#example-configurations)
    or [inputs](#inputs) below for details)*.
+
+   Example `tfvars` file:
+
+   ```hcl
+   project_id = "gke-policy-123"
+   region     = "europe-west2"
+
+   discovery {
+     enabled = true
+     projects = ["gke-project-one", "gke-project-two"]
+   }
+
+   output_cloud_storage = {
+     enabled         = true
+     bucket_name     = "gke-validations"
+     bucket_location = "EU"
+   }
+   ```
+
 2. Adjust GKE Policy Automation's `config.yaml` accordingly
    *(check [User Guide](../docs/user-guide.md) for details)*.
 3. Run `terraform init`
