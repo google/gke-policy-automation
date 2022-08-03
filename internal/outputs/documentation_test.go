@@ -25,22 +25,30 @@ func buildPoliciesMetadata() []*policy.Policy {
 
 	return []*policy.Policy{
 		{
-			Title:       "First policy",
-			Description: "First description",
-			Group:       "Group 1",
-			File:        "file1.rego",
-		},
-		{
 			Title:       "Second policy",
 			Description: "Second description",
 			Group:       "Group 2",
 			File:        "file2.rego",
 		},
+		{
+			Title:       "Third policy",
+			Description: "Third description",
+			Group:       "Group 1",
+			File:        "file3.rego",
+		},
+		{
+			Title:       "First policy",
+			Description: "First description",
+			Group:       "Group 1",
+			File:        "file1.rego",
+		},
 	}
 }
 
 func TestMarkdownDocumention(t *testing.T) {
-	expected := "|Group 1|First policy|First description|[file1.rego](https://github.com/google/gke-policy-automation/blob/main/file1.rego)|\n|Group 2|Second policy|Second description|[file2.rego](https://github.com/google/gke-policy-automation/blob/main/file2.rego)|\n"
+	expected := "|Group 1|First policy|First description|[file1.rego](https://github.com/google/gke-policy-automation/blob/main/file1.rego)|\n" +
+		"|Group 1|Third policy|Third description|[file3.rego](https://github.com/google/gke-policy-automation/blob/main/file3.rego)|\n" +
+		"|Group 2|Second policy|Second description|[file2.rego](https://github.com/google/gke-policy-automation/blob/main/file2.rego)|\n"
 
 	generator := NewMarkdownPolicyDocumentation(buildPoliciesMetadata())
 	documentation := generator.GenerateDocumentation()
