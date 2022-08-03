@@ -44,3 +44,25 @@ jobs:
         with:
           config-file: '.mlc_config.json'
           base-branch: main
+  policy-doc:
+    name: Policy documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+      - name: Get dependencies
+        run: go mod download
+      - name: Build
+        run: make build
+      - name: Generate policy documentation 
+        run: ./gke-policy generate policy-docs -s --local-policy-dir ./gke-policies -f generated-policy-docs.md
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Check policy documentation
+        run: python3 scripts/policyDocCheck.py gke-policies/README.md generated-policy-docs.md

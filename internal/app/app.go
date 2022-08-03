@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"reflect"
 	"time"
@@ -50,7 +49,7 @@ type PolicyAutomation interface {
 	ClusterJSONData() error
 	Version() error
 	PolicyCheck() error
-	PolicyGenerateDocumentation(generator outputs.DocumentationBuilder, w io.Writer) error
+	PolicyGenerateDocumentation() error
 	ConfigureSCC(orgNumber string) error
 }
 
@@ -83,6 +82,7 @@ type PolicyAutomationApp struct {
 	clusterDumpCollectors []outputs.ClusterDumpCollector
 	gke                   gke.GKEClient
 	discovery             gke.DiscoveryClient
+	policyDocsFile        string
 }
 
 func NewPolicyAutomationApp() PolicyAutomation {
@@ -141,6 +141,7 @@ func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 		if o.FileName != "" {
 			p.collectors = append(p.collectors, outputs.NewJSONResultToFileCollector(o.FileName))
 			p.clusterDumpCollectors = append(p.clusterDumpCollectors, outputs.NewFileClusterDumpCollector(o.FileName))
+			p.policyDocsFile = o.FileName
 		}
 		if o.CloudStorage.Bucket != "" && o.CloudStorage.Path != "" {
 
@@ -340,7 +341,14 @@ func (p *PolicyAutomationApp) PolicyCheck() error {
 	return nil
 }
 
-func (p *PolicyAutomationApp) PolicyGenerateDocumentation(generator outputs.DocumentationBuilder, w io.Writer) error {
+func (p *PolicyAutomationApp) PolicyGenerateDocumentation() error {
+	w, err := os.OpenFile(p.policyDocsFile, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		p.out.ErrorPrint("could not open output file for writing: ", err)
+		log.Errorf("could not open output file for writing: %s", err)
+		return err
+	}
+	defer w.Close()
 
 	files, err := p.loadPolicyFiles()
 	if err != nil {
@@ -356,14 +364,14 @@ func (p *PolicyAutomationApp) PolicyGenerateDocumentation(generator outputs.Docu
 		return err
 	}
 
-	documentationGenerator := generator(pa.GetPolicies())
-
+	documentationGenerator := outputs.NewMarkdownPolicyDocumentation(pa.GetPolicies())
+	p.out.ColorPrintf("%s [light_gray][bold]Writing policy documentation ... [%s]\n", outputs.ICON_INFO, p.policyDocsFile)
+	log.Infof("Writing policy documentation to file %s", p.policyDocsFile)
 	if _, err := w.Write([]byte(documentationGenerator.GenerateDocumentation())); err != nil {
 		p.out.ErrorPrint("could not write documentation file", err)
 		log.Errorf("could not write documentation file: %s", err)
 		return err
 	}
-
 	return nil
 }
 
@@ -500,9 +508,11 @@ func newConfigFromCli(cliConfig *CliConfig) *cfg.Config {
 			}
 		}
 	}
-	config.Outputs = append(config.Outputs, cfg.ConfigOutput{
-		FileName: cliConfig.OutputFile,
-	})
+	if cliConfig.OutputFile != "" {
+		config.Outputs = append(config.Outputs, cfg.ConfigOutput{
+			FileName: cliConfig.OutputFile,
+		})
+	}
 	if cliConfig.LocalDirectory != "" || cliConfig.GitRepository != "" {
 		config.Policies = append(config.Policies, cfg.ConfigPolicy{
 			LocalDirectory: cliConfig.LocalDirectory,

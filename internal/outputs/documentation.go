@@ -43,11 +43,11 @@ func (m *MarkdownPolicyDocumentation) GenerateDocumentation() string {
 	})
 	var sb strings.Builder
 
-	sb.WriteString("# Available Policies\n\n|Group|`Title|Description|File|\n|-|-|-|-|")
+	sb.WriteString("|Group|`Title|Description|File|\n|-|-|-|-|\n")
 
 	for _, p := range m.policies {
 		policyFileURL := fmt.Sprintf("%s/blob/%s/%s", config.DefaultGitRepository, config.DefaultGitBranch, p.File)
-		sb.WriteString(fmt.Sprintf("\n |%s|%s|%s|[%s](%s)|", p.Group, p.Title, p.Description, p.File, policyFileURL))
+		sb.WriteString(fmt.Sprintf("|%s|%s|%s|[%s](%s)|\n", p.Group, p.Title, p.Description, p.File, policyFileURL))
 	}
 
 	return sb.String()
