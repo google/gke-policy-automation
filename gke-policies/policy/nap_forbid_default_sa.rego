@@ -13,8 +13,8 @@
 # limitations under the License.
 
 # METADATA
-# title: Forbid default SA in NAP
-# description: NAP configuration should not allow default Service Accounts
+# title: Forbid default Service Accounts in Node Auto-Provisioning
+# description: Node Auto-Provisioning configuration should not allow default Service Accounts
 # custom:
 #   group: Security
 #   severity: Critical
@@ -34,5 +34,5 @@ valid {
 violation[msg] {
 	input.autoscaling.enable_node_autoprovisioning == true
 	input.autoscaling.autoprovisioning_node_pool_defaults.service_account == "default"
-	msg := "GKE cluster node autoprovisioning should have a dedicated SA configured"
+	msg := "GKE cluster Node Auto-Provisioning should have a dedicated Service Account configured"
 }
