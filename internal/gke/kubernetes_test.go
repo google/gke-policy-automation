@@ -244,6 +244,104 @@ func TestGetFetchableResourceTypes(t *testing.T) {
 	}
 }
 
+func TestGetResourcesWithMultipleGoroutines(t *testing.T) {
+
+	resourceOneName := "some-object-one"
+	resourceTwoName := "some-object-two"
+
+	resourceOne := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"name": resourceOneName,
+		},
+	}
+	resourceTwo := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"name": resourceTwoName,
+		},
+	}
+
+	resourceType1 := ResourceType{Group: "apps", Version: "v1", Name: "deployments", Namespaced: true}
+	namespace1 := "my-first-namespace"
+
+	resourceType2 := ResourceType{Group: "apps", Version: "v1", Name: "pods", Namespaced: true}
+	namespace2 := "my-second-namespace"
+
+	dynCliMock := &kubeDynamicClientMock{
+		ResourceFn: func(resource schema.GroupVersionResource) dynamic.NamespaceableResourceInterface {
+			if resource.Group == resourceType1.Group && resource.Version == resourceType1.Version && resource.Resource == resourceType1.Name {
+				return createKubeNamespaceResourceMock(namespace1, resourceOneName)
+			}
+			if resource.Group == resourceType2.Group && resource.Version == resourceType2.Version && resource.Resource == resourceType2.Name {
+				return createKubeNamespaceResourceMock(namespace2, resourceTwoName)
+			}
+			return createEmptyKubeNamespaceResourceMock()
+		},
+	}
+	expected := []*Resource{{Type: resourceType1, Data: resourceOne}, {Type: resourceType2, Data: resourceTwo}}
+
+	client := &kubernetesClient{ctx: context.TODO(), client: dynCliMock, maxGoroutines: 10}
+
+	resourceTypes := []*ResourceType{&resourceType1, &resourceType2}
+	namespaces := []string{namespace1, namespace2}
+	results, err := client.GetResources(resourceTypes, namespaces)
+
+	if err != nil {
+		t.Fatalf("err is not nil; want nil; err = %s", err)
+	}
+	if len(results) != len(expected) {
+		t.Fatalf("number of results is %d; want %d", len(results), len(expected))
+	}
+}
+
+func TestGetResourcesWithSync(t *testing.T) {
+
+	resourceOneName := "some-object-one"
+	resourceTwoName := "some-object-two"
+
+	resourceOne := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"name": resourceOneName,
+		},
+	}
+	resourceTwo := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"name": resourceTwoName,
+		},
+	}
+
+	resourceType1 := ResourceType{Group: "apps", Version: "v1", Name: "deployments", Namespaced: true}
+	namespace1 := "my-first-namespace"
+
+	resourceType2 := ResourceType{Group: "apps", Version: "v1", Name: "pods", Namespaced: true}
+	namespace2 := "my-second-namespace"
+
+	dynCliMock := &kubeDynamicClientMock{
+		ResourceFn: func(resource schema.GroupVersionResource) dynamic.NamespaceableResourceInterface {
+			if resource.Group == resourceType1.Group && resource.Version == resourceType1.Version && resource.Resource == resourceType1.Name {
+				return createKubeNamespaceResourceMock(namespace1, resourceOneName)
+			}
+			if resource.Group == resourceType2.Group && resource.Version == resourceType2.Version && resource.Resource == resourceType2.Name {
+				return createKubeNamespaceResourceMock(namespace2, resourceTwoName)
+			}
+			return createEmptyKubeNamespaceResourceMock()
+		},
+	}
+	expected := []*Resource{{Type: resourceType1, Data: resourceOne}, {Type: resourceType2, Data: resourceTwo}}
+
+	client := &kubernetesClient{ctx: context.TODO(), client: dynCliMock, maxGoroutines: 1}
+
+	resourceTypes := []*ResourceType{&resourceType1, &resourceType2}
+	namespaces := []string{namespace1, namespace2}
+	results, err := client.GetResources(resourceTypes, namespaces)
+
+	if err != nil {
+		t.Fatalf("err is not nil; want nil; err = %s", err)
+	}
+	if len(results) != len(expected) {
+		t.Fatalf("number of results is %d; want %d", len(results), len(expected))
+	}
+}
+
 func TestGetNamespacedResources(t *testing.T) {
 	resourceOne := map[string]interface{}{
 		"metadata": map[string]interface{}{
@@ -326,5 +424,47 @@ func TestStringSliceContains_negative(t *testing.T) {
 	needle := "elem-six"
 	if stringSliceContains(hay, needle) {
 		t.Errorf("result of stringSliceContains is true; want false")
+	}
+}
+
+func createKubeNamespaceResourceMock(namespace string, resourceName string) *kubeNamespacedResourceMock {
+
+	return &kubeNamespacedResourceMock{
+		NamespaceFn: func(n string) dynamic.ResourceInterface {
+			if n != namespace {
+				return createEmptyKubeNamespaceResourceMock()
+			}
+			return createKubeNamespaceResourceMockWithResource(resourceName)
+		},
+	}
+
+}
+
+func createEmptyKubeNamespaceResourceMock() *kubeNamespacedResourceMock {
+	return &kubeNamespacedResourceMock{
+		ListFn: func(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+			return &unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{},
+			}, nil
+		},
+	}
+}
+
+func createKubeNamespaceResourceMockWithResource(resourceName string) *kubeNamespacedResourceMock {
+
+	resource := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"name": resourceName,
+		},
+	}
+
+	items := []unstructured.Unstructured{{Object: resource}}
+
+	return &kubeNamespacedResourceMock{
+		ListFn: func(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+			return &unstructured.UnstructuredList{
+				Items: items,
+			}, nil
+		},
 	}
 }
