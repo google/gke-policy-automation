@@ -186,7 +186,7 @@ func TestDivideFindings(t *testing.T) {
 	}
 }
 
-func TestGetSccSource_exisitng(t *testing.T) {
+func TestGetSccSource_existing(t *testing.T) {
 	sourceName := "testSourceName"
 	mock := &sccClientMock{
 		FindSourceFn: func() (*string, error) {

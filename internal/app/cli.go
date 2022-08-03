@@ -15,10 +15,7 @@
 package app
 
 import (
-	"os"
-
 	cfg "github.com/google/gke-policy-automation/internal/config"
-	"github.com/google/gke-policy-automation/internal/outputs"
 	cli "github.com/urfave/cli/v2"
 )
 
@@ -180,24 +177,11 @@ func createGenerateCommand(p PolicyAutomation) *cli.Command {
 				Flags: (getPolicyDocumentationFlags(config)),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config, cfg.ValidatePolicyCheckConfig); err != nil {
+					if err := p.LoadCliConfig(config, cfg.ValidateGeneratePolicyDocsConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
-
-					// Required output file to write documentation text
-					w, err := os.OpenFile(config.DocumentationOutput, os.O_CREATE|os.O_WRONLY, 0644)
-
-					if err != nil {
-						return err
-					}
-
-					defer w.Close()
-
-					// it's possible to wire different policy generators for console, json, etc
-					p.PolicyGenerateDocumentation(outputs.NewMarkdownPolicyDocumentation, w)
-
-					return nil
+					return p.PolicyGenerateDocumentation()
 				},
 			},
 		},
@@ -312,15 +296,10 @@ func getPolicySourceFlags(config *CliConfig) []cli.Flag {
 }
 
 func getPolicyDocumentationFlags(config *CliConfig) []cli.Flag {
-	return append(getPolicySourceFlags(config),
-		&cli.StringFlag{
-			Name:        "output",
-			Aliases:     []string{"o"},
-			Usage:       "Path to output the documentation file",
-			Required:    true,
-			Destination: &config.DocumentationOutput,
-		},
-	)
+	flags := getCommonFlags(config)
+	flags = append(flags, getPolicySourceFlags(config)...)
+	flags = append(flags, getOutputFlags(config)...)
+	return flags
 }
 
 func getCheckFlags(config *CliConfig) []cli.Flag {

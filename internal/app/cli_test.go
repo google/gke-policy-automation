@@ -23,7 +23,7 @@ import (
 func TestNewPolicyAutomationCli(t *testing.T) {
 	app := NewPolicyAutomationApp()
 	cmd := NewPolicyAutomationCli(app)
-	validateCommandsExist(t, cmd.Commands, []string{"check", "dump", "configure", "version"})
+	validateCommandsExist(t, cmd.Commands, []string{"check", "dump", "configure", "generate", "version"})
 }
 
 func TestCheckCommand(t *testing.T) {

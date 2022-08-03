@@ -15,7 +15,6 @@
 package app
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -28,7 +27,6 @@ import (
 	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/outputs"
-	"github.com/google/gke-policy-automation/internal/policy"
 )
 
 type DiscoveryClientMock struct {
@@ -395,23 +393,6 @@ type MockDocumentation struct {
 
 func (m *MockDocumentation) GenerateDocumentation() string {
 	return m.content
-}
-
-func TestPolicyGenerateDocumentation(t *testing.T) {
-	pa := NewPolicyAutomationApp()
-
-	content := "documentation content"
-	var buffer bytes.Buffer
-
-	pa.PolicyGenerateDocumentation(func(policies []*policy.Policy) outputs.PolicyDocumentation {
-		return &MockDocumentation{content}
-	}, &buffer)
-
-	line, _ := buffer.ReadString('\n')
-
-	if line != content {
-		t.Fatalf("content is not equal to expected; %s != %s", line, content)
-	}
 }
 
 func TestAddDatetimePrefix(t *testing.T) {
