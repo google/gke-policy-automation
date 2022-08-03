@@ -167,6 +167,21 @@ func ValidatePolicyCheckConfig(config Config) error {
 	return nil
 }
 
+func ValidateGeneratePolicyDocsConfig(config Config) error {
+	var errors = make([]error, 0)
+	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
+	if len(config.Outputs) != 1 {
+		errors = append(errors, fmt.Errorf("specify output file"))
+	}
+	if len(errors) > 0 {
+		for _, err := range errors {
+			log.Warnf("configuration validation error: %s", err)
+		}
+		return errors[0]
+	}
+	return nil
+}
+
 func validateClustersConfig(config Config) []error {
 	if config.ClusterDiscovery.Enabled {
 		discovery := config.ClusterDiscovery

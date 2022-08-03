@@ -1,133 +1,40 @@
-# GKE Policy authoring guide
+# GKE Policy Automation library
 
-The GKE Policy Automation tool provides ready [set of GKE policies](./) that cover Google PSO best practices
-and recommendations.
+## Policy structure
 
-**The following guide is for GKE policy authors and contributors**. The GKE Policies need to follow
-the below rules in order to be successfully compiled and evaluated by the GKE Policy Automation tool.
+Please refer to the [Policy Authoring Guide](./AUTHORING.md) for details about structure
+of our policy files.
 
-1. [GKE Policy structure overview](#gke-policy-structure-overview)
-2. [GKE Policy metadata](#gke-policy-metadata)
-3. [GKE Policy package](#gke-policy-package)
-4. [GKE Policy rules](#gke-policy-rules)
-5. [GKE Policy tests](#gke-policy-tests)
+## Available Policies
 
----
-
-## Useful links
-
-* [Rego policy language overview](https://www.openpolicyagent.org/docs/latest/policy-language/)
-* [Rego policy reference](https://www.openpolicyagent.org/docs/latest/policy-reference/)
-* [Rego policy testing](https://www.openpolicyagent.org/docs/latest/policy-testing/)
-
-## GKE Policy structure overview
-
-The GKE policies are ASCII files with policy definitions written in [Rego language](https://www.openpolicyagent.org/docs/latest/policy-language/).
-
-The GKE Policy Automation tool can evaluate policies from local directory or directory
-from the remote GIT repository.
-
-### Policy directory tree
-
-GKE policy files can be organized into directories. Although it is not required to use directories
-at all, doing so helps to group Rego files of similar purpose. Typically directory structure is
-somehow related to the [Rego packages](https://www.openpolicyagent.org/docs/latest/policy-language/#packages)
-defined in policy files.
-
-Below is a simple directory structure for GKE policy files:
-
-```sh
-/policy_directory
-|-- policy
-|   |-- first_gke_policy.rego
-|   |-- first_gke_policy_test.rego
-|   |-- another_gke_policy.rego
-|   |-- another_gke_policy_test.rego
-|   |-- ...
-|-- rule
-|   |-- some_rule.rego 
-|   |-- another_rule.rego
-|   | ...
-```
-
-* `policy_directory` -  root directory with all GKE policy Rego files
-* `policy` - subdirectory that groups GKE policies (i.e. `gke.policy.xxxx` packages)
-* `rule` - subdirectory that groups reusable rules (i.e. `gke.rule.xxxx` packages)
-
-### Policy file structure
-
-GKE policies are written in [Rego language](https://www.openpolicyagent.org/docs/latest/policy-language/).
-Each GKE Policy is defined in an individual file and within individual Rego package. The valid
-GKE Policy file has also given structure:
-
-* Metadata section on a package level
-* Package definition with a name recognized by the tool
-* One `valid` and one or more `violation` rules
-
-More details will be covered in a following sections of this document.
-Below is an example of a valid GKE Policy file.
-
-```rego
-# METADATA
-# title: Control Plane endpoint access
-# description: Control Plane endpoint access should be limited to authorized networks only
-# custom:
-#   group: Security
-package gke.policy.control_plane_access
-
-default valid = false
-
-valid {
-  count(violation) == 0
-}
-
-violation[msg] {
-  not input.master_authorized_networks_config.enabled
-  msg := "GKE cluster has not enabled master authorized networks configuration" 
-}
-
-```
-
-## GKE Policy metadata
-
-GKE Policies use [OPA Annotations](https://www.openpolicyagent.org/docs/latest/annotations/#annotations)
-to specify policy metadata. The required metadata annotations for GKE policy:
-
-* `title` - human readable name of a policy
-* `description` - more detailed description of a policy
-* `custom.group` - name of group of a policy for policy grouping / categorization
-
-The annotations should be put on a package scope in a rego file.
-
-## GKE Policy package
-
-Each GKE Policy is defined within individual Rego package.
-The package name should start with `gke.policy.` and should match policy name. By Rego definition,
-the package name should only contain string operands.
-
-Examples:
-
-* `gke.policy.control_plane_access` for Control Plane access policy
-* `gke.policy.private_cluster` for Private Cluster policy
-
-## GKE Policy rules
-
-Each GKE Policy should have following rules:
-
-* `valid` - The rule determines if a given policy is valid or violated. It should generate either
-`true` or `false`.
-* `violation` - The rule determines violation for a given policy. It should generate string with a
-violation description. There can be multiple `violation` rules per one policy if needed.
-
-GKE Policy rules are evaluated against Cluster data returned by Get Cluster gRPC API Call.
-Therefore, the `input` document has a protobuf [GKE Cluster model](https://pkg.go.dev/google.golang.org/genproto/googleapis/container/v1#Cluster).
-
-## GKE Policy tests
-
-Each GKE Policy should be covered with unit tests. OPA Rego provides
-[testing framework](https://www.openpolicyagent.org/docs/latest/policy-testing/) for that.
-
-* Each GKE Policy should have individual test file
-* Test files should be stored in same directory as policies
-* Test files should be named same as given policy file and suffixed with `_test.rego`
-* Test rules should be in same package as given policy rules
+<!-- BEGIN POLICY-DOC -->
+|Group|Title|Description|File|
+|-|-|-|-|
+|Availability|Control Plane redundancy|GKE cluster should be regional for maximum availability of control plane during upgrades and zonal outages|[gke-policies/policy/control_plane_redundancy.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/control_plane_redundancy.rego)|
+|Availability|Multi-zone node pools|GKE node pools should be regional (multiple zones) for maximum nodes availability during zonal outages|[gke-policies/policy/node_pool_multi_zone.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/node_pool_multi_zone.rego)|
+|Availability|Use Node Auto-Repair|GKE node pools should have Node Auto-Repair enabled to configure Kubernetes Engine|[gke-policies/policy/node_pool_autorepair.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/node_pool_autorepair.rego)|
+|Maintenance|Cloud Monitoring and Logging|GKE cluster should use Cloud Logging and Monitoring|[gke-policies/policy/monitoring_and_logging.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/monitoring_and_logging.rego)|
+|Management|Enable binary authorization in the cluster|GKE cluster should enable for deploy-time security control that ensures only trusted container images are deployed to gain tighter control over your container environment.|[gke-policies/policy/cluster_binary_authorization.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/cluster_binary_authorization.rego)|
+|Management|GKE VPC-native cluster|GKE cluster nodepool should be VPC-native as per our best-practices|[gke-policies/policy/vpc_native_cluster.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/vpc_native_cluster.rego)|
+|Management|Receive updates about new GKE versions|GKE cluster should be proactively receive updates about GKE upgrades and GKE versions|[gke-policies/policy/cluster_receive_updates.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/cluster_receive_updates.rego)|
+|Management|Schedule maintenance windows and exclusions|GKE cluster should schedule maintenance windows and exclusions to upgrade predictability and to align updates with off-peak business hours.|[gke-policies/policy/cluster_maintenance_window.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/cluster_maintenance_window.rego)|
+|Scalability|GKE ConfigMaps Limit|GKE ConfigMaps Limit|[gke-policies/scalability/limits_configmaps.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/scalability/limits_configmaps.rego)|
+|Scalability|GKE HPAs Limit|GKE HPAs Limit|[gke-policies/scalability/limits_hpas.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/scalability/limits_hpas.rego)|
+|Scalability|GKE L4 ILB Subsetting|GKE cluster should use GKE L4 ILB Subsetting if nodes > 250|[gke-policies/policy/ilb_subsetting.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/ilb_subsetting.rego)|
+|Scalability|GKE Unused HPAs Limit|GKE Unused HPAs Limit|[gke-policies/scalability/limits_unused_hpas.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/scalability/limits_unused_hpas.rego)|
+|Scalability|GKE node local DNS cache|GKE cluster should use node local DNS cache|[gke-policies/policy/node_local_dns_cache.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/node_local_dns_cache.rego)|
+|Scalability|Use node pool autoscaling|GKE node pools should have autoscaling configured to proper resize nodes according to traffic|[gke-policies/policy/node_pool_autoscaling.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/node_pool_autoscaling.rego)|
+|Security|Control Plane endpoint access|Control Plane endpoint access should be limited to authorized networks only|[gke-policies/policy/control_plane_access.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/control_plane_access.rego)|
+|Security|Control Plane endpoint visibility|Control Plane endpoint should be locked from external access|[gke-policies/policy/control_plane_endpoint.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/control_plane_endpoint.rego)|
+|Security|Enrollment in Release Channels|GKE cluster should be enrolled in release channels|[gke-policies/policy/cluster_release_channels.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/cluster_release_channels.rego)|
+|Security|Forbid default Service Accounts in Node Auto-Provisioning|Node Auto-Provisioning configuration should not allow default Service Accounts|[gke-policies/policy/nap_forbid_default_sa.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/nap_forbid_default_sa.rego)|
+|Security|Forbid default compute SA on node_pool|GKE node pools should have a dedicated sa with a restricted set of permissions|[gke-policies/policy/node_pool_forbid_default_sa.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/node_pool_forbid_default_sa.rego)|
+|Security|GKE Network Policies engine|GKE cluster should have Network Policies or Dataplane V2 enabled|[gke-policies/policy/network_policies.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/network_policies.rego)|
+|Security|GKE RBAC authorization|GKE cluster should use RBAC instead of legacy ABAC authorization|[gke-policies/policy/control_plane_disable_legacy_authorization.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/control_plane_disable_legacy_authorization.rego)|
+|Security|GKE Shielded Nodes|GKE cluster should use shielded nodes|[gke-policies/policy/shielded_nodes.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/shielded_nodes.rego)|
+|Security|GKE Workload Identity|GKE cluster should have Workload Identity enabled|[gke-policies/policy/workload_identity.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/workload_identity.rego)|
+|Security|GKE private cluster|GKE cluster should be private to ensure network isolation|[gke-policies/policy/private_cluster.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/private_cluster.rego)|
+|Security|Integrity monitoring on the nodes|GKE node pools should have integrity monitoring feature enabled to detect changes in a VM boot measurments|[gke-policies/policy/node_pool_integrity_monitoring.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/node_pool_integrity_monitoring.rego)|
+|Security|Kubernetes secrets encryption|GKE cluster should use encryption for kubernetes application secrets|[gke-policies/policy/secret_encryption.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/secret_encryption.rego)|
+|Security|Use Container-Optimized OS|GKE node pools should use Container-Optimized OS which is maintained by Google and optimized for running Docker containers with security and efficiency.|[gke-policies/policy/node_pool_use_cos.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/node_pool_use_cos.rego)|
+|Security|Use Node Auto-Upgrade|GKE node pools should have Node Auto-Upgrade enabled to configure Kubernetes Engine|[gke-policies/policy/node_pool_autoupgrade.rego](https://github.com/google/gke-policy-automation/blob/main/gke-policies/policy/node_pool_autoupgrade.rego)|
