@@ -40,3 +40,4 @@ of our policy files.
 |Security|Use Container-Optimized OS|GKE node pools should use Container-Optimized OS which is maintained by Google and optimized for running Docker containers with security and efficiency.|[gke-policies/policy/node_pool_use_cos.rego](../gke-policies/policy/node_pool_use_cos.rego)|
 |Security|Use Node Auto-Upgrade|GKE node pools should have Node Auto-Upgrade enabled to configure Kubernetes Engine|[gke-policies/policy/node_pool_autoupgrade.rego](../gke-policies/policy/node_pool_autoupgrade.rego)|
 ke-policies/policy/node_pool_autoupgrade.rego)|
+
