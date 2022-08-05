@@ -49,7 +49,7 @@ Provision infrastructure with Terraform:
      projects = ["gke-project-one", "gke-project-two"]
    }
 
-   output_cloud_storage = {
+   output_storage = {
      enabled         = true
      bucket_name     = "gke-validations"
      bucket_location = "EU"
@@ -59,7 +59,7 @@ Provision infrastructure with Terraform:
 2. Adjust GKE Policy Automation's `config.yaml` accordingly
    *(check [User Guide](../docs/user-guide.md) for details)*.
 3. Run `terraform init`
-4. Run `terraform apply`
+4. Run `terraform apply -var-file <your-sample-vars-file.tfvars>`
 
 Push container image to Artifact Registry and create Cloud Run job:
 
@@ -124,7 +124,7 @@ organization levels. The code also creates the Artifact Registry required by Clo
 a the Secret Manager secret for storing tool's configuration file.
 
 Depending on configured outputs, the code will provision corresponding resources and IAM role
-bindings for Cloud Storage, Pub/Sub or Security COmmand Center.
+bindings for Cloud Storage, Pub/Sub or Security Command Center.
 
 Lastly, the script creates a Cloud Scheduler running once per day to trigger Cloud Run Job.
 
