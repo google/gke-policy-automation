@@ -16,33 +16,46 @@ package outputs
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/google/gke-policy-automation/internal/policy"
 )
+
+const defaultPolicyDocFileURLPrefix = "../"
 
 type PolicyDocumentation interface {
 	GenerateDocumentation() string
 }
 
 type MarkdownPolicyDocumentation struct {
-	policies []*policy.Policy
+	policies               []*policy.Policy
+	policyDocFileURLPrefix string
 }
 
 type DocumentationBuilder func(policies []*policy.Policy) PolicyDocumentation
 
 func NewMarkdownPolicyDocumentation(policies []*policy.Policy) PolicyDocumentation {
-	return &MarkdownPolicyDocumentation{policies}
+	return &MarkdownPolicyDocumentation{
+		policies:               policies,
+		policyDocFileURLPrefix: defaultPolicyDocFileURLPrefix,
+	}
 }
 
 func (m *MarkdownPolicyDocumentation) GenerateDocumentation() string {
-
+	sort.SliceStable(m.policies, func(i, j int) bool {
+		if m.policies[i].Group == m.policies[j].Group {
+			return m.policies[i].Title < m.policies[j].Title
+		}
+		return m.policies[i].Group < m.policies[j].Group
+	})
 	var sb strings.Builder
 
-	sb.WriteString("# Available Policies\n\n|Title|Description|Group|File|\n|-|-|-|-|")
+	sb.WriteString("|Group|Title|Description|File|\n|-|-|-|-|\n")
 
 	for _, p := range m.policies {
-		sb.WriteString(fmt.Sprintf("\n |%s|%s|%s|%s|", p.Title, p.Description, p.Group, p.File))
+		policyFileURL := fmt.Sprintf("%s%s", m.policyDocFileURLPrefix, p.File)
+		sb.WriteString(fmt.Sprintf("|%s|%s|%s|[%s](%s)|\n", p.Group, p.Title, p.Description, p.File, policyFileURL))
 	}
 
 	return sb.String()

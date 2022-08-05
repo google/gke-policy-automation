@@ -142,7 +142,6 @@ func (c *GKEApiClient) Close() error {
 
 //getResources returns an array of k8s resources that the tool has been able to fetch after the auth
 func getResources(client KubernetesClient, apiVersions []string) ([]*Resource, error) {
-	var resources []*Resource
 	namespaces, err := client.GetNamespaces()
 	if err != nil {
 		return nil, err
@@ -162,16 +161,7 @@ func getResources(client KubernetesClient, apiVersions []string) ([]*Resource, e
 		}
 	}
 
-	for ns := range namespaces {
-		for rt := range toBeFetched {
-			res, err := client.GetNamespacedResources(*toBeFetched[rt], namespaces[ns])
-			resources = append(resources, res...)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-	return resources, nil
+	return client.GetResources(toBeFetched, namespaces)
 }
 
 //GetClusterName returns the cluster's self-link in gcp
