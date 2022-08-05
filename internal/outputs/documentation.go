@@ -19,22 +19,27 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/policy"
 )
+
+const defaultPolicyDocFileURLPrefix = "../"
 
 type PolicyDocumentation interface {
 	GenerateDocumentation() string
 }
 
 type MarkdownPolicyDocumentation struct {
-	policies []*policy.Policy
+	policies               []*policy.Policy
+	policyDocFileURLPrefix string
 }
 
 type DocumentationBuilder func(policies []*policy.Policy) PolicyDocumentation
 
 func NewMarkdownPolicyDocumentation(policies []*policy.Policy) PolicyDocumentation {
-	return &MarkdownPolicyDocumentation{policies}
+	return &MarkdownPolicyDocumentation{
+		policies:               policies,
+		policyDocFileURLPrefix: defaultPolicyDocFileURLPrefix,
+	}
 }
 
 func (m *MarkdownPolicyDocumentation) GenerateDocumentation() string {
@@ -49,7 +54,7 @@ func (m *MarkdownPolicyDocumentation) GenerateDocumentation() string {
 	sb.WriteString("|Group|Title|Description|File|\n|-|-|-|-|\n")
 
 	for _, p := range m.policies {
-		policyFileURL := fmt.Sprintf("%s/blob/%s/%s", config.DefaultGitRepository, config.DefaultGitBranch, p.File)
+		policyFileURL := fmt.Sprintf("%s%s", m.policyDocFileURLPrefix, p.File)
 		sb.WriteString(fmt.Sprintf("|%s|%s|%s|[%s](%s)|\n", p.Group, p.Title, p.Description, p.File, policyFileURL))
 	}
 

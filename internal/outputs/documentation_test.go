@@ -15,6 +15,7 @@
 package outputs
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -28,27 +29,29 @@ func buildPoliciesMetadata() []*policy.Policy {
 			Title:       "Second policy",
 			Description: "Second description",
 			Group:       "Group 2",
-			File:        "file2.rego",
+			File:        "gke-policies/file2.rego",
 		},
 		{
 			Title:       "Third policy",
 			Description: "Third description",
 			Group:       "Group 1",
-			File:        "file3.rego",
+			File:        "gke-policies/file3.rego",
 		},
 		{
 			Title:       "First policy",
 			Description: "First description",
 			Group:       "Group 1",
-			File:        "file1.rego",
+			File:        "gke-policies/file1.rego",
 		},
 	}
 }
 
 func TestMarkdownDocumention(t *testing.T) {
-	expected := "|Group 1|First policy|First description|[file1.rego](https://github.com/google/gke-policy-automation/blob/main/file1.rego)|\n" +
-		"|Group 1|Third policy|Third description|[file3.rego](https://github.com/google/gke-policy-automation/blob/main/file3.rego)|\n" +
-		"|Group 2|Second policy|Second description|[file2.rego](https://github.com/google/gke-policy-automation/blob/main/file2.rego)|\n"
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "|Group 1|First policy|First description|[gke-policies/file1.rego](%sgke-policies/file1.rego)|\n", defaultPolicyDocFileURLPrefix)
+	fmt.Fprintf(&sb, "|Group 1|Third policy|Third description|[gke-policies/file3.rego](%sgke-policies/file3.rego)|\n", defaultPolicyDocFileURLPrefix)
+	fmt.Fprintf(&sb, "|Group 2|Second policy|Second description|[gke-policies/file2.rego](%sgke-policies/file2.rego)|\n", defaultPolicyDocFileURLPrefix)
+	expected := sb.String()
 
 	generator := NewMarkdownPolicyDocumentation(buildPoliciesMetadata())
 	documentation := generator.GenerateDocumentation()
