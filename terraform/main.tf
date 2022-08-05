@@ -24,11 +24,8 @@ data "google_project" "project" {
 
 resource "google_project_service" "project" {
   for_each           = toset(local.apis)
-  project            = var.project_id
+  project            = data.google_project.project.project_id
   service            = each.key
   disable_on_destroy = false
-
-  depends_on = [
-    data.google_project.project
-  ]
 }
+
