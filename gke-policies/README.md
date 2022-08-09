@@ -18,6 +18,7 @@ of our policy files.
 |Management|GKE VPC-native cluster|GKE cluster nodepool should be VPC-native as per our best-practices|[gke-policies/policy/vpc_native_cluster.rego](../gke-policies/policy/vpc_native_cluster.rego)|
 |Management|Receive updates about new GKE versions|GKE cluster should be proactively receive updates about GKE upgrades and GKE versions|[gke-policies/policy/cluster_receive_updates.rego](../gke-policies/policy/cluster_receive_updates.rego)|
 |Management|Schedule maintenance windows and exclusions|GKE cluster should schedule maintenance windows and exclusions to upgrade predictability and to align updates with off-peak business hours.|[gke-policies/policy/cluster_maintenance_window.rego](../gke-policies/policy/cluster_maintenance_window.rego)|
+|Management|Version skew between node pools and control plane|Difference between cluster control plane version and node pools version should be no more than 2 minor versions.|[gke-policies/policy/node_pool_version_skew.rego](../gke-policies/policy/node_pool_version_skew.rego)|
 |Scalability|GKE ConfigMaps Limit|GKE ConfigMaps Limit|[gke-policies/scalability/limits_configmaps.rego](../gke-policies/scalability/limits_configmaps.rego)|
 |Scalability|GKE HPAs Limit|GKE HPAs Limit|[gke-policies/scalability/limits_hpas.rego](../gke-policies/scalability/limits_hpas.rego)|
 |Scalability|GKE L4 ILB Subsetting|GKE cluster should use GKE L4 ILB Subsetting if nodes > 250|[gke-policies/policy/ilb_subsetting.rego](../gke-policies/policy/ilb_subsetting.rego)|
