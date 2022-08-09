@@ -1,7 +1,5 @@
 # GKE Policy Automation
 
-This is not an officially supported Google product.
-
 This repository contains the tool and the [policy library](./gke-policies) for validating [GKE](https://cloud.google.com/kubernetes-engine)
 clusters against configuration best practices.
 
@@ -13,6 +11,8 @@ clusters against configuration best practices.
 ![GitHub](https://img.shields.io/github/license/google/gke-policy-automation)
 
 ![GKE Policy Automation Demo](./assets/gke-policy-automation-demo.gif)
+
+Note: this is not an officially supported Google product.
 
 ---
 
