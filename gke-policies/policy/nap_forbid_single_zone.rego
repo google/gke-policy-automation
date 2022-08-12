@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Ensure that node pool locations within Node Auto-Provisioning are covering one than more zone (or not enforced at all)
+# title: Ensure that node pool locations within Node Auto-Provisioning are covering more than one zone (or not enforced at all)
 # description: Node Auto-Provisioning configuration should cover more than one zone
 # custom:
 #   group: Security
