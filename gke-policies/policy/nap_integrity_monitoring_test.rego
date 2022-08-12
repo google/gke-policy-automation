@@ -12,39 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.nap_forbid_single_zone
+package gke.policy.nap_integrity_monitoring
 
 test_cluster_not_enabled_nap {
     valid with input as {"name": "cluster-without-nap", "autoscaling": {"enable_node_autoprovisioning": false}}
 }
 
-test_cluster_enabled_nap_without_enabled_autoprovisioning_locations_not_enabled {
-    valid with input as {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true}}
-}
-
-test_cluster_enabled_nap_with_enabled_autoprovisioning_locations_multiple {
+test_cluster_enabled_nap_with_integrity_monitoring_enabled {
     valid with input as {
         "name": "cluster-with-nap", 
         "autoscaling": {
             "enable_node_autoprovisioning": true, 
-            "autoprovisioning_locations": [
-                "europe-central2-a",
-                "europe-central2-b"
-            ]
+            "autoprovisioning_node_pool_defaults": {
+                "shielded_instance_config":{"enable_integrity_monitoring": true}
+            }
         }
     }
 }
 
-test_cluster_enabled_nap_with_enabled_autoprovisioning_locations_single {
+test_cluster_enabled_nap_without_integrity_monitoring_enabled {
     not valid with input as {
         "name": "cluster-with-nap", 
         "autoscaling": {
             "enable_node_autoprovisioning": true, 
             "autoprovisioning_node_pool_defaults": {
-                "shielded_instance_config":{"enable_integrity_monitoring": true},
-                "image_type":"COS_CONTAINERD"
+                "shielded_instance_config":{"enable_integrity_monitoring": false}
             },
-            "autoprovisioning_locations":  ["europe-central2-a"],
         }
     }
 }
