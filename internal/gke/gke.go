@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"regexp"
 	"strings"
 
 	container "cloud.google.com/go/container/apiv1"
@@ -98,6 +99,20 @@ type GKEApiClient struct {
 type Cluster struct {
 	*containerpb.Cluster
 	Resources []*Resource
+}
+
+func (c Cluster) ReadableId() string {
+	r := regexp.MustCompile(`.+/(projects/.+/(locations|zones)/.+/clusters/.+)`)
+	if !r.MatchString(c.SelfLink) {
+		log.Warnf("cluster selfLink %s does not match readable identifier regex", c.SelfLink)
+		return c.Id
+	}
+	matches := r.FindStringSubmatch(c.SelfLink)
+	if len(matches) != 3 {
+		log.Warnf("cluster selfLink %s has invalid number of readable identifier regex matches", c.SelfLink)
+		return c.Id
+	}
+	return matches[1]
 }
 
 //GetCluster returns a Cluster object with all the information regarding the cluster,

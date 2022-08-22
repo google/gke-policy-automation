@@ -272,3 +272,16 @@ func TestGetClusterResourcesForNonEmptyConfig(t *testing.T) {
 		t.Errorf("should return resources for v1 configuration. Returned %d; want 1", len(cluster.Resources))
 	}
 }
+
+func TestReadableId(t *testing.T) {
+	expected := "projects/test/zones/europe-north1-a/clusters/cluster-demo"
+	cluster := &Cluster{
+		Cluster: &containerpb.Cluster{
+			SelfLink: fmt.Sprintf("%s/%s", "https://container.googleapis.com/v1", expected),
+		},
+	}
+	readableId := cluster.ReadableId()
+	if readableId != expected {
+		t.Errorf("readable id = %v; want %v", readableId, expected)
+	}
+}

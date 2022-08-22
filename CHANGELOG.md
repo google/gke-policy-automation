@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.1 (Aug 17, 2022)
+
+IMPROVEMENTS:
+
+* Improved efficiency of K8S resources fetching [#107](https://github.com/google/gke-policy-automation/pull/107)
+* Updated policy docs generator [#109](https://github.com/google/gke-policy-automation/pull/109)
+
+BUG FIXES:
+
+* Tool should not fail on a discovered cluster that does not exist [#113](https://github.com/google/gke-policy-automation/issues/113)
+* Failed cluster discovery was not returning an error [#104](https://github.com/google/gke-policy-automation/pull/104)
+
 ## 1.2.0 (Jul 22, 2022)
 
 FEATURES:
