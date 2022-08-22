@@ -17,8 +17,8 @@
 # description: Nodes in Node Auto-Provisioning should use Container-Optimized OS
 # custom:
 #   group: Security
-#   severity: Critical
-#   sccCategory: NAP_COS_CONFIGURED
+#   severity: High
+#   sccCategory: NAP_COS_UNCONFIGURED
 #   cis:
 #     version: "1.2"
 #     id: "5.2.1"

@@ -18,7 +18,7 @@
 # custom:
 #   group: Security
 #   severity: Critical
-#   sccCategory: NAP_INTEGRITY_MONITORING
+#   sccCategory: NAP_INTEGRITY_MONITORING_DISABLED
 #   cis:
 #     version: "1.2"
 #     id: "5.2.1"

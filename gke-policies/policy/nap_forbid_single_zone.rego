@@ -17,8 +17,8 @@
 # description: Node Auto-Provisioning configuration should cover more than one zone
 # custom:
 #   group: Security
-#   severity: Critical
-#   sccCategory: NAP_MULTIPLE_ZONES_CONFIGURED
+#   severity: High
+#   sccCategory: NAP_ZONAL
 #   cis:
 #     version: "1.2"
 #     id: "5.2.1"
