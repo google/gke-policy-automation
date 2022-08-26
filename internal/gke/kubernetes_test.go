@@ -86,6 +86,14 @@ func (m *kubeNamespacedResourceMock) Patch(ctx context.Context, name string, pt 
 	return nil, nil
 }
 
+func (m *kubeNamespacedResourceMock) Apply(ctx context.Context, name string, obj *unstructured.Unstructured, options metav1.ApplyOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	return nil, nil
+}
+
+func (m *kubeNamespacedResourceMock) ApplyStatus(ctx context.Context, name string, obj *unstructured.Unstructured, options metav1.ApplyOptions) (*unstructured.Unstructured, error) {
+	return nil, nil
+}
+
 type dicoveryClientMock struct {
 	ServerGroupsAndResourcesFn func() ([]*metav1.APIGroup, []*metav1.APIResourceList, error)
 }
