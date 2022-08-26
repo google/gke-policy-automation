@@ -26,6 +26,7 @@ import (
 
 	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/outputs"
+	"github.com/stretchr/testify/assert"
 )
 
 type DiscoveryClientMock struct {
@@ -134,6 +135,10 @@ func TestLoadCliConfig_defaults(t *testing.T) {
 	if !reflect.DeepEqual(policy, defaultPolicy) {
 		t.Error("config policy is not same as default policy")
 	}
+	if pa.config.K8SApiConfig.MaxQPS != cfg.DefaultK8SClientQPS {
+		t.Errorf("K8SApiConfig MaxQPS = %v; want %v", pa.config.K8SApiConfig.MaxQPS, cfg.DefaultK8SClientQPS)
+	}
+	assert.ElementsMatchf(t, pa.config.K8SApiConfig.ApiVersions, cfg.DefaultK8SApiVersions, "K8SApiConfig ApiVersions match")
 }
 
 func TestLoadConfig(t *testing.T) {

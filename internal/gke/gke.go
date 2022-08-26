@@ -44,6 +44,7 @@ type gkeApiClientBuilder struct {
 	ctx             context.Context
 	credentialsFile string
 	k8sApiVersions  []string
+	k8sMaxQPS       int
 }
 
 func NewGKEApiClientBuilder(ctx context.Context) *gkeApiClientBuilder {
@@ -55,8 +56,9 @@ func (b *gkeApiClientBuilder) WithCredentialsFile(credentialsFile string) *gkeAp
 	return b
 }
 
-func (b *gkeApiClientBuilder) WithK8SClient(apiVersions []string) *gkeApiClientBuilder {
+func (b *gkeApiClientBuilder) WithK8SClient(apiVersions []string, maxQPS int) *gkeApiClientBuilder {
 	b.k8sApiVersions = apiVersions
+	b.k8sMaxQPS = maxQPS
 	return b
 }
 
@@ -71,22 +73,18 @@ func (b *gkeApiClientBuilder) Build() (GKEClient, error) {
 		return nil, err
 	}
 
-	var k8sApiVersions []string
-	if len(b.k8sApiVersions) > 0 {
-		k8sApiVersions = b.k8sApiVersions
-	}
-
 	return &GKEApiClient{
 		ctx:            b.ctx,
 		client:         cli,
 		authTokenFunc:  getClusterToken,
 		k8sClientFunc:  NewKubernetesClient,
-		k8sApiVersions: k8sApiVersions,
+		k8sApiVersions: b.k8sApiVersions,
+		k8sMaxQPS:      b.k8sMaxQPS,
 	}, nil
 }
 
 type authTokenFunc func(ctx context.Context) (string, error)
-type k8sClientFunc func(ctx context.Context, kubeConfig *clientcmdapi.Config) (KubernetesClient, error)
+type k8sClientFunc func(ctx context.Context, kubeConfig *clientcmdapi.Config, maxQPS int) (KubernetesClient, error)
 
 type GKEApiClient struct {
 	ctx            context.Context
@@ -94,6 +92,7 @@ type GKEApiClient struct {
 	k8sClientFunc  k8sClientFunc
 	authTokenFunc  authTokenFunc
 	k8sApiVersions []string
+	k8sMaxQPS      int
 }
 
 type Cluster struct {
@@ -138,7 +137,7 @@ func (c *GKEApiClient) GetCluster(name string) (*Cluster, error) {
 			log.Debugf("unable to get kubeconfig: %s", err)
 			return nil, err
 		}
-		k8cli, err := c.k8sClientFunc(c.ctx, kubeConfig)
+		k8cli, err := c.k8sClientFunc(c.ctx, kubeConfig, c.k8sMaxQPS)
 		if err != nil {
 			return nil, err
 		}

@@ -88,7 +88,7 @@ func createCheckCommand(p PolicyAutomation) *cli.Command {
 				Action: func(c *cli.Context) error {
 					defer p.Close()
 					config.K8SCheck = true
-					if err := p.LoadCliConfig(config, cfg.ValidateClusterCheckConfig); err != nil {
+					if err := p.LoadCliConfig(config, cfg.ValidateScalabilityCheckConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}

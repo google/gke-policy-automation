@@ -15,6 +15,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -23,13 +24,14 @@ import (
 )
 
 var (
-	APIVERSIONS = []string{"v1", "autoscaling/v1"}
+	DefaultK8SApiVersions = []string{"v1", "autoscaling/v1"}
 )
 
 const (
 	DefaultGitRepository = "https://github.com/google/gke-policy-automation"
 	DefaultGitBranch     = "main"
 	DefaultGitPolicyDir  = "gke-policies"
+	DefaultK8SClientQPS  = 50
 )
 
 type ReadFileFn func(string) ([]byte, error)
@@ -37,7 +39,6 @@ type ValidateConfig func(config Config) error
 
 type Config struct {
 	SilentMode       bool                   `yaml:"silent"`
-	K8SCheck         bool                   `yaml:"k8sCheck"`
 	DumpFile         string                 `yaml:"dumpFile"`
 	CredentialsFile  string                 `yaml:"credentialsFile"`
 	Clusters         []ConfigCluster        `yaml:"clusters"`
@@ -45,6 +46,7 @@ type Config struct {
 	Outputs          []ConfigOutput         `yaml:"outputs"`
 	ClusterDiscovery ClusterDiscovery       `yaml:"clusterDiscovery"`
 	PolicyExclusions ConfigPolicyExclusions `yaml:"policyExclusions"`
+	K8SApiConfig     K8SApiConfig           `yaml:"kubernetesAPIClient"`
 }
 
 type ConfigPolicy struct {
@@ -94,6 +96,12 @@ type ClusterDiscovery struct {
 type ConfigPolicyExclusions struct {
 	Policies     []string `yaml:"policies"`
 	PolicyGroups []string `yaml:"policyGroups"`
+}
+
+type K8SApiConfig struct {
+	Enabled     bool     `yaml:"enabled"`
+	ApiVersions []string `yaml:"resourceAPIVersions"`
+	MaxQPS      int      `yaml:"clientMaxQPS"`
 }
 
 func ReadConfig(path string, readFn ReadFileFn) (*Config, error) {
@@ -178,6 +186,16 @@ func ValidateGeneratePolicyDocsConfig(config Config) error {
 			log.Warnf("configuration validation error: %s", err)
 		}
 		return errors[0]
+	}
+	return nil
+}
+
+func ValidateScalabilityCheckConfig(config Config) error {
+	if err := ValidateClusterCheckConfig(config); err != nil {
+		return nil
+	}
+	if !config.K8SApiConfig.Enabled {
+		return errors.New("kubernetes API client is disabled")
 	}
 	return nil
 }
@@ -283,5 +301,11 @@ func SetConfigDefaults(config *Config) {
 			GitRepository: DefaultGitRepository,
 			GitBranch:     DefaultGitBranch,
 			GitDirectory:  DefaultGitPolicyDir})
+	}
+	if config.K8SApiConfig.MaxQPS == 0 {
+		config.K8SApiConfig.MaxQPS = DefaultK8SClientQPS
+	}
+	if len(config.K8SApiConfig.ApiVersions) == 0 {
+		config.K8SApiConfig.ApiVersions = DefaultK8SApiVersions
 	}
 }
