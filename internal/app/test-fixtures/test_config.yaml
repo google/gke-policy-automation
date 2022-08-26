@@ -29,3 +29,8 @@ outputs:
 - pubsub:
     project: my-pubsub-project
     topic: my-topic
+kubernetesAPIClient:
+  enabled: true
+  clientMaxQPS: 55
+  resourceAPIVersions:
+    - v1

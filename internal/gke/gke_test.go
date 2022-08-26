@@ -54,7 +54,9 @@ func (mockClusterManagerClient) Close() error {
 
 func TestNewGKEClient(t *testing.T) {
 	testCredsFile := "test-fixtures/test_credentials.json"
-	c, err := NewGKEApiClientBuilder(context.Background()).WithCredentialsFile(testCredsFile).WithK8SClient(config.APIVERSIONS).Build()
+	c, err := NewGKEApiClientBuilder(context.Background()).WithCredentialsFile(testCredsFile).
+		WithK8SClient([]string{"v1"}, config.DefaultK8SClientQPS).
+		Build()
 	if err != nil {
 		t.Fatalf("error when creating client: %v", err)
 	}
@@ -126,9 +128,10 @@ func (mockK8Client) GetResources(resourceType []*ResourceType, namespace []strin
 func TestGKEApiClientBuilder(t *testing.T) {
 	credFile := "test-fixtures/test_credentials.json"
 	apiVersions := []string{"policy/v1", "networking.k8s.io/v1"}
+	maxQPS := 69
 	b := NewGKEApiClientBuilder(context.TODO()).
 		WithCredentialsFile(credFile).
-		WithK8SClient(apiVersions)
+		WithK8SClient(apiVersions, maxQPS)
 	client, err := b.Build()
 	if err != nil {
 		t.Fatalf("err = %v, want nil", err)
@@ -140,6 +143,9 @@ func TestGKEApiClientBuilder(t *testing.T) {
 	if !reflect.DeepEqual(apiClient.k8sApiVersions, apiVersions) {
 		t.Errorf("apiClient k8sApiVersions = %v; want %v", apiClient.k8sApiVersions, apiVersions)
 	}
+	if apiClient.k8sMaxQPS != maxQPS {
+		t.Errorf("apiClient k8sMaxQPS = %v; want %v", apiClient.k8sMaxQPS, maxQPS)
+	}
 	if b.credentialsFile != credFile {
 		t.Errorf("builder credentialsFile = %v; want %v", b.credentialsFile, credFile)
 	}
@@ -149,7 +155,7 @@ func TestGetCluster(t *testing.T) {
 	client := GKEApiClient{
 		ctx:    context.Background(),
 		client: &mockClusterManagerClient{},
-		k8sClientFunc: func(ctx context.Context, kubeConfig *clientcmdapi.Config) (KubernetesClient, error) {
+		k8sClientFunc: func(ctx context.Context, kubeConfig *clientcmdapi.Config, maxQPS int) (KubernetesClient, error) {
 			return &mockK8Client{}, nil
 
 		},
@@ -227,7 +233,7 @@ func TestGetClusterResourcesForEmptyConfig(t *testing.T) {
 	client := GKEApiClient{
 		ctx:    context.Background(),
 		client: &mockClusterManagerClient{},
-		k8sClientFunc: func(ctx context.Context, kubeConfig *clientcmdapi.Config) (KubernetesClient, error) {
+		k8sClientFunc: func(ctx context.Context, kubeConfig *clientcmdapi.Config, maxQPS int) (KubernetesClient, error) {
 			return &mockK8Client{}, nil
 
 		},
@@ -252,7 +258,7 @@ func TestGetClusterResourcesForNonEmptyConfig(t *testing.T) {
 	client := GKEApiClient{
 		ctx:    context.Background(),
 		client: &mockClusterManagerClient{},
-		k8sClientFunc: func(ctx context.Context, kubeConfig *clientcmdapi.Config) (KubernetesClient, error) {
+		k8sClientFunc: func(ctx context.Context, kubeConfig *clientcmdapi.Config, maxQPS int) (KubernetesClient, error) {
 			return &mockK8Client{}, nil
 
 		},

@@ -128,8 +128,8 @@ func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 		if p.config.CredentialsFile != "" {
 			builder = builder.WithCredentialsFile(p.config.CredentialsFile)
 		}
-		if p.config.K8SCheck {
-			builder = builder.WithK8SClient(cfg.APIVERSIONS)
+		if p.config.K8SApiConfig.Enabled {
+			builder = builder.WithK8SClient(config.K8SApiConfig.ApiVersions, config.K8SApiConfig.MaxQPS)
 		}
 		p.gke, err = builder.Build()
 		if err != nil {
@@ -351,7 +351,7 @@ func newConfigFromFile(path string) (*cfg.Config, error) {
 func newConfigFromCli(cliConfig *CliConfig) *cfg.Config {
 	config := &cfg.Config{}
 	config.SilentMode = cliConfig.SilentMode
-	config.K8SCheck = cliConfig.K8SCheck
+	config.K8SApiConfig.Enabled = cliConfig.K8SCheck
 	config.CredentialsFile = cliConfig.CredentialsFile
 	config.DumpFile = cliConfig.DumpFile
 	if cliConfig.DiscoveryEnabled {

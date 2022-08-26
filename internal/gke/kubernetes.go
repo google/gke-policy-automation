@@ -21,10 +21,12 @@ import (
 	"sync"
 
 	"github.com/google/gke-policy-automation/internal/log"
+	"github.com/google/gke-policy-automation/internal/version"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
+	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
@@ -71,14 +73,12 @@ const (
 	defaultMaxGoroutines = 10
 )
 
-func NewKubernetesClient(ctx context.Context, kubeConfig *clientcmdapi.Config) (KubernetesClient, error) {
-	return NewKubernetesClientWithConfiguredGoroutines(ctx, kubeConfig, defaultMaxGoroutines)
+func NewKubernetesClient(ctx context.Context, kubeConfig *clientcmdapi.Config, maxQPS int) (KubernetesClient, error) {
+	return NewKubernetesClientWithConfiguredGoroutines(ctx, kubeConfig, maxQPS, defaultMaxGoroutines)
 }
 
-func NewKubernetesClientWithConfiguredGoroutines(ctx context.Context, kubeConfig *clientcmdapi.Config, maxGoRoutines int) (KubernetesClient, error) {
-	config, err := clientcmd.BuildConfigFromKubeconfigGetter("", func() (*clientcmdapi.Config, error) {
-		return kubeConfig, nil
-	})
+func NewKubernetesClientWithConfiguredGoroutines(ctx context.Context, kubeConfig *clientcmdapi.Config, maxQPS int, maxGoRoutines int) (KubernetesClient, error) {
+	config, err := getKubernetesRestClientConfig(kubeConfig, maxQPS)
 	if err != nil {
 		return nil, err
 	}
@@ -232,4 +232,16 @@ func stringSliceContains(hay []string, needle string) bool {
 		}
 	}
 	return false
+}
+
+func getKubernetesRestClientConfig(kubeConfig *clientcmdapi.Config, maxQPS int) (*restclient.Config, error) {
+	config, err := clientcmd.BuildConfigFromKubeconfigGetter("", func() (*clientcmdapi.Config, error) {
+		return kubeConfig, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	config.QPS = float32(maxQPS)
+	config.UserAgent = version.UserAgent
+	return config, nil
 }
