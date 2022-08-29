@@ -57,6 +57,8 @@ type Policy struct {
 	ProcessingErrors []error
 	CisVersion       string
 	CisID            string
+	ExternalURI      string
+	Recommendation   string
 }
 
 type PolicyEvaluationResult struct {
@@ -365,6 +367,12 @@ func (p *Policy) mapModule(module *ast.Module) {
 					p.CisID = cisID
 				}
 			}
+		}
+		if recommendation, ok := getStringFromInterfaceMap("recommendation", annot.Custom); ok {
+			p.Recommendation = recommendation
+		}
+		if externalURI, ok := getStringFromInterfaceMap("externalURI", annot.Custom); ok {
+			p.ExternalURI = externalURI
 		}
 	}
 }

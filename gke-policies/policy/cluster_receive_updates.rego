@@ -18,6 +18,13 @@
 # custom:
 #   group: Management
 #   severity: Low
+#   recommendation: >
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Under Automation, in the row for "Notifications", click the edit icon.
+#     Select the "Enable Notifications" checkbox. From the drop-down list, select the Pub/Sub topic where you want to send update notifications.
+#     To filter notifications, select the Filter notification types checkbox, and then select the notification types you want to receive.
+#     Click "Save changes" once done.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-notifications
 #   sccCategory: UPDATE_NOTIFICATIONS_DISABLED
 
 package gke.policy.cluster_receive_updates

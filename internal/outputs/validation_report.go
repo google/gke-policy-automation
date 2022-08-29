@@ -33,6 +33,8 @@ type ValidationReportPolicy struct {
 	PolicyGroup        string                               `json:"group"`
 	PolicyTitle        string                               `json:"title"`
 	PolicyDescription  string                               `json:"description"`
+	Recommendation     string                               `json:"recommendation,omitempty"`
+	ExternalURI        string                               `json:"externalURI,omitempty"`
 	ClusterEvaluations []*ValidationReportClusterEvaluation `json:"clusters"`
 }
 
@@ -136,6 +138,8 @@ func mapResultPolicyToReportPolicy(policy *policy.Policy) *ValidationReportPolic
 		PolicyTitle:       policy.Title,
 		PolicyDescription: policy.Description,
 		PolicyGroup:       policy.Group,
+		Recommendation:    policy.Recommendation,
+		ExternalURI:       policy.ExternalURI,
 	}
 	return reportPolicy
 }
