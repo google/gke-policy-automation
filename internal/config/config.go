@@ -45,6 +45,7 @@ type Config struct {
 	Outputs          []ConfigOutput         `yaml:"outputs"`
 	ClusterDiscovery ClusterDiscovery       `yaml:"clusterDiscovery"`
 	PolicyExclusions ConfigPolicyExclusions `yaml:"policyExclusions"`
+	Metrics          []ConfigMetric         `yaml:"metrics"`
 }
 
 type ConfigPolicy struct {
@@ -66,6 +67,11 @@ type ConfigOutput struct {
 	PubSub                PubSubOutput                `yaml:"pubsub"`
 	CloudStorage          CloudStorageOutput          `yaml:"cloudStorage"`
 	SecurityCommandCenter SecurityCommandCenterOutput `yaml:"securityCommandCenter"`
+}
+
+type ConfigMetric struct {
+	MetricName string `yaml:"name"`
+	Query      string `yaml:"query"`
 }
 
 type PubSubOutput struct {

@@ -16,6 +16,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -131,6 +132,18 @@ func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 		if p.config.K8SCheck {
 			builder = builder.WithK8SClient(cfg.APIVERSIONS)
 		}
+
+		if len(p.config.Metrics) > 0 {
+			//metricQueries := make([]gke.MetricQuery)
+			var metricQueries []gke.MetricQuery
+
+			for _, m := range p.config.Metrics {
+				metricQueries = append(metricQueries, gke.MetricQuery{Name: m.MetricName, Query: m.Query})
+			}
+
+			builder = builder.WithMetricsClient(metricQueries)
+		}
+
 		p.gke, err = builder.Build()
 		if err != nil {
 			return
@@ -223,6 +236,9 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 	}
 	for _, clusterId := range clusterIds {
 		cluster, err := p.gke.GetCluster(clusterId)
+		val, err := json.MarshalIndent(cluster, "", "    ")
+		log.Debugf("cluster: " + string(val))
+
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)

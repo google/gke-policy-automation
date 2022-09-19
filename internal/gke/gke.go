@@ -44,6 +44,7 @@ type gkeApiClientBuilder struct {
 	ctx             context.Context
 	credentialsFile string
 	k8sApiVersions  []string
+	metrics         []MetricQuery
 }
 
 func NewGKEApiClientBuilder(ctx context.Context) *gkeApiClientBuilder {
@@ -57,6 +58,12 @@ func (b *gkeApiClientBuilder) WithCredentialsFile(credentialsFile string) *gkeAp
 
 func (b *gkeApiClientBuilder) WithK8SClient(apiVersions []string) *gkeApiClientBuilder {
 	b.k8sApiVersions = apiVersions
+	return b
+}
+
+func (b *gkeApiClientBuilder) WithMetricsClient(metricQueries []MetricQuery) *gkeApiClientBuilder {
+	b.metrics = metricQueries
+	log.Debugf("with metrics: %s", metricQueries)
 	return b
 }
 
@@ -76,29 +83,40 @@ func (b *gkeApiClientBuilder) Build() (GKEClient, error) {
 		k8sApiVersions = b.k8sApiVersions
 	}
 
+	var metricQueries []MetricQuery
+	if len(b.metrics) > 0 {
+		metricQueries = b.metrics
+	}
+
 	return &GKEApiClient{
-		ctx:            b.ctx,
-		client:         cli,
-		authTokenFunc:  getClusterToken,
-		k8sClientFunc:  NewKubernetesClient,
-		k8sApiVersions: k8sApiVersions,
+		ctx:              b.ctx,
+		client:           cli,
+		authTokenFunc:    getClusterToken,
+		k8sClientFunc:    NewKubernetesClient,
+		k8sApiVersions:   k8sApiVersions,
+		metricClientFunc: NewMetricClient,
+		metricQueries:    metricQueries,
 	}, nil
 }
 
 type authTokenFunc func(ctx context.Context) (string, error)
 type k8sClientFunc func(ctx context.Context, kubeConfig *clientcmdapi.Config) (KubernetesClient, error)
+type metricClientFunc func(ctx context.Context, projectId string, authToken string) (MetricsClient, error)
 
 type GKEApiClient struct {
-	ctx            context.Context
-	client         ClusterManagerClient
-	k8sClientFunc  k8sClientFunc
-	authTokenFunc  authTokenFunc
-	k8sApiVersions []string
+	ctx              context.Context
+	client           ClusterManagerClient
+	k8sClientFunc    k8sClientFunc
+	authTokenFunc    authTokenFunc
+	k8sApiVersions   []string
+	metricClientFunc metricClientFunc
+	metricQueries    []MetricQuery
 }
 
 type Cluster struct {
 	*containerpb.Cluster
 	Resources []*Resource
+	Metrics   map[string]Metric
 }
 
 func (c Cluster) ReadableId() string {
@@ -126,6 +144,7 @@ func (c *GKEApiClient) GetCluster(name string) (*Cluster, error) {
 	}
 
 	var resources []*Resource = nil
+	metricMap := make(map[string]Metric)
 
 	if len(c.k8sApiVersions) > 0 {
 		clusterToken, err := c.authTokenFunc(c.ctx)
@@ -147,7 +166,32 @@ func (c *GKEApiClient) GetCluster(name string) (*Cluster, error) {
 			return nil, err
 		}
 	}
-	return &Cluster{cluster, resources}, err
+
+	if len(c.metricQueries) > 0 {
+		clusterToken, err := c.authTokenFunc(c.ctx)
+		if err != nil {
+			log.Debugf("unable to get cluster token: %s", err)
+			return nil, err
+		}
+		metricsClient, err := c.metricClientFunc(c.ctx, "ewojtach-sandbox", clusterToken)
+		if err != nil {
+			log.Debugf("unable to create metrics client: %s", err)
+			return nil, err
+		}
+
+		for _, metric := range c.metricQueries {
+			res, err := metricsClient.GetMetric(metric.Query, cluster.Name)
+			if err != nil {
+				log.Debugf("unable to get metric: %s", err)
+				return nil, err
+			}
+			metricMap[metric.Name] = Metric{
+				Name:  metric.Name,
+				Value: res,
+			}
+		}
+	}
+	return &Cluster{cluster, resources, metricMap}, err
 }
 
 //Close closes the client connection
