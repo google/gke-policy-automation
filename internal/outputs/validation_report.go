@@ -114,6 +114,9 @@ func (m *validationReportMapperImpl) GetReport() *ValidationReport {
 		policies = append(policies, policy)
 	}
 	sort.SliceStable(policies, func(i, j int) bool {
+		if policies[i].PolicyGroup == policies[j].PolicyGroup {
+			return policies[i].PolicyName < policies[j].PolicyName
+		}
 		return policies[i].PolicyGroup < policies[j].PolicyGroup
 	})
 	stats := make([]*ValidationReportClusterStats, 0, len(m.clusterStats))
