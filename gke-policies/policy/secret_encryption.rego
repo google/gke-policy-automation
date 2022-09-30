@@ -18,6 +18,13 @@
 # custom:
 #   group: Security
 #   severity: Medium
+#   recommendation: >
+#     This recommendation requires KMS key to be provisioned as a prerequsite.
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Under Security, in the row for "Application-layer secrets encryption", click the edit icon.
+#     Select the "Encrypt secrets at the application layer" checkbox. Select your KMS key from
+#     the list or provide it's resource name. Click "Save changes" once done.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/encrypting-secrets
 #   sccCategory: SECRETS_ENCRYPTION_DISABLED
 #   cis:
 #     version: "1.2"

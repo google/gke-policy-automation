@@ -18,6 +18,11 @@
 # custom:
 #   group: Security
 #   severity: Medium
+#   recommendation: >
+#     Once the node pool is provisioned, it cannot be updated to enable Secure Boot.
+#     It is required to create new node pool in the cluster with Secure Boot feature
+#     enabled.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/shielded-gke-nodes#secure_boot
 #   sccCategory: SECURE_BOOT_DISABLED
 #   cis:
 #     version: "1.2"

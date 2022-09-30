@@ -18,6 +18,11 @@
 # custom:
 #   group: Security
 #   severity: Critical
+#   recommendation: >
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Under Security, in the row for "Legacy authorization", click the edit icon.
+#     Unselect the "Enable legacy authorization" checkbox and click "Save changes".
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/api-server-authentication#legacy-auth
 #   sccCategory: RBAC_DISABLED
 #   cis:
 #     version: "1.2"

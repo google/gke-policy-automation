@@ -18,6 +18,13 @@
 # custom:
 #   group: Security
 #   severity: CRITICAL
+#   recommendation: >
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Under Security, in the row for "Workload Identity", click the edit icon.
+#     Select the "Enable Workload Identity" checkbox. Leave the default workload identity pool
+#     unchanged, as the default one is the only one that is currently supported.
+#     Click "Save changes" once done.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity
 #   sccCategory: WORKLOAD_IDENTITY_DISABLED
 #   cis:
 #     version: "1.2"

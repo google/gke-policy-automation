@@ -18,6 +18,11 @@
 # custom:
 #   group: Scalability
 #   severity: Medium
+#   recommendation: >
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Under Networking, in the row for "NodeLocal DNSCache", click the edit icon.
+#     Select the "Enable NodeLocal DNSCache" checkbox and click "Save changes" button.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/nodelocal-dns-cache
 #   sccCategory: DNS_CACHE_DISABLED
 
 package gke.policy.node_local_dns_cache

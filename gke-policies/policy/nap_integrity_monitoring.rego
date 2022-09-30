@@ -19,6 +19,16 @@
 #   group: Security
 #   severity: Critical
 #   sccCategory: NAP_INTEGRITY_MONITORING_DISABLED
+#   recommendation: >
+#     The Integrity Monitoring can be enabled for Node Autoprovisioning using the configuration file only.
+#     Prepare the YAML configuration file with Integrity Monitoring enabled:
+#       shieldedInstanceConfig:
+#         enableSecureBoot: true
+#         enableIntegrityMonitoring: false
+#     Next, run the following gcloud command:
+#     gcloud container clusters update CLUSTER_NAME --enable-autoprovisioning --autoprovisioning-config-file FILE_NAME
+#     Refer to the official documentation for more details.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning#node_integrity
 #   cis:
 #     version: "1.2"
 #     id: "5.2.1"

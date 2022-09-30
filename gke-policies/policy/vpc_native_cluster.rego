@@ -18,6 +18,11 @@
 # custom:
 #   group: Management
 #   severity: CRITICAL
+#   recommendation: >
+#     Once the cluster is created as a route-based cluster, this cannon be changed.
+#     The cluster must be recreated, ensuring that VPN-native networking
+#     (with an alias IP ranges) is configured.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/alias-ips
 #   sccCategory: VPC_NATIVE_ROUTING_DISABLED
 
 package gke.policy.vpc_native_cluster

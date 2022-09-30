@@ -18,6 +18,11 @@
 # custom:
 #   group: Security
 #   severity: Critical
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Select "Nodes" tab and click on the name of the target node pool. Within the node pool
+#     details pane, click EDIT. Under the "Management" heading, select the "Enable auto-upagde"
+#     checkbox. Click "Save" button once done.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/hardening-your-cluster#use_least_privilege_sa
 #   sccCategory: DEFAULT_SA_CONFIGURED
 #   cis:
 #     version: "1.2"

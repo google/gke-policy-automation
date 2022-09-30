@@ -18,6 +18,13 @@
 # custom:
 #   group: Security
 #   severity: Critical
+#   recommendation: >
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Under Networking, in the row for "Control plane authorized networks", click the edit icon.
+#     Select the "Enable control plane authorized networks" checkbox. Click "Add Authorized network" and fill name and network fields.
+#     Click Done. Add additional aiuthorized networks as needed.
+#     Click "Save changes" once done.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/authorized-networks
 #   sccCategory: CONTROL_PLANE_ACCESS_UNRESTRICTED
 #   cis:
 #     version: "1.2"

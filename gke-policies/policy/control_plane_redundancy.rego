@@ -18,6 +18,10 @@
 # custom:
 #   group: Availability
 #   severity: High
+#   recommendation: >
+#     Once the cluster is created as a zonal cluster, it is not possible to change it's type to regional.
+#     The cluster must be recreated, ensuring that regional location type is choosen.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/regional-clusters
 #   sccCategory: CONTROL_PLANE_ZONAL
 
 package gke.policy.control_plane_redundancy

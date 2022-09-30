@@ -18,6 +18,11 @@
 # custom:
 #   group: Security
 #   severity: Critical
+#   recommendation: >
+#    Once the node pool is provisioned, it cannot be updated to enable Integrity Monitoring.
+#    It is required to create new node pool in the cluster with Integrity Monitoring feature
+#    enabled.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/shielded-gke-nodes#node_integrity
 #   sccCategory: NODEPOOL_INTEGRITY_MONITORING_DISABLED
 #   cis:
 #     version: "1.2"

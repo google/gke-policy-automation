@@ -18,6 +18,13 @@
 # custom:
 #   group: Scalability
 #   severity: Medium
+#   recommendation: >
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Select "Nodes" tab and click on the name of the target node pool. Within the node pool
+#     details pane, click EDIT. Under the "Size" heading, select the "Enable cluster autoscaler"
+#     checkbox. Adjust the values in the "Minimum number of nodes" and "Maximum number of nodes"
+#     fields. Slick "Save" button once done.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-autoscaler
 #   sccCategory: NODEPOOL_AUTOSCALING_DISABLED
 
 package gke.policy.node_pool_autoscaling

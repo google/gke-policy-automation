@@ -18,6 +18,13 @@
 # custom:
 #   group: Security
 #   severity: High
+#   recommendation: >
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Select "Nodes" tab and click on the name of the target node pool. Within the node pool
+#     details pane, click EDIT. Under the "Image type" heading, click "Change" button.
+#     Select the Container-Optimized OS with containerd image type from the list.
+#     Click "Change" button once done.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/node-images
 #   sccCategory: NODEPOOL_COS_UNUSED
 #   cis:
 #     version: "1.2"

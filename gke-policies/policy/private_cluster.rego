@@ -18,6 +18,10 @@
 # custom:
 #   group: Security
 #   severity: High
+#   recommendation: >
+#     Once the cluster is created as a public cluster, this cannon be changed.
+#     The cluster must be recreated, ensuring that Private cluster mode is enabled.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/private-clusters
 #   sccCategory: NODES_PUBLIC
 #   cis:
 #     version: "1.2"
