@@ -58,7 +58,7 @@ func NewMetricClient(ctx context.Context, projectId string, authToken string) (M
 	client, err := api.NewClient(api.Config{
 		Address:      "https://monitoring.googleapis.com/v1/projects/" + projectId + "/location/global/prometheus/",
 		RoundTripper: config.NewAuthorizationCredentialsRoundTripper("Bearer", config.Secret(authToken), api.DefaultRoundTripper),
-	}) //plik - credential file
+	})
 
 	if err != nil {
 		log.Fatalf("Failed to create metrics client: %v", err)
@@ -118,8 +118,6 @@ func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterName 
 	metricsResult := make(map[string]Metric)
 
 	queryChannel := make(chan MetricQuery, m.maxGoRoutines)
-	wg := new(sync.WaitGroup)
-	wg.Add(m.maxGoRoutines)
 
 	go func() {
 		for _, q := range queries {
@@ -131,31 +129,35 @@ func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterName 
 	resultsChannel := make(chan Metric, m.maxGoRoutines)
 	errorChannel := make(chan error, m.maxGoRoutines)
 
-	for gr := 0; gr < m.maxGoRoutines; gr++ {
-		log.Debugf("Starting getMetrics goroutine")
-		go func() {
-			for q := range queryChannel {
-				r, err := m.GetMetric(q, clusterName)
-				if err != nil {
-					log.Debugf("unable to get metric: %s", err)
-					errorChannel <- err
-					wg.Done()
-				}
-				metricResult := Metric{
-					Name:  q.Name,
-					Value: r,
-				}
-				resultsChannel <- metricResult
-			}
-			wg.Done()
-		}()
-	}
-	log.Debugf("waiting for getMetrics goroutines to finish")
-	wg.Wait()
-	log.Debugf("all getMetrics goroutines finished")
+	go func() {
+		wg := new(sync.WaitGroup)
+		wg.Add(m.maxGoRoutines)
 
-	close(resultsChannel)
-	close(errorChannel)
+		for gr := 0; gr < m.maxGoRoutines; gr++ {
+			log.Debugf("Starting getMetrics goroutine")
+			go func() {
+				for q := range queryChannel {
+					r, err := m.GetMetric(q, clusterName)
+					if err != nil {
+						log.Debugf("unable to get metric: %s", err)
+						errorChannel <- err
+						wg.Done()
+					}
+					metricResult := Metric{
+						Name:  q.Name,
+						Value: r,
+					}
+					resultsChannel <- metricResult
+				}
+				wg.Done()
+			}()
+		}
+		wg.Wait()
+		close(resultsChannel)
+		close(errorChannel)
+
+	}()
+
 	if len(errorChannel) > 0 {
 		err := <-errorChannel
 		log.Errorf("unable to get metric: %s", err)
