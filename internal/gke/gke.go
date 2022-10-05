@@ -45,6 +45,7 @@ type gkeApiClientBuilder struct {
 	credentialsFile string
 	k8sApiVersions  []string
 	metrics         []MetricQuery
+	k8sMaxQPS       int
 }
 
 func NewGKEApiClientBuilder(ctx context.Context) *gkeApiClientBuilder {
@@ -56,8 +57,9 @@ func (b *gkeApiClientBuilder) WithCredentialsFile(credentialsFile string) *gkeAp
 	return b
 }
 
-func (b *gkeApiClientBuilder) WithK8SClient(apiVersions []string) *gkeApiClientBuilder {
+func (b *gkeApiClientBuilder) WithK8SClient(apiVersions []string, maxQPS int) *gkeApiClientBuilder {
 	b.k8sApiVersions = apiVersions
+	b.k8sMaxQPS = maxQPS
 	return b
 }
 
@@ -77,11 +79,6 @@ func (b *gkeApiClientBuilder) Build() (GKEClient, error) {
 		return nil, err
 	}
 
-	var k8sApiVersions []string
-	if len(b.k8sApiVersions) > 0 {
-		k8sApiVersions = b.k8sApiVersions
-	}
-
 	var metricQueries []MetricQuery
 	if len(b.metrics) > 0 {
 		metricQueries = b.metrics
@@ -92,14 +89,15 @@ func (b *gkeApiClientBuilder) Build() (GKEClient, error) {
 		client:           cli,
 		authTokenFunc:    getClusterToken,
 		k8sClientFunc:    NewKubernetesClient,
-		k8sApiVersions:   k8sApiVersions,
+		k8sApiVersions:   b.k8sApiVersions,
+		k8sMaxQPS:        b.k8sMaxQPS,
 		metricClientFunc: NewMetricClient,
 		metricQueries:    metricQueries,
 	}, nil
 }
 
 type authTokenFunc func(ctx context.Context) (string, error)
-type k8sClientFunc func(ctx context.Context, kubeConfig *clientcmdapi.Config) (KubernetesClient, error)
+type k8sClientFunc func(ctx context.Context, kubeConfig *clientcmdapi.Config, maxQPS int) (KubernetesClient, error)
 type metricClientFunc func(ctx context.Context, projectId string, authToken string) (MetricsClient, error)
 
 type GKEApiClient struct {
@@ -108,6 +106,7 @@ type GKEApiClient struct {
 	k8sClientFunc    k8sClientFunc
 	authTokenFunc    authTokenFunc
 	k8sApiVersions   []string
+	k8sMaxQPS        int
 	metricClientFunc metricClientFunc
 	metricQueries    []MetricQuery
 }
@@ -156,7 +155,7 @@ func (c *GKEApiClient) GetCluster(name string) (*Cluster, error) {
 			log.Debugf("unable to get kubeconfig: %s", err)
 			return nil, err
 		}
-		k8cli, err := c.k8sClientFunc(c.ctx, kubeConfig)
+		k8cli, err := c.k8sClientFunc(c.ctx, kubeConfig, c.k8sMaxQPS)
 		if err != nil {
 			return nil, err
 		}
