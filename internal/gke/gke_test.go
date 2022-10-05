@@ -69,6 +69,28 @@ func TestNewGKEClient(t *testing.T) {
 	}
 }
 
+func TestNewGKEClientWithMetrics(t *testing.T) {
+	testCredsFile := "test-fixtures/test_credentials.json"
+	metricQueries := []MetricQuery{MetricQuery{
+		Name:  "xxx",
+		Query: "apiserver_storage_objects{resource=\"pods\"}",
+	}}
+
+	c, err := NewGKEApiClientBuilder(context.Background()).WithCredentialsFile(testCredsFile).WithMetricsClient(metricQueries).Build()
+
+	if err != nil {
+		t.Fatalf("error when creating client: %v", err)
+	}
+	apiClient, ok := c.(*GKEApiClient)
+	if !ok {
+		t.Fatalf("can't cast GKE client to GKEApiClient")
+	}
+
+	if !reflect.DeepEqual(apiClient.metricQueries, metricQueries) {
+		t.Errorf("apiClient metricQueries = %v; want %v", apiClient.metricQueries, metricQueries)
+	}
+}
+
 type mockK8Client struct {
 }
 
@@ -283,5 +305,14 @@ func TestReadableId(t *testing.T) {
 	readableId := cluster.ReadableId()
 	if readableId != expected {
 		t.Errorf("readable id = %v; want %v", readableId, expected)
+	}
+}
+
+func TestGetProjectId(t *testing.T) {
+	expected := "test-project"
+	selfLink := "https://container.googleapis.com/v1/projects/test-project/zones/europe-central2-a/clusters/test-cluster/nodePools/default-pool"
+	result := getProjectIdFromSelfLink(selfLink)
+	if result != expected {
+		t.Errorf("selfLink = %v; want %v", selfLink, expected)
 	}
 }

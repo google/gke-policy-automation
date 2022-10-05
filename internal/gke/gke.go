@@ -63,7 +63,6 @@ func (b *gkeApiClientBuilder) WithK8SClient(apiVersions []string) *gkeApiClientB
 
 func (b *gkeApiClientBuilder) WithMetricsClient(metricQueries []MetricQuery) *gkeApiClientBuilder {
 	b.metrics = metricQueries
-	log.Debugf("with metrics: %s", metricQueries)
 	return b
 }
 
@@ -173,23 +172,19 @@ func (c *GKEApiClient) GetCluster(name string) (*Cluster, error) {
 			log.Debugf("unable to get cluster token: %s", err)
 			return nil, err
 		}
-		metricsClient, err := c.metricClientFunc(c.ctx, "ewojtach-sandbox", clusterToken)
+		metricsClient, err := c.metricClientFunc(c.ctx, getProjectIdFromSelfLink(cluster.SelfLink), clusterToken)
 		if err != nil {
 			log.Debugf("unable to create metrics client: %s", err)
 			return nil, err
 		}
 
-		for _, metric := range c.metricQueries {
-			res, err := metricsClient.GetMetric(metric.Query, cluster.Name)
-			if err != nil {
-				log.Debugf("unable to get metric: %s", err)
-				return nil, err
-			}
-			metricMap[metric.Name] = Metric{
-				Name:  metric.Name,
-				Value: res,
-			}
+		res, err := metricsClient.GetMetricsForCluster(c.metricQueries, cluster.Name)
+		if err != nil {
+			log.Debugf("unable to get metric: %s", err)
+			return nil, err
 		}
+
+		metricMap = res
 	}
 	return &Cluster{cluster, resources, metricMap}, err
 }
@@ -273,4 +268,18 @@ func getKubeConfig(clusterData *containerpb.Cluster, clusterToken string) (*clie
 	config.CurrentContext = clusterContext
 	log.Info("Local kubernetes cluster configuration created")
 	return config, nil
+}
+
+func getProjectIdFromSelfLink(selfLink string) string {
+	cuttingBySlash := strings.FieldsFunc(selfLink, func(r rune) bool {
+		if r == '/' {
+			return true
+		}
+		return false
+	})
+
+	if len(cuttingBySlash) < 4 {
+		log.Error("Error getting project id from selflink: " + selfLink)
+	}
+	return cuttingBySlash[4]
 }
