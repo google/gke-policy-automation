@@ -73,7 +73,7 @@ func TestNewGKEClient(t *testing.T) {
 
 func TestNewGKEClientWithMetrics(t *testing.T) {
 	testCredsFile := "test-fixtures/test_credentials.json"
-	metricQueries := []MetricQuery{MetricQuery{
+	metricQueries := []MetricQuery{{
 		Name:  "xxx",
 		Query: "apiserver_storage_objects{resource=\"pods\"}",
 	}}
