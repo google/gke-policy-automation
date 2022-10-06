@@ -18,6 +18,12 @@
 # custom:
 #   group: Security
 #   severity: Critical
+#   recommendation: >
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Under Automation, in the row for "Node auto-provisioning", click the edit icon.
+#     Expand the "Service account" drop-down list and select dedicated, non-default service
+#     account. Click "Save changes" once done.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning#identity
 #   sccCategory: NAP_DEFAULT_SA_CONFIGURED
 #   cis:
 #     version: "1.2"

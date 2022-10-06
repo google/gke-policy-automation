@@ -18,6 +18,15 @@
 # custom:
 #   group: Maintenance
 #   severity: Medium
+#   recommendation: >
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Under Features, in the row for "Cloud Logging", click the edit icon.
+#     Select the "Enable Cloud Logging" checkbox. From the drop-down list, select System and Workloads.
+#     Click "Save changes" once done.
+#     Under Features, in the row for "Cloud Monitoring", click the edit icon.
+#     Select the "Enable Cloud Monitoring" checkbox. From the drop-down list, select System.
+#     Click "Save changes" once done.
+#   externalURI: https://cloud.google.com/stackdriver/docs/solutions/gke/installing
 #   sccCategory: LOGGING_OR_MONITORING_DISABLED
 #   cis:
 #     version: "1.2"

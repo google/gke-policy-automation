@@ -18,6 +18,13 @@
 # custom:
 #   group: Management
 #   severity: Medium
+#   recommendation: >
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Under Automation, in the row for "Maintenance Window", click the edit icon.
+#     Select the "Enable Maintenance Window" checkbox. Select the start time and length, then select the days of the week on which the maintenance window occurs.
+#     To edit the recurrence rule specification (RRule) directly, select Custom editor.
+#     Click "Save changes" once done.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/maintenance-windows-and-exclusions
 #   sccCategory: MAINTENANCE_WINDOWS_DISABLED
 
 package gke.policy.cluster_maintenance_window

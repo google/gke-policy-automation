@@ -18,6 +18,11 @@
 # custom:
 #   group: Security
 #   severity: High
+#   recommendation: >
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Under Networking, in the row for "Network policy", click the edit icon.
+#     Select the "Enable Network Policy for nodes" checkbox and click "Save changes" button.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/tutorials/network-policy
 #   sccCategory: NETWORK_POLICIES_DISABLED
 #   cis:
 #     version: "1.2"

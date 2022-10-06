@@ -18,6 +18,12 @@
 # custom:
 #   group: Security
 #   severity: High
+#   recommendation: >
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Select "Nodes" tab and click on the name of the target node pool. Within the node pool
+#     details pane, click EDIT. Under the "Management" heading, select the "Enable auto-upagde"
+#     checkbox. Slick "Save" button once done.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-upgrades
 #   sccCategory: NODEPOOL_AUTOUPGRADE_DISABLED
 #   cis:
 #     version: "1.2"

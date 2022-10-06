@@ -18,6 +18,11 @@
 # custom:
 #   group: Management
 #   severity: Low
+#   recommendation: >
+#     Enable Binary Authorization API on the cluster project.
+#     Next, navigate to the GKE page in Google Cloud Console and select the name of the cluster. Under Security, in the row for "Binary Authorization", click the edit icon.
+#     Select the "Enable Binary Authorization" checkbox and click "Save changes".
+#   externalURI: https://cloud.google.com/binary-authorization/docs/setting-up
 #   sccCategory: BINARY_AUTHORIZATION_DISABLED
 #   cis:
 #     version: "1.2"

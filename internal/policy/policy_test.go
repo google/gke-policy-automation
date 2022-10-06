@@ -380,6 +380,8 @@ func TestMapModule(t *testing.T) {
 	category := "TEST"
 	cisVersion := "1.2"
 	cisID := "4.1.3"
+	recommendation := "do this and that"
+	externalURI := "https://cloud.google.com/kubernetes-engine"
 
 	content := fmt.Sprintf("# METADATA\n"+
 		"# title: %s\n"+
@@ -391,8 +393,10 @@ func TestMapModule(t *testing.T) {
 		"#   cis:\n"+
 		"#     version: %q\n"+
 		"#     id: %q\n"+
+		"#   recommendation: %s\n"+
+		"#   externalURI: %s\n"+
 		"package %s\n"+
-		"p = 1", title, desc, group, severity, category, cisVersion, cisID, pkg)
+		"p = 1", title, desc, group, severity, category, cisVersion, cisID, recommendation, externalURI, pkg)
 
 	modules := map[string]string{file: content}
 	compiler := ast.MustCompileModulesWithOpts(modules,
@@ -427,6 +431,12 @@ func TestMapModule(t *testing.T) {
 	}
 	if policy.CisID != cisID {
 		t.Errorf("cis id = %v; want %v", policy.CisID, cisID)
+	}
+	if policy.ExternalURI != externalURI {
+		t.Errorf("externalURI = %v; want %v", policy.ExternalURI, externalURI)
+	}
+	if policy.Recommendation != recommendation {
+		t.Errorf("recommendation = %v; want %v", policy.Recommendation, recommendation)
 	}
 }
 

@@ -18,6 +18,11 @@
 # custom:
 #   group: Scalability
 #   severity: High
+#   recommendation: >
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Under Networking, in the row for "Subsetting for L4 Internal Load Balancers", click the edit icon.
+#     Select the "Enable subsetting for L4 internal load balancers" checkbox and click "Save changes".
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balancing#subsetting
 #   sccCategory: ILB_SUBSETTING_DISABLED
 
 package gke.policy.enable_ilb_subsetting

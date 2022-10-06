@@ -18,6 +18,11 @@
 # custom:
 #   group: Security
 #   severity: High
+#   recommendation: >
+#     The node image type for node created by Node Autoprovisioning can be changed from the command
+#     line only. To change it to the recommended COS with containerid, run the following command:
+#     gcloud container clusters update CLUSTER_NAME --enable-autoprovisioning --autoprovisioning-image-type cos_containerd
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning#default-image-type
 #   sccCategory: NAP_COS_UNCONFIGURED
 #   cis:
 #     version: "1.2"

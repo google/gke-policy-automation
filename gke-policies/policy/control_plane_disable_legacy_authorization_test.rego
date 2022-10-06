@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# METADATA
-# title: GKE RBAC authorization
-# description: GKE cluster should use RBAC instead of legacy ABAC authorization
-# custom:
-#   group: Security
 package gke.policy.disable_legacy_authorization
 
 test_enabled_legacy_authorization {

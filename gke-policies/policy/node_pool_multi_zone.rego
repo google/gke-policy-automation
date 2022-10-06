@@ -18,6 +18,12 @@
 # custom:
 #   group: Availability
 #   severity: High
+#   recommendation: >
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Select "Nodes" tab and click on the name of the target node pool. Within the node pool
+#     details pane, click EDIT. Under the "Zones" heading, select the cheboxes for multiple
+#     zones. Slick "Save" button once done.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/node-pools#multiple-zones
 #   sccCategory: NODEPOOL_ZONAL
 
 package gke.policy.node_pool_multi_zone
