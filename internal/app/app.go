@@ -134,7 +134,6 @@ func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 		}
 
 		if len(p.config.Metrics) > 0 {
-			//metricQueries := make([]gke.MetricQuery)
 			var metricQueries []gke.MetricQuery
 
 			for _, m := range p.config.Metrics {
@@ -236,14 +235,18 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 	}
 	for _, clusterId := range clusterIds {
 		cluster, err := p.gke.GetCluster(clusterId)
-		val, err := json.MarshalIndent(cluster, "", "    ")
-		log.Debugf("cluster: " + string(val))
 
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
 			log.Errorf("could not fetch cluster details: %s", err)
 			return err
 		}
+		val, err := json.MarshalIndent(cluster, "", "    ")
+		if err != nil {
+			log.Debugf("could not format cluster details: %s", err)
+		}
+		log.Debugf("cluster: " + string(val))
+
 		for _, dumpCollector := range p.clusterDumpCollectors {
 			log.Debugf("registering cluster data with cluster dump collector %s", reflect.TypeOf(dumpCollector).String())
 			dumpCollector.RegisterCluster(cluster)
