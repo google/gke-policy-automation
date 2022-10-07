@@ -44,6 +44,7 @@ type gkeApiClientBuilder struct {
 	ctx             context.Context
 	credentialsFile string
 	k8sApiVersions  []string
+	metrics         []MetricQuery
 	k8sMaxQPS       int
 }
 
@@ -62,6 +63,11 @@ func (b *gkeApiClientBuilder) WithK8SClient(apiVersions []string, maxQPS int) *g
 	return b
 }
 
+func (b *gkeApiClientBuilder) WithMetricsClient(metricQueries []MetricQuery) *gkeApiClientBuilder {
+	b.metrics = metricQueries
+	return b
+}
+
 func (b *gkeApiClientBuilder) Build() (GKEClient, error) {
 	opts := []option.ClientOption{option.WithUserAgent(version.UserAgent)}
 	if b.credentialsFile != "" {
@@ -73,31 +79,42 @@ func (b *gkeApiClientBuilder) Build() (GKEClient, error) {
 		return nil, err
 	}
 
+	var metricQueries []MetricQuery
+	if len(b.metrics) > 0 {
+		metricQueries = b.metrics
+	}
+
 	return &GKEApiClient{
-		ctx:            b.ctx,
-		client:         cli,
-		authTokenFunc:  getClusterToken,
-		k8sClientFunc:  NewKubernetesClient,
-		k8sApiVersions: b.k8sApiVersions,
-		k8sMaxQPS:      b.k8sMaxQPS,
+		ctx:              b.ctx,
+		client:           cli,
+		authTokenFunc:    getClusterToken,
+		k8sClientFunc:    NewKubernetesClient,
+		k8sApiVersions:   b.k8sApiVersions,
+		k8sMaxQPS:        b.k8sMaxQPS,
+		metricClientFunc: NewMetricClient,
+		metricQueries:    metricQueries,
 	}, nil
 }
 
 type authTokenFunc func(ctx context.Context) (string, error)
 type k8sClientFunc func(ctx context.Context, kubeConfig *clientcmdapi.Config, maxQPS int) (KubernetesClient, error)
+type metricClientFunc func(ctx context.Context, projectId string, authToken string) (MetricsClient, error)
 
 type GKEApiClient struct {
-	ctx            context.Context
-	client         ClusterManagerClient
-	k8sClientFunc  k8sClientFunc
-	authTokenFunc  authTokenFunc
-	k8sApiVersions []string
-	k8sMaxQPS      int
+	ctx              context.Context
+	client           ClusterManagerClient
+	k8sClientFunc    k8sClientFunc
+	authTokenFunc    authTokenFunc
+	k8sApiVersions   []string
+	k8sMaxQPS        int
+	metricClientFunc metricClientFunc
+	metricQueries    []MetricQuery
 }
 
 type Cluster struct {
 	*containerpb.Cluster
 	Resources []*Resource
+	Metrics   map[string]Metric
 }
 
 func (c Cluster) ReadableId() string {
@@ -125,6 +142,7 @@ func (c *GKEApiClient) GetCluster(name string) (*Cluster, error) {
 	}
 
 	var resources []*Resource = nil
+	metricMap := make(map[string]Metric)
 
 	if len(c.k8sApiVersions) > 0 {
 		clusterToken, err := c.authTokenFunc(c.ctx)
@@ -146,7 +164,28 @@ func (c *GKEApiClient) GetCluster(name string) (*Cluster, error) {
 			return nil, err
 		}
 	}
-	return &Cluster{cluster, resources}, err
+
+	if len(c.metricQueries) > 0 {
+		clusterToken, err := c.authTokenFunc(c.ctx)
+		if err != nil {
+			log.Debugf("unable to get cluster token: %s", err)
+			return nil, err
+		}
+		metricsClient, err := c.metricClientFunc(c.ctx, getProjectIdFromSelfLink(cluster.SelfLink), clusterToken)
+		if err != nil {
+			log.Debugf("unable to create metrics client: %s", err)
+			return nil, err
+		}
+
+		res, err := metricsClient.GetMetricsForCluster(c.metricQueries, cluster.Name)
+		if err != nil {
+			log.Debugf("unable to get metric: %s", err)
+			return nil, err
+		}
+
+		metricMap = res
+	}
+	return &Cluster{cluster, resources, metricMap}, err
 }
 
 //Close closes the client connection
@@ -228,4 +267,31 @@ func getKubeConfig(clusterData *containerpb.Cluster, clusterToken string) (*clie
 	config.CurrentContext = clusterContext
 	log.Info("Local kubernetes cluster configuration created")
 	return config, nil
+}
+
+func getProjectIdFromSelfLink(selfLink string) string {
+
+	r := regexp.MustCompile(`/projects/.+/(locations|zones)/.+`)
+	if !r.MatchString(selfLink) {
+		log.Errorf("cluster selfLink %s does not match selflink format", selfLink)
+		return ""
+	}
+	matches := r.FindStringSubmatch(selfLink)
+
+	if len(matches) < 2 {
+		log.Errorf("cluster selfLink %s does not match selflink format", selfLink)
+		return ""
+	}
+	match := matches[0]
+	cuttingBySlash := strings.FieldsFunc(match, func(r rune) bool {
+		if r == '/' {
+			return true
+		}
+		return false
+	})
+
+	if len(cuttingBySlash) < 2 {
+		log.Error("Error getting project id from selflink: " + selfLink)
+	}
+	return cuttingBySlash[1]
 }
