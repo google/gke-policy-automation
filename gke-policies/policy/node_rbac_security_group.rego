@@ -18,6 +18,14 @@
 # custom:
 #   group: Security
 #   severity: Medium
+#   recommendation: >
+#     This recommendation requires Google Group with a name gke-security-groups to be
+#     created in your domain as a prerequsite.
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Under Security, in the row for "Google Groups for RBAC", click the edit icon.
+#     Select the "Enable Google Groups for RBAC" checkbox. Fill the name of your group
+#     in the text field below. Click "Save changes" once done.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/google-groups-rbac
 #   sccCategory: RBAC_SECURITY_GROUP_DISABLED
 #   cis:
 #     version: "1.2"

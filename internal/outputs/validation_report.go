@@ -33,6 +33,8 @@ type ValidationReportPolicy struct {
 	PolicyGroup        string                               `json:"group"`
 	PolicyTitle        string                               `json:"title"`
 	PolicyDescription  string                               `json:"description"`
+	Recommendation     string                               `json:"recommendation,omitempty"`
+	ExternalURI        string                               `json:"externalURI,omitempty"`
 	ClusterEvaluations []*ValidationReportClusterEvaluation `json:"clusters"`
 }
 
@@ -112,6 +114,9 @@ func (m *validationReportMapperImpl) GetReport() *ValidationReport {
 		policies = append(policies, policy)
 	}
 	sort.SliceStable(policies, func(i, j int) bool {
+		if policies[i].PolicyGroup == policies[j].PolicyGroup {
+			return policies[i].PolicyName < policies[j].PolicyName
+		}
 		return policies[i].PolicyGroup < policies[j].PolicyGroup
 	})
 	stats := make([]*ValidationReportClusterStats, 0, len(m.clusterStats))
@@ -136,6 +141,8 @@ func mapResultPolicyToReportPolicy(policy *policy.Policy) *ValidationReportPolic
 		PolicyTitle:       policy.Title,
 		PolicyDescription: policy.Description,
 		PolicyGroup:       policy.Group,
+		Recommendation:    policy.Recommendation,
+		ExternalURI:       policy.ExternalURI,
 	}
 	return reportPolicy
 }

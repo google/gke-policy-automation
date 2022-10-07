@@ -18,6 +18,11 @@
 # custom:
 #   group: Management
 #   severity: Medium
+#   recommendation: >
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Under Features, in the row for "Compute Engine persistent disk CSI Driver ", click the edit icon.
+#     Select the "Enable Compute Engine Persistent Disk CSI Driver " checkbox and click "Save changes".
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/gce-pd-csi-driver
 #   sccCategory: GCE_CSI_DRIVER_DISABLED
 
 package gke.policy.cluster_gce_csi_driver

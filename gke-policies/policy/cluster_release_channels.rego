@@ -19,6 +19,12 @@
 #   group: Security
 #   severity: High
 #   sccCategory: RELEASE_CHANNELS_DISABLED
+#   recommendation: >
+#     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
+#     Under Cluster Basics, in the row for "Release channel	", click the edit icon.
+#     Select the "Release channel" option. From the drop-down lists, select the desired release channel and version.
+#     Click "Save changes" once done.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/release-channels
 #   cis:
 #     version: "1.2"
 #     id: "5.5.4"

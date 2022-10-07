@@ -15,6 +15,8 @@
 package outputs
 
 import (
+	"fmt"
+
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/policy"
 )
@@ -41,7 +43,12 @@ func (p *consoleResultCollector) Close() error {
 	p.out.Printf("\n")
 	p.out.InitTabs(95)
 	for _, policy := range report.Policies {
-		p.out.ColorPrintf("%s [bold][light_gray][%s][yellow] %s[reset]: %s\n", ICON_MAGNIFIER, policy.PolicyGroup, policy.PolicyName, policy.PolicyTitle)
+		policyTitle := policy.PolicyTitle
+		if policy.ExternalURI != "" {
+			policyTitle = fmt.Sprintf("%s \x1b]8;;%s\x07%s\x1b]8;;\x07", ICON_HYPERLINK, policy.ExternalURI, policy.PolicyTitle)
+		}
+		p.out.ColorPrintf("%s [bold][light_gray][%s][yellow] %s[reset]: %s\n", ICON_MAGNIFIER, policy.PolicyGroup, policy.PolicyName, policyTitle)
+
 		for _, evaluation := range policy.ClusterEvaluations {
 			statusString := "[ \033[1m\033[32mOK\033[0m ]"
 			if !evaluation.Valid {
