@@ -135,9 +135,14 @@ func TestGetMetric(t *testing.T) {
 
 	metricName := "test-metric"
 	metricValue := 22
+	testQuery := "test-query"
 
 	v1ApiMock := &metricsApiClientMock{
 		QueryFn: func(ctx context.Context, query string, ts time.Time, opts ...v1.Option) (model.Value, v1.Warnings, error) {
+
+			if query != testQuery {
+				t.Errorf("query is %v; want %v", query, testQuery)
+			}
 
 			return pmodel.Vector{
 				&pmodel.Sample{
@@ -151,7 +156,7 @@ func TestGetMetric(t *testing.T) {
 
 	client := &metricsClient{ctx: context.TODO(), client: nil, api: v1ApiMock, maxGoRoutines: defaultMaxGoroutines}
 
-	result, err := client.GetMetric(MetricQuery{Query: "test-query", Name: metricName}, "sample-cluster")
+	result, err := client.GetMetric(MetricQuery{Query: testQuery, Name: metricName}, "sample-cluster")
 
 	if err != nil {
 		t.Fatalf("err is not nil; want nil; err = %s", err)
@@ -191,4 +196,18 @@ func TestGetMetricsForCluster(t *testing.T) {
 	if len(result) != 2 {
 		t.Errorf("result len is %v; want %v", len(result), 2)
 	}
+}
+
+func TestReplaceWildcard(t *testing.T) {
+	query := "apiserver_storage_objects{resource=\"pods\", cluster=CLUSTER_NAME}"
+	clusterName := "test_cluster"
+
+	expected := "apiserver_storage_objects{resource=\"pods\", cluster=\"test_cluster\"}"
+
+	result := replaceWildcard("CLUSTER_NAME", clusterName, query)
+
+	if result != expected {
+		t.Errorf("result query is %v; want %v", result, expected)
+	}
+
 }

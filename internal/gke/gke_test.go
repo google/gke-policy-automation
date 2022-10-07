@@ -319,6 +319,6 @@ func TestGetProjectId(t *testing.T) {
 	selfLink := "https://container.googleapis.com/v1/projects/test-project/zones/europe-central2-a/clusters/test-cluster/nodePools/default-pool"
 	result := getProjectIdFromSelfLink(selfLink)
 	if result != expected {
-		t.Errorf("selfLink = %v; want %v", selfLink, expected)
+		t.Errorf("projectId = %v; want %v", result, expected)
 	}
 }

@@ -22,8 +22,6 @@ import (
 
 	"github.com/google/gke-policy-automation/internal/log"
 
-	//monitoring "cloud.google.com/go/monitoring/apiv3/v2"
-
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/config"
@@ -78,13 +76,12 @@ func NewMetricClient(ctx context.Context, projectId string, authToken string) (M
 func (m *metricsClient) GetMetric(metricQuery MetricQuery, clusterName string) (string, error) {
 
 	query := metricQuery.Query
-	clusterNameExp := regexp.MustCompile("CLUSTER_NAME")
 
-	query = clusterNameExp.ReplaceAllString(query, "\""+clusterName+"\"")
+	query = replaceWildcard("CLUSTER_NAME", clusterName, query)
 
 	log.Debugf("Querying metric client with query: " + query)
 
-	result, warnings, err := m.api.Query(context.Background(), query, time.Now())
+	result, warnings, err := m.api.Query(m.ctx, query, time.Now())
 	if err != nil {
 		log.Fatalf("Failed to query metrics client: %v", err)
 		return "", err
@@ -93,11 +90,12 @@ func (m *metricsClient) GetMetric(metricQuery MetricQuery, clusterName string) (
 		log.Warnf("Warning when querying metrics client: %v", warnings)
 	}
 
-	queryResults := make([]string, 0)
+	queryResults := make([]string, 0, 1)
 
 	data, ok := result.(pmodel.Vector)
 	if !ok {
 		log.Fatalf("Unsupported result format: %s", result.Type().String())
+		return "", err
 	}
 	for _, v := range data {
 		queryResults = append(queryResults, v.Value.String())
@@ -106,8 +104,11 @@ func (m *metricsClient) GetMetric(metricQuery MetricQuery, clusterName string) (
 	ret := ""
 	if len(queryResults) > 0 {
 		ret = queryResults[0]
+		if len(queryResults) > 1 {
+			log.Warnf("query %s returned more than one result for cluster %s", query, clusterName)
+		}
 	} else {
-		log.Debugf("query %s returned no value found for cluster %s", query, clusterName)
+		log.Warnf("query %s returned no value found for cluster %s", query, clusterName)
 	}
 
 	return ret, nil //get first value only
@@ -167,4 +168,10 @@ func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterName 
 		metricsResult[result.Name] = result
 	}
 	return metricsResult, nil
+}
+
+func replaceWildcard(wildcard string, value string, query string) string {
+	clusterNameExp := regexp.MustCompile(wildcard)
+
+	return clusterNameExp.ReplaceAllString(query, "\""+value+"\"")
 }

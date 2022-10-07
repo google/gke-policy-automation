@@ -270,15 +270,28 @@ func getKubeConfig(clusterData *containerpb.Cluster, clusterToken string) (*clie
 }
 
 func getProjectIdFromSelfLink(selfLink string) string {
-	cuttingBySlash := strings.FieldsFunc(selfLink, func(r rune) bool {
+
+	r := regexp.MustCompile(`/projects/.+/(locations|zones)/.+`)
+	if !r.MatchString(selfLink) {
+		log.Errorf("cluster selfLink %s does not match selflink format", selfLink)
+		return ""
+	}
+	matches := r.FindStringSubmatch(selfLink)
+
+	if len(matches) < 2 {
+		log.Errorf("cluster selfLink %s does not match selflink format", selfLink)
+		return ""
+	}
+	match := matches[0]
+	cuttingBySlash := strings.FieldsFunc(match, func(r rune) bool {
 		if r == '/' {
 			return true
 		}
 		return false
 	})
 
-	if len(cuttingBySlash) < 4 {
+	if len(cuttingBySlash) < 2 {
 		log.Error("Error getting project id from selflink: " + selfLink)
 	}
-	return cuttingBySlash[4]
+	return cuttingBySlash[1]
 }
