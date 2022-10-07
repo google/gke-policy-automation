@@ -15,6 +15,7 @@
 package app
 
 import (
+	"encoding/json"
 	"errors"
 
 	"github.com/google/gke-policy-automation/internal/gke"
@@ -180,6 +181,10 @@ func (p *PolicyAutomationApp) getClusterData(ids []string) ([]*gke.Cluster, erro
 			}
 			return nil, err
 		}
+
+		val, err := json.MarshalIndent(cluster, "", "    ")
+		log.Debugf("[DEBUG] cluster: " + string(val))
+
 		results = append(results, cluster)
 	}
 	return results, nil
