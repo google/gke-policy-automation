@@ -17,7 +17,11 @@
 # description: GKE Autopilot mode is the recommended way to operate a GKE cluster
 # custom:
 #   group: Management
-#   severity: High
+#   severity: Medium
+#   recommendation: >
+#     Autopilot mode (recommended): GKE manages the underlying infrastructure such as node configuration, 
+#     autoscaling, auto-upgrades, baseline security configurations, and baseline networking configuration.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/choose-cluster-mode
 #   sccCategory: AUTOPILOT_DISABLED
 
 package gke.policy.autopilot
