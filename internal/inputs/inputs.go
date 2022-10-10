@@ -29,6 +29,7 @@ type Input interface {
 	GetID() string
 	GetDescription() string
 	GetData(clusterID string) (interface{}, error)
+	Close() error
 }
 
 type Cluster struct {

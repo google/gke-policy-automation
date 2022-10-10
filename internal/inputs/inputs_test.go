@@ -25,6 +25,7 @@ type inputMock struct {
 	getIDFn          func() string
 	getDescriptionFn func() string
 	getDataFn        func(clusterID string) (interface{}, error)
+	closeFn          func() error
 }
 
 func (m inputMock) GetID() string {
@@ -37,6 +38,10 @@ func (m inputMock) GetDescription() string {
 
 func (m inputMock) GetData(clusterID string) (interface{}, error) {
 	return m.getDataFn(clusterID)
+}
+
+func (m inputMock) Close() error {
+	return m.closeFn()
 }
 
 func TestGetAllInputsData(t *testing.T) {
