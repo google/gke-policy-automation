@@ -33,7 +33,7 @@ type Input interface {
 }
 
 type Cluster struct {
-	data map[string]interface{}
+	Data map[string]interface{}
 }
 
 type getDataTask struct {
@@ -99,9 +99,9 @@ func processResults(resultsChan chan *getDataTaskResult) map[string]*Cluster {
 	for result := range resultsChan {
 		data, ok := results[result.clusterID]
 		if !ok {
-			data = &Cluster{data: make(map[string]interface{})}
+			data = &Cluster{Data: make(map[string]interface{})}
 		}
-		data.data[result.inputID] = result.result
+		data.Data[result.inputID] = result.result
 		results[result.clusterID] = data
 	}
 	return results

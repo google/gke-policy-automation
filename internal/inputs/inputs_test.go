@@ -148,13 +148,13 @@ func TestProcessResults(t *testing.T) {
 	if !ok {
 		t.Fatalf("no results for cluster-two")
 	}
-	if data := cOneResults.data["gke-api"]; data != "cluster-one-gcp-data" {
+	if data := cOneResults.Data["gke-api"]; data != "cluster-one-gcp-data" {
 		t.Errorf("cluster-one results for gcp-api: %v; want %v", data, "cluster-one-gcp-data")
 	}
-	if data := cOneResults.data["kube-api"]; data != "cluster-one-kube-data" {
+	if data := cOneResults.Data["kube-api"]; data != "cluster-one-kube-data" {
 		t.Errorf("cluster-one results for kube-api: %v; want %v", data, "cluster-one-kube-data")
 	}
-	if data := cTwoResults.data["gke-api"]; data != "cluster-two-gcp-data" {
+	if data := cTwoResults.Data["gke-api"]; data != "cluster-two-gcp-data" {
 		t.Errorf("cluster-two results for kube-api: %v; want %v", data, "cluster-two-gcp-data")
 	}
 }
