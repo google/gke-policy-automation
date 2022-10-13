@@ -50,28 +50,38 @@ type getDataTaskResult struct {
 
 //GetAllInputsData fetches data from given inputs for all given clusters in a concurrent manner
 func GetAllInputsData(inputs []Input, clusterIDs []string) (map[string]*Cluster, []error) {
-	tasksNo := len(inputs) * len(clusterIDs)
-	tasksChan := make(chan *getDataTask, tasksNo)
-	resultsChan := make(chan *getDataTaskResult, tasksNo)
-	errorsChan := make(chan *getDataTaskResult, tasksNo)
-	log.Infof("creating %d get data tasks", tasksNo)
+	return GetAllInputsDataWithMaxGoRoutines(inputs, clusterIDs, defaultMaxDataGetCoroutines)
+}
 
-	for _, input := range inputs {
-		for _, clusterID := range clusterIDs {
-			tasksChan <- &getDataTask{input: input, clusterID: clusterID}
+//GetAllInputsDataWithMaxGoRoutines fetches data from given inputs for all given clusters
+//in a concurrent manner. The maxGoRoutines parameter determines concurrency level
+func GetAllInputsDataWithMaxGoRoutines(inputs []Input, clusterIDs []string, maxGoRoutines int) (map[string]*Cluster, []error) {
+	log.Debugf("using %d maxGoRoutines", maxGoRoutines)
+	tasksChan := make(chan *getDataTask, maxGoRoutines)
+	resultsChan := make(chan *getDataTaskResult, maxGoRoutines)
+	errorsChan := make(chan *getDataTaskResult, maxGoRoutines)
+
+	log.Debugf("starting tasks producing goroutine")
+	go func() {
+		for _, input := range inputs {
+			for _, clusterID := range clusterIDs {
+				tasksChan <- &getDataTask{input: input, clusterID: clusterID}
+			}
 		}
-	}
-	close(tasksChan)
+		close(tasksChan)
+	}()
 
-	log.Debugf("starting %d goroutines", defaultMaxDataGetCoroutines)
-	var wg sync.WaitGroup
-	for i := 0; i < defaultMaxDataGetCoroutines; i++ {
-		wg.Add(1)
-		go getInputData(i, &wg, tasksChan, resultsChan, errorsChan)
-	}
-	wg.Wait()
-	close(resultsChan)
-	close(errorsChan)
+	log.Debugf("starting tasks consuming goroutine")
+	go func() {
+		var wg sync.WaitGroup
+		for i := 0; i < maxGoRoutines; i++ {
+			wg.Add(1)
+			go getInputData(i, &wg, tasksChan, resultsChan, errorsChan)
+		}
+		wg.Wait()
+		close(resultsChan)
+		close(errorsChan)
+	}()
 	log.Debugf("processing results and errors")
 	results := processResults(resultsChan)
 	errors := processErrors(errorsChan)
