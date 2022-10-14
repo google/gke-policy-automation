@@ -257,6 +257,8 @@ func TestCreateFinding(t *testing.T) {
 		SourcePolicyFile:  "name.rego",
 		CisVersion:        "1.0",
 		CisID:             "1.2.3",
+		ExternalURI:       "https://link-to-external-uri",
+		Recommendation:    "A good recommendation",
 	}
 	mock := &sccApiClientMock{
 		UpdateFindingFn: func(ctx context.Context, req *sccpb.UpdateFindingRequest, opts ...gax.CallOption) (*sccpb.Finding, error) {
@@ -278,6 +280,9 @@ func TestCreateFinding(t *testing.T) {
 			}
 			if req.Finding.Severity.String() != finding.Severity {
 				t.Errorf("finding severity = %v; want %v", req.Finding.Severity.String(), finding.Severity)
+			}
+			if req.Finding.ExternalUri != finding.ExternalURI {
+				t.Errorf("finding externalUri = %v; want %v", req.Finding.ExternalUri, finding.ExternalURI)
 			}
 			if req.UpdateMask != nil {
 				t.Errorf("update mask = %v; want nil", req.UpdateMask)

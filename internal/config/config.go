@@ -298,7 +298,7 @@ func validatePubSubConfig(pubsub PubSubOutput) []error {
 	return errors
 }
 
-//setConfigDefaults checks passed config and sets default values if needed
+// setConfigDefaults checks passed config and sets default values if needed
 func SetConfigDefaults(config *Config) {
 	if len(config.Policies) < 1 {
 		log.Debugf("no policies defined, using default GIT policy source: repo %s, branch %s, directory %s",

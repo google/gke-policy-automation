@@ -96,6 +96,8 @@ type Finding struct {
 	SourcePolicyName  string
 	SourcePolicyFile  string
 	SourcePolicyGroup string
+	ExternalURI       string
+	Recommendation    string
 }
 
 type securityCommandCenterClientImpl struct {
@@ -187,7 +189,7 @@ func (c *securityCommandCenterClientImpl) findSourceNameByDisplayName(displayNam
 	return &name, nil
 }
 
-//getFindings returns slice of findings for a given SCC source, resource and category.
+// getFindings returns slice of findings for a given SCC source, resource and category.
 func (c *securityCommandCenterClientImpl) getFindings(source string, resource string, category string) ([]*sccpb.ListFindingsResponse_ListFindingsResult, error) {
 	req := &sccpb.ListFindingsRequest{
 		Parent: source,
@@ -200,7 +202,7 @@ func (c *securityCommandCenterClientImpl) getFindings(source string, resource st
 		func(lfr *sccpb.ListFindingsResponse_ListFindingsResult) bool { return true })
 }
 
-//createFinding creates given finding under the given source.
+// createFinding creates given finding under the given source.
 func (c *securityCommandCenterClientImpl) createFinding(sourceName string, finding *Finding) (string, error) {
 	sccFinding := &sccpb.Finding{
 		Name:             fmt.Sprintf("%s/findings/%s", sourceName, uniuri.NewLen(32)),
@@ -214,6 +216,7 @@ func (c *securityCommandCenterClientImpl) createFinding(sourceName string, findi
 		EventTime:        timestamppb.New(finding.Time),
 		SourceProperties: mapFindingSourceProperties(finding),
 		Compliances:      mapFindingCompliances(finding),
+		ExternalUri:      finding.ExternalURI,
 	}
 	sccFinding, err := c.upsertFinding(sccFinding, nil)
 	if err != nil {
@@ -222,7 +225,7 @@ func (c *securityCommandCenterClientImpl) createFinding(sourceName string, findi
 	return sccFinding.Name, nil
 }
 
-//updateFinding updates all findings with a names from given slice
+// updateFinding updates all findings with a names from given slice
 func (c *securityCommandCenterClientImpl) updateFindings(findingListResults []*sccpb.ListFindingsResponse_ListFindingsResult, finding *Finding) MultipleErrors {
 	errors := MultipleErrors{}
 	for _, result := range findingListResults {
@@ -233,7 +236,7 @@ func (c *securityCommandCenterClientImpl) updateFindings(findingListResults []*s
 	return errors
 }
 
-//updateFinding updates state and event time for a given finding
+// updateFinding updates state and event time for a given finding
 func (c *securityCommandCenterClientImpl) updateFinding(result *sccpb.Finding, finding *Finding) error {
 	result.EventTime = timestamppb.New(finding.Time)
 	result.SourceProperties = mapFindingSourceProperties(finding)
@@ -243,9 +246,9 @@ func (c *securityCommandCenterClientImpl) updateFinding(result *sccpb.Finding, f
 	return err
 }
 
-//upsertFinding creates or updates given SCC finding using patch operation.
-//For creation, the given finding should have valid identifier in the name field.
-//For update, the updateMaskPaths should be given to indicate fields to be updated.
+// upsertFinding creates or updates given SCC finding using patch operation.
+// For creation, the given finding should have valid identifier in the name field.
+// For update, the updateMaskPaths should be given to indicate fields to be updated.
 func (c *securityCommandCenterClientImpl) upsertFinding(finding *sccpb.Finding, updateMaskPaths []string) (*sccpb.Finding, error) {
 	req := &sccpb.UpdateFindingRequest{
 		Finding: finding,
@@ -259,7 +262,7 @@ func (c *securityCommandCenterClientImpl) upsertFinding(finding *sccpb.Finding, 
 	return c.client.UpdateFinding(c.ctx, req)
 }
 
-//resourceIteratorToSlice iterates using given resource iterator, up to the given limit, and returns list of resources.
+// resourceIteratorToSlice iterates using given resource iterator, up to the given limit, and returns list of resources.
 func resourceIteratorToSlice[R sccResource](it sccResourceIterator[R], limit int, filter sccResourceFilter[R]) ([]R, error) {
 	results := make([]R, 0)
 	i := 0
@@ -285,7 +288,7 @@ func resourceIteratorToSlice[R sccResource](it sccResourceIterator[R], limit int
 	return results, nil
 }
 
-//mapFindingSeverityString maps severity string to SCC severity uint32
+// mapFindingSeverityString maps severity string to SCC severity uint32
 func mapFindingSeverityString(severity string) sccpb.Finding_Severity {
 	switch severity {
 	case FINDING_SEVERITY_STRING_CRITICAL:
@@ -306,6 +309,8 @@ func mapFindingSourceProperties(finding *Finding) map[string]*structpb.Value {
 	result["PolicyName"] = structpb.NewStringValue(finding.SourcePolicyName)
 	result["PolicyFile"] = structpb.NewStringValue(finding.SourcePolicyFile)
 	result["PolicyGroup"] = structpb.NewStringValue(finding.SourcePolicyGroup)
+
+	result["Recommendation"] = structpb.NewStringValue(finding.Recommendation)
 
 	if finding.CisID != "" && finding.CisVersion != "" {
 		standards := map[string]interface{}{

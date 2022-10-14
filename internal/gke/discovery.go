@@ -72,34 +72,34 @@ func newAssetInventoryDiscoveryClient(ctx context.Context, opts ...option.Client
 	return &AssetInventoryDiscoveryClient{ctx: ctx, cli: client, searchLimit: defaultSearchLimit}, nil
 }
 
-//GetClustersInProject finds GKE clusters in a given GCP project (identified by name)
-//and returns slice with their identifiers.
+// GetClustersInProject finds GKE clusters in a given GCP project (identified by name)
+// and returns slice with their identifiers.
 func (c *AssetInventoryDiscoveryClient) GetClustersInProject(name string) ([]string, error) {
 	scope := fmt.Sprintf("projects/%s", name)
 	return c.getClustersForScope(scope)
 }
 
-//GetClustersInFolder finds GKE clusters in a given GCP folder (identified by number)
-//and returns slice with their identifiers.
+// GetClustersInFolder finds GKE clusters in a given GCP folder (identified by number)
+// and returns slice with their identifiers.
 func (c *AssetInventoryDiscoveryClient) GetClustersInFolder(number string) ([]string, error) {
 	scope := fmt.Sprintf("folders/%s", number)
 	return c.getClustersForScope(scope)
 }
 
-//GetClustersInFolder finds GKE clusters in a given GCP organization (identified by number)
-//and returns slice with their identifiers.
+// GetClustersInFolder finds GKE clusters in a given GCP organization (identified by number)
+// and returns slice with their identifiers.
 func (c *AssetInventoryDiscoveryClient) GetClustersInOrg(number string) ([]string, error) {
 	scope := fmt.Sprintf("organizations/%s", number)
 	return c.getClustersForScope(scope)
 }
 
-//Close closes the client and underlying connections to other services.
+// Close closes the client and underlying connections to other services.
 func (c *AssetInventoryDiscoveryClient) Close() error {
 	return c.cli.Close()
 }
 
-//getClustersForScope searches for a GKE clusters in a given Asset Inventory scope
-//and returns slice with cluster identifiers.
+// getClustersForScope searches for a GKE clusters in a given Asset Inventory scope
+// and returns slice with cluster identifiers.
 func (c *AssetInventoryDiscoveryClient) getClustersForScope(scope string) ([]string, error) {
 	req := &assetpb.SearchAllResourcesRequest{
 		Scope:      scope,
@@ -112,14 +112,14 @@ func (c *AssetInventoryDiscoveryClient) getClustersForScope(scope string) ([]str
 	return filterMapSeachResults(results), nil
 }
 
-//clusterSearch runs asset inventory searchAllResults with a given request and iterates
-//through the results, returning them as a slice.
+// clusterSearch runs asset inventory searchAllResults with a given request and iterates
+// through the results, returning them as a slice.
 func (c *AssetInventoryDiscoveryClient) clusterSearch(req *assetpb.SearchAllResourcesRequest) ([]*assetpb.ResourceSearchResult, error) {
 	log.Debugf("cluster search with request: %s", req)
 	return c.collectResourceSearchResults(c.cli.SearchAllResources(c.ctx, req))
 }
 
-//collectResourceSearchResults collects ResourceSearchResult with a given iterator.
+// collectResourceSearchResults collects ResourceSearchResult with a given iterator.
 func (c *AssetInventoryDiscoveryClient) collectResourceSearchResults(it AssetInventorySearchResultIterator) ([]*assetpb.ResourceSearchResult, error) {
 	results := make([]*assetpb.ResourceSearchResult, 0)
 	i := 0
@@ -141,8 +141,8 @@ func (c *AssetInventoryDiscoveryClient) collectResourceSearchResults(it AssetInv
 	return results, nil
 }
 
-//filterMapSeachResults filters search results to GKE clusters, maps to
-//the cluster identifiers and returns as a slice.
+// filterMapSeachResults filters search results to GKE clusters, maps to
+// the cluster identifiers and returns as a slice.
 func filterMapSeachResults(results []*assetpb.ResourceSearchResult) []string {
 	identifiers := make([]string, 0, len(results))
 	for _, result := range results {
@@ -160,7 +160,7 @@ func filterMapSeachResults(results []*assetpb.ResourceSearchResult) []string {
 	return identifiers
 }
 
-//getIDFromName returns cluster identifier from full cluster asset name.
+// getIDFromName returns cluster identifier from full cluster asset name.
 func getIDFromName(name string) (string, error) {
 	r := regexp.MustCompile(`//container\.googleapis\.com/(projects/.+/(locations|zones)/.+/clusters/.+)`)
 	if !r.MatchString(name) {
