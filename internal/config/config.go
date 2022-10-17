@@ -43,6 +43,7 @@ type Config struct {
 	CredentialsFile  string                 `yaml:"credentialsFile"`
 	Clusters         []ConfigCluster        `yaml:"clusters"`
 	Policies         []ConfigPolicy         `yaml:"policies"`
+	Inputs           []ConfigInput          `yaml:"inputs"`
 	Outputs          []ConfigOutput         `yaml:"outputs"`
 	ClusterDiscovery ClusterDiscovery       `yaml:"clusterDiscovery"`
 	PolicyExclusions ConfigPolicyExclusions `yaml:"policyExclusions"`
@@ -62,6 +63,27 @@ type ConfigCluster struct {
 	Name     string `yaml:"name"`
 	Project  string `yaml:"project"`
 	Location string `yaml:"location"`
+}
+
+type ConfigInput struct {
+	GKEApi        GKEApiInput   `yaml:"gke-api"`
+	GKELocalInput GKELocalInput `yaml:"gke-local"`
+	K8sApi        K8SApiInput   `yaml:"k8s-api"`
+}
+
+type GKEApiInput struct {
+	Enabled bool `yaml:"enabled"`
+}
+
+type GKELocalInput struct {
+	Enabled  bool   `yaml:"enabled"`
+	DumpFile string `yaml:"file"`
+}
+
+type K8SApiInput struct {
+	Enabled     bool     `yaml:"enabled"`
+	ApiVersions []string `yaml:"resourceAPIVersions"`
+	MaxQPS      int      `yaml:"clientMaxQPS"`
 }
 
 type ConfigOutput struct {
@@ -105,9 +127,11 @@ type ConfigPolicyExclusions struct {
 }
 
 type K8SApiConfig struct {
-	Enabled     bool     `yaml:"enabled"`
-	ApiVersions []string `yaml:"resourceAPIVersions"`
-	MaxQPS      int      `yaml:"clientMaxQPS"`
+	Enabled        bool     `yaml:"enabled"`
+	ApiVersions    []string `yaml:"resourceAPIVersions"`
+	MaxQPS         int      `yaml:"clientMaxQPS"`
+	TimeoutSeconds int      `yaml:"clientTimeoutSeconds"`
+	MaxGoroutines  int      `yaml:"maxGoroutines"`
 }
 
 func ReadConfig(path string, readFn ReadFileFn) (*Config, error) {
