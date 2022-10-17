@@ -38,6 +38,7 @@ valid {
 }
 
 violation[msg] {
+	not input.autopilot.enabled
 	input.autoscaling.enable_node_autoprovisioning == true
 	input.autoscaling.autoprovisioning_node_pool_defaults.service_account == "default"
 	msg := "GKE cluster Node Auto-Provisioning should have a dedicated Service Account configured"
