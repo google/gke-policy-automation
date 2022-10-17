@@ -170,6 +170,8 @@ func mapPolicyToFinding(resourceName string, eventTime time.Time, policy *policy
 		SourcePolicyGroup: policy.Group,
 		CisVersion:        policy.CisVersion,
 		CisID:             policy.CisID,
+		ExternalURI:       policy.ExternalURI,
+		Recommendation:    policy.Recommendation,
 	}
 }
 

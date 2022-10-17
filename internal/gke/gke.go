@@ -131,8 +131,8 @@ func (c Cluster) ReadableId() string {
 	return matches[1]
 }
 
-//GetCluster returns a Cluster object with all the information regarding the cluster,
-//externally through the Containers API and Internally with the K8s APIs
+// GetCluster returns a Cluster object with all the information regarding the cluster,
+// externally through the Containers API and Internally with the K8s APIs
 func (c *GKEApiClient) GetCluster(name string) (*Cluster, error) {
 	req := &containerpb.GetClusterRequest{
 		Name: name}
@@ -188,12 +188,12 @@ func (c *GKEApiClient) GetCluster(name string) (*Cluster, error) {
 	return &Cluster{cluster, resources, metricMap}, err
 }
 
-//Close closes the client connection
+// Close closes the client connection
 func (c *GKEApiClient) Close() error {
 	return c.client.Close()
 }
 
-//getResources returns an array of k8s resources that the tool has been able to fetch after the auth
+// getResources returns an array of k8s resources that the tool has been able to fetch after the auth
 func getResources(client KubernetesClient, apiVersions []string) ([]*Resource, error) {
 	namespaces, err := client.GetNamespaces()
 	if err != nil {
@@ -217,7 +217,7 @@ func getResources(client KubernetesClient, apiVersions []string) ([]*Resource, e
 	return client.GetResources(toBeFetched, namespaces)
 }
 
-//GetClusterName returns the cluster's self-link in gcp
+// GetClusterName returns the cluster's self-link in gcp
 func GetClusterName(project string, location string, name string) string {
 	return fmt.Sprintf("projects/%s/locations/%s/clusters/%s", project, location, name)
 }
@@ -229,7 +229,7 @@ func buildApiVersionString(version string, group string) string {
 	return version
 }
 
-//getKubeConfig create a kubeconfig configuration file from a given clusterData and a gcp auth token
+// getKubeConfig create a kubeconfig configuration file from a given clusterData and a gcp auth token
 func getKubeConfig(clusterData *containerpb.Cluster, clusterToken string) (*clientcmdapi.Config, error) {
 	clusterMasterAuth := clusterData.MasterAuth.ClusterCaCertificate
 	clusterEndpoint := clusterData.Endpoint

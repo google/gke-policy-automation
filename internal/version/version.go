@@ -14,8 +14,8 @@
 
 package version
 
-//Application version is set at build-time in the release process
+// Application version is set at build-time in the release process
 var Version = "unknown"
 
-//UserAgent to be set by (http) clients
+// UserAgent to be set by (http) clients
 var UserAgent = "gke-policy-automation/" + Version

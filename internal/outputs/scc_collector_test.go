@@ -227,15 +227,17 @@ func TestMapPolicyToFinding(t *testing.T) {
 	resourceName := "projects/tst/locations/europe-west3/clusters/tst"
 	time := time.Now()
 	policy := &policy.Policy{
-		Violations:  []string{"invalid"},
-		Category:    "category",
-		Severity:    "LOW",
-		Description: "description",
-		Group:       "Security",
-		File:        "file.rego",
-		Name:        "gke.policy.test",
-		CisVersion:  "1.2",
-		CisID:       "6.2.3",
+		Violations:     []string{"invalid"},
+		Category:       "category",
+		Severity:       "LOW",
+		Description:    "description",
+		Group:          "Security",
+		File:           "file.rego",
+		Name:           "gke.policy.test",
+		CisVersion:     "1.2",
+		CisID:          "6.2.3",
+		ExternalURI:    "https://external-uri",
+		Recommendation: "A good recommendation",
 	}
 	finding := mapPolicyToFinding(resourceName, time, policy)
 	if finding.Time != time {
@@ -271,6 +273,12 @@ func TestMapPolicyToFinding(t *testing.T) {
 	}
 	if finding.Severity != scc.FINDING_SEVERITY_STRING_LOW {
 		t.Errorf("finding severity = %v; want %v", finding.Severity, scc.FINDING_SEVERITY_STRING_LOW)
+	}
+	if finding.ExternalURI != policy.ExternalURI {
+		t.Errorf("finding externalURI = %v; want %v", finding.ExternalURI, policy.ExternalURI)
+	}
+	if finding.Recommendation != policy.Recommendation {
+		t.Errorf("finding recommendation = %v; want %v", finding.Recommendation, policy.Recommendation)
 	}
 }
 
