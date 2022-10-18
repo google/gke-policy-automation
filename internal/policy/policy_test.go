@@ -520,7 +520,6 @@ func TestGetStringListFromInterfaceMap_negative(t *testing.T) {
 	}
 }
 
-//
 func TestInitPolicyExcludeCache(t *testing.T) {
 	pa := &GKEPolicyAgent{}
 	pa.excludes.Policies = []string{"policy_one", "policy_two"}

@@ -26,8 +26,8 @@ import (
 	apiCodes "google.golang.org/grpc/codes"
 )
 
-//getClusters retrieves lists of a clusters for further processing
-//from the sources that are defined in a configuration.
+// getClusters retrieves lists of a clusters for further processing
+// from the sources that are defined in a configuration.
 func (p *PolicyAutomationApp) getClusters() ([]string, error) {
 	if p.config.DumpFile != "" {
 		log.Debugf("using local cluster discovery client on a file %s", p.config.DumpFile)
@@ -61,7 +61,7 @@ func (p *PolicyAutomationApp) getClusters() ([]string, error) {
 	return clusters, nil
 }
 
-//discoverClusters discovers clusters according to the cluster discovery configuration.
+// discoverClusters discovers clusters according to the cluster discovery configuration.
 func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 	if p.config.ClusterDiscovery.Organization != "" {
 		log.Infof("Discovering clusters in organization %s", p.config.ClusterDiscovery.Organization)

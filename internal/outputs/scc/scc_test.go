@@ -257,6 +257,8 @@ func TestCreateFinding(t *testing.T) {
 		SourcePolicyFile:  "name.rego",
 		CisVersion:        "1.0",
 		CisID:             "1.2.3",
+		ExternalURI:       "https://link-to-external-uri",
+		Recommendation:    "A good recommendation",
 	}
 	mock := &sccApiClientMock{
 		UpdateFindingFn: func(ctx context.Context, req *sccpb.UpdateFindingRequest, opts ...gax.CallOption) (*sccpb.Finding, error) {
@@ -278,6 +280,9 @@ func TestCreateFinding(t *testing.T) {
 			}
 			if req.Finding.Severity.String() != finding.Severity {
 				t.Errorf("finding severity = %v; want %v", req.Finding.Severity.String(), finding.Severity)
+			}
+			if req.Finding.ExternalUri != finding.ExternalURI {
+				t.Errorf("finding externalUri = %v; want %v", req.Finding.ExternalUri, finding.ExternalURI)
 			}
 			if req.UpdateMask != nil {
 				t.Errorf("update mask = %v; want nil", req.UpdateMask)
@@ -435,6 +440,7 @@ func TestMapFindingSourceProperties(t *testing.T) {
 		SourcePolicyGroup: "group",
 		CisVersion:        "1.2",
 		CisID:             "6.9.1",
+		Recommendation:    "A good recommendation",
 	}
 	result := mapFindingSourceProperties(finding)
 	expectedPolicyName := fmt.Sprintf("string_value:%q", finding.SourcePolicyName)
@@ -475,6 +481,10 @@ func TestMapFindingSourceProperties(t *testing.T) {
 	id := idList.Values[0].GetStringValue()
 	if id != finding.CisID {
 		t.Errorf("result compliance_standards cis element 0 ids element 0 = %v; want %v", id, finding.CisID)
+	}
+	expectedRecommendation := fmt.Sprintf("string_value:%q", finding.Recommendation)
+	if result["Recommendation"].String() != expectedRecommendation {
+		t.Errorf("Recommendation = %v; want %v", result["Recommendation"].String(), expectedRecommendation)
 	}
 }
 
