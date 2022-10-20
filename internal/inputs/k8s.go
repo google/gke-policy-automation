@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	k8sApiInputID            = "k8s-api"
+	k8sApiInputID            = "k8sAPI"
 	k8sApiInputDescription   = "Cluster resource data from Kubernetes API"
 	k8sKubeConfigContextName = "gke"
 )

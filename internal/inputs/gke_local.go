@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	gkeLocalInputID          = "gke-local"
+	gkeLocalInputID          = "gkeLocal"
 	gkeLocalInputDescription = "GKE cluster data from JSON dump"
 )
 

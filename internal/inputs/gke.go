@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	gkeApiInputID          = "gke-api"
+	gkeApiInputID          = "gkeAPI"
 	gkeApiInputDescription = "GKE cluster data from GCP API"
 )
 

@@ -66,9 +66,9 @@ type ConfigCluster struct {
 }
 
 type ConfigInput struct {
-	GKEApi        GKEApiInput   `yaml:"gke-api"`
-	GKELocalInput GKELocalInput `yaml:"gke-local"`
-	K8sApi        K8SApiInput   `yaml:"k8s-api"`
+	GKEApi        GKEApiInput   `yaml:"gkeAPI"`
+	GKELocalInput GKELocalInput `yaml:"gkeLocal"`
+	K8sApi        K8SApiInput   `yaml:"k8sAPI"`
 }
 
 type GKEApiInput struct {
@@ -131,7 +131,6 @@ type K8SApiConfig struct {
 	ApiVersions    []string `yaml:"resourceAPIVersions"`
 	MaxQPS         int      `yaml:"clientMaxQPS"`
 	TimeoutSeconds int      `yaml:"clientTimeoutSeconds"`
-	MaxGoroutines  int      `yaml:"maxGoroutines"`
 }
 
 func ReadConfig(path string, readFn ReadFileFn) (*Config, error) {
