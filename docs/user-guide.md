@@ -289,7 +289,7 @@ file on a GCS bucket and Pub/Sub topic.
 
 ### Console JSON output
 
-The validation results can be displayed in the console standard output in a JSON format using the 
+The validation results can be displayed in the console standard output in a JSON format using the
 ```-json``` flag.
 
 Example of enabling JSON standard output in a command line:
