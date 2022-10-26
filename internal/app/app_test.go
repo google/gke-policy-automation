@@ -165,6 +165,7 @@ func TestLoadConfig(t *testing.T) {
 func TestNewConfigFromCli(t *testing.T) {
 	input := &CliConfig{
 		SilentMode:      true,
+		JsonOutput:      true,
 		CredentialsFile: "/path/to/creds.json",
 		ClusterName:     "testCluster",
 		ClusterLocation: "europe-central2",
@@ -176,6 +177,9 @@ func TestNewConfigFromCli(t *testing.T) {
 	config := newConfigFromCli(input)
 	if config.SilentMode != input.SilentMode {
 		t.Errorf("silentMode = %v; want %v", config.SilentMode, input.SilentMode)
+	}
+	if config.JsonOutput != input.JsonOutput {
+		t.Errorf("jsonOutput = %v; want %v", config.JsonOutput, input.JsonOutput)
 	}
 	if config.CredentialsFile != input.CredentialsFile {
 		t.Errorf("credentialsFile = %v; want %v", config.CredentialsFile, input.CredentialsFile)

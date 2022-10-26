@@ -119,6 +119,12 @@ func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 	if !p.config.SilentMode {
 		p.out = outputs.NewStdOutOutput()
 		p.collectors = []outputs.ValidationResultCollector{outputs.NewConsoleResultCollector(p.out)}
+
+		if p.config.JsonOutput {
+			p.out = outputs.NewSilentOutput()
+			p.collectors = []outputs.ValidationResultCollector{outputs.NewConsoleJsonResultCollector(outputs.NewStdOutOutput())}
+		}
+
 		p.clusterDumpCollectors = append(p.clusterDumpCollectors, outputs.NewOutputClusterDumpCollector(p.out))
 	}
 	if p.config.DumpFile != "" {
@@ -351,6 +357,7 @@ func newConfigFromFile(path string) (*cfg.Config, error) {
 func newConfigFromCli(cliConfig *CliConfig) *cfg.Config {
 	config := &cfg.Config{}
 	config.SilentMode = cliConfig.SilentMode
+	config.JsonOutput = cliConfig.JsonOutput
 	config.K8SApiConfig.Enabled = cliConfig.K8SCheck
 	config.CredentialsFile = cliConfig.CredentialsFile
 	config.DumpFile = cliConfig.DumpFile

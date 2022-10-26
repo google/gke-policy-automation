@@ -287,6 +287,19 @@ policyExclusions:
 The GKE Policy Automation tool produces cluster validation results to the stderr, local JSON file,
 file on a GCS bucket and Pub/Sub topic.
 
+### Console JSON output
+
+The validation results can be displayed in the console standard output in a JSON format using the
+```-json``` flag.
+
+Example of enabling JSON standard output in a command line:
+
+```sh
+  ./gke-policy check \
+  --project my-project --location europe-west2 --name my-cluster \
+  -json
+```
+
 ### Local JSON file
 
 The validation results can be stored in the local file in a JSON format.
