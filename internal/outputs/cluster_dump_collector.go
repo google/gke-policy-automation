@@ -18,16 +18,16 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/google/gke-policy-automation/internal/gke"
+	"github.com/google/gke-policy-automation/internal/inputs"
 )
 
 type fileClusterDumpCollector struct {
 	writeFileFunc func(name string, data []byte, perm os.FileMode) error
 	filename      string
-	clusters      []*gke.Cluster
+	clusters      []*inputs.Cluster
 }
 
-func (c *fileClusterDumpCollector) RegisterCluster(cluster *gke.Cluster) {
+func (c *fileClusterDumpCollector) RegisterCluster(cluster *inputs.Cluster) {
 	c.clusters = append(c.clusters, cluster)
 }
 
@@ -48,10 +48,10 @@ func NewFileClusterDumpCollector(filename string) ClusterDumpCollector {
 
 type outputClusterDumpCollector struct {
 	output   *Output
-	clusters []*gke.Cluster
+	clusters []*inputs.Cluster
 }
 
-func (c *outputClusterDumpCollector) RegisterCluster(cluster *gke.Cluster) {
+func (c *outputClusterDumpCollector) RegisterCluster(cluster *inputs.Cluster) {
 	c.clusters = append(c.clusters, cluster)
 }
 

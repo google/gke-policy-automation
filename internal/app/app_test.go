@@ -153,9 +153,6 @@ func TestLoadConfig(t *testing.T) {
 	if !reflect.DeepEqual(config, pa.config) {
 		t.Errorf("pa.config is not same as input config")
 	}
-	if pa.gke == nil {
-		t.Errorf("pa.gke is nil; want gke.GKEClient")
-	}
 	err = pa.Close()
 	if err != nil {
 		t.Errorf("err on close is not nil; want nil; err = %s", err)

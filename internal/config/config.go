@@ -44,7 +44,7 @@ type Config struct {
 	CredentialsFile  string                 `yaml:"credentialsFile"`
 	Clusters         []ConfigCluster        `yaml:"clusters"`
 	Policies         []ConfigPolicy         `yaml:"policies"`
-	Inputs           []ConfigInput          `yaml:"inputs"`
+	Inputs           ConfigInput            `yaml:"inputs"`
 	Outputs          []ConfigOutput         `yaml:"outputs"`
 	ClusterDiscovery ClusterDiscovery       `yaml:"clusterDiscovery"`
 	PolicyExclusions ConfigPolicyExclusions `yaml:"policyExclusions"`
@@ -67,9 +67,10 @@ type ConfigCluster struct {
 }
 
 type ConfigInput struct {
-	GKEApi        GKEApiInput   `yaml:"gkeAPI"`
-	GKELocalInput GKELocalInput `yaml:"gkeLocal"`
-	K8sApi        K8SApiInput   `yaml:"k8sAPI"`
+	GKEApi        GKEApiInput     `yaml:"gkeAPI"`
+	GKELocalInput GKELocalInput   `yaml:"gkeLocal"`
+	K8sApi        K8SApiInput     `yaml:"k8sAPI"`
+	MetricsApi    MetricsApiInput `yaml:"metricsAPI"`
 }
 
 type GKEApiInput struct {
@@ -85,6 +86,12 @@ type K8SApiInput struct {
 	Enabled     bool     `yaml:"enabled"`
 	ApiVersions []string `yaml:"resourceAPIVersions"`
 	MaxQPS      int      `yaml:"clientMaxQPS"`
+}
+
+type MetricsApiInput struct {
+	Enabled   bool           `yaml:"enabled"`
+	ProjectId string         `yaml:"project"`
+	Metrics   []ConfigMetric `yaml:"metrics"`
 }
 
 type ConfigOutput struct {

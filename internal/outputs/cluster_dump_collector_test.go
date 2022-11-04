@@ -20,7 +20,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/google/gke-policy-automation/internal/gke"
+	"github.com/google/gke-policy-automation/internal/inputs"
 	"google.golang.org/genproto/googleapis/container/v1"
 )
 
@@ -41,36 +41,25 @@ func TestFileClusterDumpCollectorNew(t *testing.T) {
 }
 
 func TestFileClusterDumpCollectorRegisterCluster(t *testing.T) {
-	clusters := []*gke.Cluster{
-		{
-			Cluster:   &container.Cluster{Name: "cluster-one"},
-			Resources: []*gke.Resource{},
-		},
-		{
-			Cluster:   &container.Cluster{Name: "cluster-two"},
-			Resources: []*gke.Resource{},
-		},
-	}
+
+	cluster := &inputs.Cluster{Data: make(map[string]interface{})}
+
+	cluster.Data["gkeAPI"] = &container.Cluster{Name: "cluster-one"}
 
 	collector := fileClusterDumpCollector{}
-	for _, cluster := range clusters {
-		collector.RegisterCluster(cluster)
-	}
-	if !reflect.DeepEqual(collector.clusters, clusters) {
-		t.Fatalf("collector clusters = %v; want %v", collector.clusters, clusters)
+	collector.RegisterCluster(cluster)
+	if !reflect.DeepEqual(collector.clusters[0], cluster) {
+		t.Fatalf("collector clusters = %v; want %v", collector.clusters[0], cluster)
 	}
 }
 
 func TestFileClusterDumpCollectorClose(t *testing.T) {
 	fileName := "test.json"
+	cluster := &inputs.Cluster{Data: make(map[string]interface{})}
+	cluster.Data["gkeAPI"] = &container.Cluster{Name: "cluster-one"}
 	collector := fileClusterDumpCollector{
 		filename: fileName,
-		clusters: []*gke.Cluster{
-			{
-				Cluster:   &container.Cluster{Name: "cluster-one"},
-				Resources: []*gke.Resource{},
-			},
-		},
+		clusters: []*inputs.Cluster{cluster},
 		writeFileFunc: func(name string, data []byte, perm os.FileMode) error {
 			if name != fileName {
 				t.Fatalf("filename = %v; want %v", name, fileName)
@@ -100,10 +89,10 @@ func TestOutputClusterDumpCollectorNew(t *testing.T) {
 func TestOutputClusterDumpCollectorClose(t *testing.T) {
 	var buff bytes.Buffer
 	output := &Output{w: &buff}
+	cluster := &inputs.Cluster{Data: make(map[string]interface{})}
+	cluster.Data["gkeAPI"] = &container.Cluster{Name: "cluster-one"}
 	collector := NewOutputClusterDumpCollector(output)
-	collector.RegisterCluster(&gke.Cluster{
-		Cluster:   &container.Cluster{Name: "cluster-one"},
-		Resources: []*gke.Resource{}})
+	collector.RegisterCluster(cluster)
 
 	collector.Close()
 	if len(buff.String()) <= 0 {

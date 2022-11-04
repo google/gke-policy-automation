@@ -16,14 +16,14 @@ package app
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
+	"regexp"
 
 	"github.com/google/gke-policy-automation/internal/gke"
+	"github.com/google/gke-policy-automation/internal/inputs"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/outputs"
 	"github.com/google/gke-policy-automation/internal/policy"
-	"github.com/googleapis/gax-go/v2/apierror"
-	apiCodes "google.golang.org/grpc/codes"
 )
 
 // getClusters retrieves lists of a clusters for further processing
@@ -53,6 +53,7 @@ func (p *PolicyAutomationApp) getClusters() ([]string, error) {
 	clusters := make([]string, 0, len(p.config.Clusters))
 	for _, configCluster := range p.config.Clusters {
 		clusterName, err := getClusterName(configCluster)
+		log.Debugf("cluster name from config: %s", clusterName)
 		if err != nil {
 			return nil, err
 		}
@@ -119,16 +120,18 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 		log.Errorf("could not identify clusters: %s", err)
 		return err
 	}
-	clusterData, err := p.getClusterData(clusterIds)
-	if err != nil {
-		p.out.ErrorPrint("could not fetch the cluster details", err)
-		log.Errorf("could not fetch cluster details: %s", err)
-		return err
+	clusterData, errors := inputs.GetAllInputsData(p.inputs, clusterIds)
+	if errors != nil && len(errors) > 0 {
+		p.out.ErrorPrint("could not fetch the cluster details", errors[0])
+		log.Errorf("could not fetch cluster details: %s", errors[0])
+		return errors[0]
 	}
+	val, err := json.MarshalIndent(clusterData, "", "    ")
+	log.Debugf("[DEBUG] cluster: " + string(val))
 
 	evalResults := &evaluationResults{}
 	for _, cluster := range clusterData {
-		clusterId := cluster.ReadableId()
+		clusterId := ReadableIdFromSelfLink(fmt.Sprintf("%v", cluster.Data["SelfLink"]))
 		p.out.ColorPrintf("%s [light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
 			outputs.ICON_INFO, clusterId)
 		log.Infof("Evaluating policies against GKE cluster %s", clusterId)
@@ -164,28 +167,17 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 	return nil
 }
 
-func (p *PolicyAutomationApp) getClusterData(ids []string) ([]*gke.Cluster, error) {
-	results := make([]*gke.Cluster, 0)
-	for _, clusterId := range ids {
-		log.Infof("Fetching GKE cluster %s", clusterId)
-		p.out.ColorPrintf("%s [light_gray][bold]Fetching GKE cluster details... [%s]\n", outputs.ICON_INFO, clusterId)
-		cluster, err := p.gke.GetCluster(clusterId)
-		if err != nil {
-			var apiErr *apierror.APIError
-			if errors.As(err, &apiErr) {
-				if apiErr.GRPCStatus().Code() == apiCodes.NotFound {
-					p.out.ColorPrintf("%s [yellow][bold]Could not fetch cluster: cluster not found [%s]\n", outputs.ICON_INFO, clusterId)
-					log.Warnf("could not fetch cluster details: %s", err)
-					continue
-				}
-			}
-			return nil, err
-		}
-
-		val, err := json.MarshalIndent(cluster, "", "    ")
-		log.Debugf("[DEBUG] cluster: " + string(val))
-
-		results = append(results, cluster)
+func ReadableIdFromSelfLink(selfLink string) string {
+	log.Debugf("selflink: %s", selfLink)
+	r := regexp.MustCompile(`.+/(projects/.+/(locations|zones)/.+/clusters/.+)`)
+	if !r.MatchString(selfLink) {
+		log.Warnf("cluster selfLink %s does not match readable identifier regex", selfLink)
+		return selfLink
 	}
-	return results, nil
+	matches := r.FindStringSubmatch(selfLink)
+	if len(matches) != 3 {
+		log.Warnf("cluster selfLink %s has invalid number of readable identifier regex matches", selfLink)
+		return selfLink
+	}
+	return matches[1]
 }
