@@ -211,31 +211,6 @@ func TestNewConfigFromCli(t *testing.T) {
 	}
 }
 
-func TestGetClusterName(t *testing.T) {
-	input := []cfg.ConfigCluster{
-		{ID: "projects/myproject/locations/europe-central2/clusters/testCluster"},
-		{Name: "testClusterTwo", Location: "europe-east2", Project: "testProject"},
-	}
-	expected := []string{
-		"projects/myproject/locations/europe-central2/clusters/testCluster",
-		"projects/testProject/locations/europe-east2/clusters/testClusterTwo",
-	}
-	for i := range input {
-		name, _ := getClusterName(input[i])
-		if name != expected[i] {
-			t.Errorf("clusterName = %v; want %v", name, expected[i])
-		}
-	}
-}
-
-func TestGetClusterName_negative(t *testing.T) {
-	input := cfg.ConfigCluster{Name: "test", Location: "europe-east2"}
-	_, err := getClusterName(input)
-	if err == nil {
-		t.Errorf("error is nil; want error")
-	}
-}
-
 func TestClusterReviewWithNoPolicies(t *testing.T) {
 
 	pa := PolicyAutomationApp{

@@ -464,13 +464,3 @@ func newConfigFromCli(cliConfig *CliConfig) *cfg.Config {
 	}
 	return config
 }
-
-func getClusterName(c cfg.ConfigCluster) (string, error) {
-	if c.ID != "" {
-		return c.ID, nil
-	}
-	if c.Name != "" && c.Location != "" && c.Project != "" {
-		return gke.GetClusterName(c.Project, c.Location, c.Name), nil
-	}
-	return "", fmt.Errorf("cluster mandatory parameters not set (project, name, location)")
-}

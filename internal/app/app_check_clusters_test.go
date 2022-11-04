@@ -25,19 +25,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type mockGKEClient struct {
-	getClusterFn func(name string) (*gke.Cluster, error)
-	closeFn      func() error
-}
-
-func (m *mockGKEClient) GetCluster(name string) (*gke.Cluster, error) {
-	return m.getClusterFn(name)
-}
-
-func (m *mockGKEClient) Close() error {
-	return m.closeFn()
-}
-
 type mockAPIError struct {
 	gRPCStatusFn func() *status.Status
 	errorFn      func() string

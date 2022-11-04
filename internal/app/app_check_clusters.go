@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/inputs"
 	"github.com/google/gke-policy-automation/internal/log"
@@ -180,4 +181,14 @@ func ReadableIdFromSelfLink(selfLink string) string {
 		return selfLink
 	}
 	return matches[1]
+}
+
+func getClusterName(c config.ConfigCluster) (string, error) {
+	if c.ID != "" {
+		return c.ID, nil
+	}
+	if c.Name != "" && c.Location != "" && c.Project != "" {
+		return fmt.Sprintf("projects/%s/locations/%s/clusters/%s", c.Project, c.Location, c.Name), nil
+	}
+	return "", fmt.Errorf("cluster mandatory parameters not set (project, name, location)")
 }
