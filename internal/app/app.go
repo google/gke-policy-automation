@@ -314,12 +314,13 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 	for _, dumpCollector := range p.clusterDumpCollectors {
 		colType := reflect.TypeOf(dumpCollector).String()
 		log.Debugf("closing cluster dump collector %s", colType)
-		p.out.ColorPrintf("%s [light_gray][bold]Writing evaluation results ...\n", outputs.ICON_INFO)
+		p.out.ColorPrintf("%s [light_gray][bold]closing cluster dump collector ...\n", outputs.ICON_INFO)
 		if err := dumpCollector.Close(); err != nil {
 			log.Errorf("failed to close cluster dump collector %s due to %s", colType, err)
 			return err
 		}
 	}
+
 	return nil
 }
 

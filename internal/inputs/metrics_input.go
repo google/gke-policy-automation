@@ -133,9 +133,7 @@ func (i *metricsInput) GetData(clusterID string) (interface{}, error) {
 }
 
 func (i *metricsInput) Close() error {
-	if i.metricsClient != nil {
-		return i.metricsInput.Close()
-	}
+	log.Debugf("closing metrics input")
 	return nil
 }
 

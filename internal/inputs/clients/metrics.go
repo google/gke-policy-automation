@@ -35,7 +35,7 @@ type MetricQuery struct {
 
 type Metric struct {
 	Name  string
-	Value string //? which type - json
+	Value string
 }
 
 type MetricsClient interface {
@@ -153,7 +153,7 @@ func (m *metricsClient) GetMetric(metricQuery MetricQuery, clusterName string) (
 		log.Warnf("query %s returned no value found for cluster %s", query, clusterName)
 	}
 
-	return ret, nil //get first value only
+	return ret, nil
 }
 
 func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterName string) (map[string]Metric, error) {

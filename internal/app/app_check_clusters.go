@@ -17,7 +17,6 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
 
 	"github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/gke"
@@ -53,12 +52,12 @@ func (p *PolicyAutomationApp) getClusters() ([]string, error) {
 	}
 	clusters := make([]string, 0, len(p.config.Clusters))
 	for _, configCluster := range p.config.Clusters {
-		clusterName, err := getClusterName(configCluster)
-		log.Debugf("cluster name from config: %s", clusterName)
+		clusterId, err := getClusterId(configCluster)
+		log.Debugf("cluster id from config: %s", clusterId)
 		if err != nil {
 			return nil, err
 		}
-		clusters = append(clusters, clusterName)
+		clusters = append(clusters, clusterId)
 	}
 	return clusters, nil
 }
@@ -132,18 +131,17 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 
 	evalResults := &evaluationResults{}
 	for _, cluster := range clusterData {
-		clusterId := ReadableIdFromSelfLink(fmt.Sprintf("%v", cluster.Data["SelfLink"]))
 		p.out.ColorPrintf("%s [light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
-			outputs.ICON_INFO, clusterId)
-		log.Infof("Evaluating policies against GKE cluster %s", clusterId)
+			outputs.ICON_INFO, cluster.Name)
+		log.Infof("Evaluating policies against GKE cluster %s", cluster.Name)
 		for _, pkgBase := range regoPackageBases {
 			evalResult, err := pa.Evaluate(cluster, pkgBase)
 			if err != nil {
 				p.out.ErrorPrint("failed to evaluate policies", err)
-				log.Errorf("could not evaluate rego policies on cluster %s: %s", clusterId, err)
+				log.Errorf("could not evaluate rego policies on cluster %s: %s", cluster.Name, err)
 				return err
 			}
-			evalResult.ClusterID = clusterId
+			evalResult.ClusterID = cluster.Name
 			evalResults.Add(evalResult)
 		}
 	}
@@ -168,22 +166,7 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 	return nil
 }
 
-func ReadableIdFromSelfLink(selfLink string) string {
-	log.Debugf("selflink: %s", selfLink)
-	r := regexp.MustCompile(`.+/(projects/.+/(locations|zones)/.+/clusters/.+)`)
-	if !r.MatchString(selfLink) {
-		log.Warnf("cluster selfLink %s does not match readable identifier regex", selfLink)
-		return selfLink
-	}
-	matches := r.FindStringSubmatch(selfLink)
-	if len(matches) != 3 {
-		log.Warnf("cluster selfLink %s has invalid number of readable identifier regex matches", selfLink)
-		return selfLink
-	}
-	return matches[1]
-}
-
-func getClusterName(c config.ConfigCluster) (string, error) {
+func getClusterId(c config.ConfigCluster) (string, error) {
 	if c.ID != "" {
 		return c.ID, nil
 	}
