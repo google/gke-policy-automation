@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+/*
 locals {
   scc_apis = try(var.output_scc.enabled) ? ["securitycenter.googleapis.com"] : []
 }
@@ -38,3 +39,5 @@ resource "google_organization_iam_member" "scc-out-sources" {
   role   = "roles/securitycenter.sourcesAdmin"
   member = "serviceAccount:${google_service_account.sa.email}"
 }
+
+*/

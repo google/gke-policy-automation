@@ -25,6 +25,7 @@ resource "google_secret_manager_secret" "config" {
   ]
 }
 
+/*
 data "template_file" "config-template" {
   template = file("${var.config_file_path}")
   vars = {
@@ -45,3 +46,4 @@ resource "google_secret_manager_secret_iam_member" "job-sa" {
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.sa.email}"
 }
+*/

@@ -49,53 +49,54 @@ variable "run_script" {
 }
 
 variable "discovery" {
-  type        = map(any)
+  type = object({
+    organization = optional(string, null)
+    projects     = optional(list(string), [])
+    folders      = optional(list(string), [])
+  })
   description = "Configures cluster discovery mechanism."
-  default = {
-    "enabled" = true
-  }
   validation {
-    condition     = can(var.discovery.enabled)
-    error_message = "Key 'enabled' has to be defined for cluster discovery."
+    condition     = var.discovery.organization != null || length(var.discovery.projects) > 0 || length(var.discovery.folders) > 0
+    error_message = "At least one of organization, projects, folders has to be defined for cluster discovery"
   }
 }
 
 variable "output_storage" {
-  type        = map(any)
-  description = "Configuration of Clud Storage output"
+  type = object({
+    enabled         = bool
+    bucket_name     = optional(string)
+    bucket_location = optional(string)
+  })
+  description = "Configuration of Cloud Storage output"
   default = {
-    "enabled" = false
+    enabled = false
   }
   validation {
-    condition     = can(var.output_storage.enabled)
-    error_message = "Key 'enabled' has to be defined for Cloud Stroage output."
-  }
-  validation {
-    condition     = !try(var.output_storage.enabled, false) || can(var.output_storage.bucket_name)
+    condition     = !var.output_storage.enabled || var.output_storage.bucket_name != null
     error_message = "Key 'bucket_name' has to be defined for Cloud Stroage output."
   }
   validation {
-    condition     = !try(var.output_storage.enabled, false) || can(var.output_storage.bucket_location)
+    condition     = !var.output_storage.enabled || var.output_storage.bucket_location != null
     error_message = "Key 'bucket_location' has to be defined for Cloud Stroage output."
   }
 }
 
 variable "output_pubsub" {
-  type        = map(any)
+  type = object({
+    enabled = bool
+    topic   = optional(string)
+  })
   description = "Configuration of Pub/Sub output"
   default = {
     "enabled" = false
   }
   validation {
-    condition     = can(var.output_pubsub.enabled)
-    error_message = "Key 'enabled' has to be defined for Pub/Sub output."
-  }
-  validation {
-    condition     = !try(var.output_pubsub.enabled, false) || can(var.output_pubsub.topic)
+    condition     = !var.output_pubsub.enabled || var.output_pubsub.topic != null
     error_message = "Key 'topic' has to be defined for Pub/Sub output."
   }
 }
 
+/*
 variable "output_scc" {
   type        = map(any)
   description = "Configuration of Security Command Center output"
@@ -111,3 +112,4 @@ variable "output_scc" {
     error_message = "Key 'organization' has to be defined for Security Command Center output."
   }
 }
+*/

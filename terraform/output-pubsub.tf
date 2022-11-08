@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+/*
 locals {
   pubsub_apis = try(var.output_pubsub.enabled) ? ["pubsub.googleapis.com"] : []
 }
@@ -41,3 +42,4 @@ resource "google_pubsub_topic_iam_member" "pubsub-out" {
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${google_service_account.sa.email}"
 }
+*/
