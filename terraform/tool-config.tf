@@ -25,13 +25,12 @@ resource "google_secret_manager_secret" "config" {
   ]
 }
 
-/*
 data "template_file" "config-template" {
   template = file("${var.config_file_path}")
   vars = {
     DISCOVERY_PROJECT_ID   = data.google_project.project.project_id
-    DISCOVERY_ORGANIZATION = can(var.discovery.organization) ? var.discovery.organization : null
-    SCC_ORGANIZATION       = can(var.output_scc.organization) ? var.output_scc.organization : null
+    DISCOVERY_ORGANIZATION = var.discovery.organization != null ? var.discovery.organization : null
+    SCC_ORGANIZATION       = var.output_scc.organization != null ? var.output_scc.organization : null
   }
 }
 
@@ -46,4 +45,3 @@ resource "google_secret_manager_secret_iam_member" "job-sa" {
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.sa.email}"
 }
-*/

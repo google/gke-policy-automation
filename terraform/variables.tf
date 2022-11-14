@@ -96,20 +96,18 @@ variable "output_pubsub" {
   }
 }
 
-/*
 variable "output_scc" {
-  type        = map(any)
+  type = object({
+    enabled          = bool
+    organization     = optional(string)
+    provision_source = optional(bool, true)
+  })
   description = "Configuration of Security Command Center output"
   default = {
     "enabled" = false
   }
   validation {
-    condition     = can(var.output_scc.enabled)
-    error_message = "Key 'enabled' has to be defined for Security Command Center output."
-  }
-  validation {
-    condition     = !try(var.output_scc.enabled, false) || can(var.output_scc.organization)
+    condition     = !var.output_scc.enabled || var.output_scc.organization != null
     error_message = "Key 'organization' has to be defined for Security Command Center output."
   }
 }
-*/

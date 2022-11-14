@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-/*
 locals {
-  pubsub_apis = try(var.output_pubsub.enabled) ? ["pubsub.googleapis.com"] : []
+  pubsub_apis = var.output_pubsub.enabled ? ["pubsub.googleapis.com"] : []
 }
 
 resource "google_project_service" "pubsub-out" {
@@ -27,7 +26,7 @@ resource "google_project_service" "pubsub-out" {
 }
 
 resource "google_pubsub_topic" "pubsub-out" {
-  count   = try(var.output_pubsub.enabled) ? 1 : 0
+  count   = var.output_pubsub.enabled ? 1 : 0
   project = data.google_project.project.project_id
   name    = var.output_pubsub.topic
   depends_on = [
@@ -36,10 +35,9 @@ resource "google_pubsub_topic" "pubsub-out" {
 }
 
 resource "google_pubsub_topic_iam_member" "pubsub-out" {
-  count   = try(var.output_pubsub.enabled) ? 1 : 0
+  count   = var.output_pubsub.enabled ? 1 : 0
   project = data.google_project.project.project_id
   topic   = google_pubsub_topic.pubsub-out[count.index].name
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${google_service_account.sa.email}"
 }
-*/
