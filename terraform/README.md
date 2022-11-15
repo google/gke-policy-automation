@@ -24,7 +24,7 @@ The solution leverages the below GCP components:
 
 ## Prerequisites
 
-* Terraform installed
+* Terraform tool, version >=1.13
 * `gcloud` command
 * Exiting project for GKE Policy Automation resources
 * IAM permissions to create resources in the GKE Policy Automation project
@@ -199,46 +199,45 @@ Lastly, the script creates a Cloud Scheduler running once per day to trigger Clo
 |---|---|:---:|:---:|:---:|
 | [project_id](variables.tf#L17) | Identifier of an existing GCP project for GKE Policy Automation resources. | `string` | ✓ |  |
 | [region](variables.tf#L22) | GCP region for GKE Policy Automation resources. | `string` | ✓ |  |
+| [discovery](variables.tf#L51) | Configuration of cluster discovery mechanism. Check [discovery attributes](#discovery-attributes).  | `object` | ✓ |  |
 | [job_name](variables.tf#L27) | Name of a Cloud Run Job for GKE Policy Automation container. | `string` |  | `gke-policy-automation` |
-| [config_file_path](variables.tf#L33) | Path to the YAML file with GKE Policy Automation configuration. | `string` |  | `config.yaml` |
-| [config_file_path](variables.tf#L39) | CRON interval for triggering the GKE Policy Automation job. | `string` |  | `"0 1 * * *` |
+| [config_file_path](variables.tf#L33) | Path to the YAML file with [GKE Policy Automation configuration](../docs/user-guide.md#configuration-file). | `string` |  | `config.yaml` |
+| [cron_interval](variables.tf#L39) | CRON interval for triggering the GKE Policy Automation job. | `string` |  | `"0 1 * * *` |
 | [run_script](variables.tf#L45) | Indicates whether to run script for populating Artifact Registry and Cloud Run Jobs. | `bool` |  | `false` |
-| [discovery](variables.tf#L51) | Configuration of cluster discovery mechanism. Check [discovery attributes](#discovery-attributes).  | `map(any)` |  | `{"enabled" = true}` |
-| [output_storage](variables.tf#L63) | Configuration of Cloud Storage output. Check [Cloud Storage attributes](#cloud-storage-attributes). | `map(any)` |  | `{"enabled" = false}` |
-| [output_pubsub](variables.tf#L45) | Configuration of Pub/Sub output. Check [Pub/Sub attributes](#pubsub-attributes) | `map(any)` |  | `{"enabled" = false}` |
-| [output_scc](variables.tf#L99) | Configuration of Security Command Center output. Check [Security Command Center attributes](#security-command-center-attributes). | `map(any)` |  | `{"enabled" = false}` |
+| [output_storage](variables.tf#L64) | Configuration of Cloud Storage output. Check [Cloud Storage attributes](#cloud-storage-attributes). | `object` |  | `{"enabled" = false}` |
+| [output_pubsub](variables.tf#L84) | Configuration of Pub/Sub output. Check [Pub/Sub attributes](#pubsub-attributes) | `object` |  | `{"enabled" = false}` |
+| [output_scc](variables.tf#L99) | Configuration of Security Command Center output. Check [Security Command Center attributes](#security-command-center-attributes). | `object` |  | `{"enabled" = false}` |
 
 ### Discovery attributes
 
 | Name | Description | Type | Required | Default |
 |---|---|:---:|:---:|:---:|
-| [enabled](variables.tf#L51) | Indicates if resources for discovery mechanism will be provisioned. | `bool` | ✓ |  |
-| [organization](variables.tf#L51) | GCP region for GKE Policy Automation resources. *One of `organization`, `folders` or `projects` is required.* | `string` |  | `null` |
-| [folders](variables.tf#L51) | List of folder numbers to provision discovery resources for. *One of `organization`, `folders` or `projects` is required.* | `bool` |  | `null` |
-| [projects](variables.tf#L33) | List of project identifiers to provision discovery resources for. *One of `organization`, `folders` or `projects` is required.* | `string` |  | `null` |
+| [organization](variables.tf#L53) | The organization number to provision discovery resources for. *One of `organization`, `folders` or `projects` is required.* | `string` |  | `null` |
+| [folders](variables.tf#L54) | List of folder numbers to provision discovery resources for. *One of `organization`, `folders` or `projects` is required.* | `list(string)` |  | `[]` |
+| [projects](variables.tf#L55) | List of project identifiers to provision discovery resources for. *One of `organization`, `folders` or `projects` is required.* | `list(string)` |  | `[]` |
 
 ### Cloud Storage attributes
 
 | Name | Description | Type | Required | Default |
 |---|---|:---:|:---:|:---:|
-| [enabled](variables.tf#L63) | Indicates if resources for Cloud Storage output will be provisioned. | `bool` | ✓ |  |
-| [bucket_name](variables.tf#L63) | The name of a bucket that will be provisioned. | `string` | ✓ |  |
-| [bucket_location](variables.tf#L63) | The [location of a bucket](https://cloud.google.com/storage/docs/locations) that will be provisioned. | `string` | ✓ |  |
+| [enabled](variables.tf#L66) | Indicates if resources for Cloud Storage output will be provisioned. | `bool` | ✓ |  |
+| [bucket_name](variables.tf#L67) | The name of a bucket that will be provisioned. | `string` | ✓ |  |
+| [bucket_location](variables.tf#L68) | The [location of a bucket](https://cloud.google.com/storage/docs/locations) that will be provisioned. | `string` | ✓ |  |
 
 ### Pub/Sub attributes
 
 | Name | Description | Type | Required | Default |
 |---|---|:---:|:---:|:---:|
-| [enabled](variables.tf#L45) | Indicates if resources for Pub/Sub output will be provisioned. | `bool` | ✓ |  |
-| [topic](variables.tf#L45) | The name of a topic that will be provisioned. | `bool` | ✓ |  |
+| [enabled](variables.tf#L86) | Indicates if resources for Pub/Sub output will be provisioned. | `bool` | ✓ |  |
+| [topic](variables.tf#L87) | The name of a topic that will be provisioned. | `string` | ✓ |  |
 
 ### Security Command Center attributes
 
 | Name | Description | Type | Required | Default |
 |---|---|:---:|:---:|:---:|
-| [enabled](variables.tf#L45) | Indicates if resources for Pub/Sub output will be provisioned. | `bool` | ✓ |  |
-| [organization](variables.tf#L45) | The organization number to provision discovery resources for. | `string` | ✓ |  |
-| [provision_source](variables.tf#L45) | Indicates weather to provision `roles/securitycenter.sourcesAdmin` for the tool, so it will be able to automatically register itself as a source. If not enabled, then this has to be done [manually beforehand](../docs/user-guide.md#security-command-center). | `bool` |  | `true` |
+| [enabled](variables.tf#L101) | Indicates if resources for Pub/Sub output will be provisioned. | `bool` | ✓ |  |
+| [organization](variables.tf#L102) | The organization number to provision discovery resources for. | `string` | ✓ |  |
+| [provision_source](variables.tf#L103) | Indicates weather to provision `roles/securitycenter.sourcesAdmin` for the tool, so it will be able to automatically register itself as a source. If not enabled, then this has to be done [manually beforehand](../docs/user-guide.md#security-command-center). | `bool` |  | `true` |
 
 ## Outputs
 

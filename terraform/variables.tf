@@ -51,8 +51,8 @@ variable "run_script" {
 variable "discovery" {
   type = object({
     organization = optional(string, null)
-    projects     = optional(list(string), [])
     folders      = optional(list(string), [])
+    projects     = optional(list(string), [])
   })
   description = "Configures cluster discovery mechanism."
   validation {

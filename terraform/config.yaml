@@ -15,8 +15,8 @@
 silent: true
 clusterDiscovery:
   enabled: true
-  projects:
-    - ${DISCOVERY_PROJECT_ID}
+  organization:
+    - ${SCC_ORGANIZATION}
 outputs:
   - securityCommandCenter:
       organization: ${SCC_ORGANIZATION}
