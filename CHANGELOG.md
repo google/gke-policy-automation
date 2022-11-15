@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.2 (Nov 8, 2022)
+
+IMPROVEMENTS:
+
+* Add support for JSON output to stdout [#129](https://github.com/google/gke-policy-automation/issues/129)
+
 ## 1.2.1 (Aug 17, 2022)
 
 IMPROVEMENTS:
