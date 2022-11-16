@@ -16,8 +16,9 @@ package inputs
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"regexp"
-	"strings"
 
 	"github.com/google/gke-policy-automation/internal/inputs/clients"
 	"github.com/google/gke-policy-automation/internal/log"
@@ -33,7 +34,6 @@ type newMetricsClientFunc func(ctx context.Context, projectId string, authToken 
 type metricsInput struct {
 	ctx                  context.Context
 	tokenSource          clients.TokenSource
-	metricsInput         Input
 	newMetricsClientFunc newMetricsClientFunc
 	metricsClient        clients.MetricsClient
 	projectId            string
@@ -116,14 +116,22 @@ func (i *metricsInput) GetDescription() string {
 }
 
 func (i *metricsInput) GetData(clusterID string) (interface{}, error) {
+
+	projectId, _, clusterName, err := sliceAndValidateClusterId(clusterID)
+
+	if err != nil {
+		log.Error("Error parsing clusterId: " + err.Error())
+		return nil, err
+	}
+
 	if i.metricsClient == nil {
 		log.Debugf("Empty client - creating one for %v", clusterID)
-		if err := i.createMetricsClient(getProjectIdFromClusterId(clusterID)); err != nil {
+		if err := i.createMetricsClient(projectId); err != nil {
 			return nil, err
 		}
 	}
 
-	data, err := i.metricsClient.GetMetricsForCluster(i.queries, getClusterNameFromClusterId(clusterID))
+	data, err := i.metricsClient.GetMetricsForCluster(i.queries, clusterName)
 	if err != nil {
 		log.Errorf("Error fetching metric: %s", err)
 		return nil, err
@@ -165,45 +173,14 @@ func (i *metricsInput) createMetricsClient(clusterProjectId string) error {
 	return nil
 }
 
-func getProjectIdFromClusterId(clusterId string) string {
-
-	cuttingBySlash := sliceAndValidateClusterId(clusterId)
-
-	if cuttingBySlash == nil || len(cuttingBySlash) < 2 {
-		log.Error("Error getting project id from clusterId: " + clusterId)
+func sliceAndValidateClusterId(id string) (string, string, string, error) {
+	r := regexp.MustCompile(`projects/(.+)/(locations|zones)/(.+)/clusters/(.+)`)
+	if !r.MatchString(id) {
+		return "", "", "", errors.New("input does not match regexp")
 	}
-	return cuttingBySlash[1]
-}
-
-func getClusterNameFromClusterId(clusterId string) string {
-
-	cuttingBySlash := sliceAndValidateClusterId(clusterId)
-
-	if cuttingBySlash == nil || len(cuttingBySlash) < 6 {
-		log.Error("Error getting cluster name from clusterId: " + clusterId)
+	matches := r.FindStringSubmatch(id)
+	if len(matches) != 5 {
+		return "", "", "", fmt.Errorf("wrong number of matches, got %d, expected %d", len(matches), 5)
 	}
-	return cuttingBySlash[5]
-}
-
-func sliceAndValidateClusterId(clusterId string) []string {
-	r := regexp.MustCompile(`projects/.+/locations/.+/clusters/.+`)
-	if !r.MatchString(clusterId) {
-		log.Errorf("cluster id %s does not match clusterId format", clusterId)
-		return nil
-	}
-	matches := r.FindStringSubmatch(clusterId)
-
-	if len(matches) < 1 {
-		log.Errorf("cluster id %s does not match clusterId format", clusterId)
-		return nil
-	}
-	match := matches[0]
-	cuttingBySlash := strings.FieldsFunc(match, func(r rune) bool {
-		if r == '/' {
-			return true
-		}
-		return false
-	})
-
-	return cuttingBySlash
+	return matches[1], matches[3], matches[4], nil
 }
