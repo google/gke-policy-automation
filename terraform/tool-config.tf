@@ -31,6 +31,7 @@ data "template_file" "config-template" {
     DISCOVERY_PROJECT_ID   = data.google_project.project.project_id
     DISCOVERY_ORGANIZATION = var.discovery.organization != null ? var.discovery.organization : null
     SCC_ORGANIZATION       = var.output_scc.organization != null ? var.output_scc.organization : null
+    SCC_PROVISION_SOURCE   = var.output_scc.provision_source
   }
 }
 

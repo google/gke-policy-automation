@@ -20,3 +20,4 @@ clusterDiscovery:
 outputs:
   - securityCommandCenter:
       organization: ${SCC_ORGANIZATION}
+      provisionSource: true
