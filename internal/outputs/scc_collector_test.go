@@ -62,8 +62,8 @@ func TestNewSccCollector(t *testing.T) {
 	if sccCol.createSource != createSource {
 		t.Errorf("collector createSource = %v; want %v", sccCol.createSource, createSource)
 	}
-	if sccCol.maxGoRoutines != defaultMaxCoroutines {
-		t.Errorf("collector threadsNo = %v; want %v", sccCol.maxGoRoutines, defaultMaxCoroutines)
+	if sccCol.goRoutinesNo != defaultGoroutinesNo {
+		t.Errorf("collector threadsNo = %v; want %v", sccCol.goRoutinesNo, defaultGoroutinesNo)
 	}
 }
 
@@ -95,7 +95,7 @@ func TestProcessFindings(t *testing.T) {
 			return findingsToErr[finding.Category]
 		},
 	}
-	c := &sccCollector{cli: mock, findings: findings, maxGoRoutines: 2}
+	c := &sccCollector{cli: mock, findings: findings, goRoutinesNo: 2}
 	result := c.processFindings(source)
 	if len(result) != len(findingsToErr) {
 		t.Fatalf("number of results = %v; want %v", len(result), len(findingsToErr))
@@ -144,9 +144,9 @@ func TestUpsertFindings(t *testing.T) {
 	findings := []*scc.Finding{
 		{Category: "test-one"},
 	}
-	c := &sccCollector{cli: &mock, maxGoRoutines: 1}
-	findingsChan := make(chan *scc.Finding, c.maxGoRoutines)
-	errorsChan := make(chan error, c.maxGoRoutines)
+	c := &sccCollector{cli: &mock, goRoutinesNo: 1}
+	findingsChan := make(chan *scc.Finding, c.goRoutinesNo)
+	errorsChan := make(chan error, c.goRoutinesNo)
 	for _, finding := range findings {
 		findingsChan <- finding
 	}

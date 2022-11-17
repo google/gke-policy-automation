@@ -28,16 +28,16 @@ import (
 )
 
 const (
-	defaultMaxCoroutines = 20
-	collectorName        = "Security Command Center"
+	defaultGoroutinesNo = 20
+	collectorName       = "Security Command Center"
 )
 
 type sccCollector struct {
-	ctx           context.Context
-	cli           scc.SecurityCommandCenterClient
-	createSource  bool
-	maxGoRoutines int
-	findings      []*scc.Finding
+	ctx          context.Context
+	cli          scc.SecurityCommandCenterClient
+	createSource bool
+	goRoutinesNo int
+	findings     []*scc.Finding
 }
 
 func NewSccCollector(ctx context.Context, orgNumber string, createSource bool, credsFile string) (ValidationResultCollector, error) {
@@ -56,10 +56,10 @@ func NewSccCollector(ctx context.Context, orgNumber string, createSource bool, c
 
 func newSccCollector(ctx context.Context, createSource bool, cli scc.SecurityCommandCenterClient) ValidationResultCollector {
 	return &sccCollector{
-		ctx:           ctx,
-		cli:           cli,
-		maxGoRoutines: defaultMaxCoroutines,
-		createSource:  createSource,
+		ctx:          ctx,
+		cli:          cli,
+		goRoutinesNo: defaultGoroutinesNo,
+		createSource: createSource,
 	}
 }
 
@@ -112,9 +112,9 @@ func (c *sccCollector) getSccSource() (string, error) {
 }
 
 func (c *sccCollector) processFindings(source string) []error {
-	log.Debugf("using %d maxGoRoutines", c.maxGoRoutines)
-	findingsChan := make(chan *scc.Finding, c.maxGoRoutines)
-	errorsChan := make(chan error, c.maxGoRoutines)
+	log.Debugf("using %d maxGoRoutines", c.goRoutinesNo)
+	findingsChan := make(chan *scc.Finding, c.goRoutinesNo)
+	errorsChan := make(chan error, c.goRoutinesNo)
 
 	log.Debugf("starting finding producing goroutine")
 	go func() {
@@ -127,7 +127,7 @@ func (c *sccCollector) processFindings(source string) []error {
 	log.Debugf("starting finding consuming goroutine")
 	go func() {
 		var wg sync.WaitGroup
-		for i := 0; i < c.maxGoRoutines; i++ {
+		for i := 0; i < c.goRoutinesNo; i++ {
 			wg.Add(1)
 			go c.upsertFinding(i, &wg, findingsChan, source, errorsChan)
 		}
