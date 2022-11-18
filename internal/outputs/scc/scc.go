@@ -277,7 +277,7 @@ func mapFindingSourceProperties(finding *Finding) map[string]*structpb.Value {
 
 	if finding.CisID != "" && finding.CisVersion != "" {
 		standards := map[string]interface{}{
-			"cis": []interface{}{
+			"cis_gke": []interface{}{
 				map[string]interface{}{
 					"version": finding.CisVersion,
 					"ids":     []interface{}{finding.CisID},
@@ -298,7 +298,7 @@ func mapFindingCompliances(finding *Finding) []*sccpb.Compliance {
 		return nil
 	}
 	return []*sccpb.Compliance{{
-		Standard: "cis",
+		Standard: "cis_gke",
 		Version:  finding.CisVersion,
 		Ids:      []string{finding.CisID}},
 	}
