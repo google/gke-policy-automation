@@ -1,3 +1,8 @@
+<!-- markdownlint-disable MD041 -->
+<img src="assets/gke-policy-automation-logo.png" alt="GKE Policy Automation logo"
+title="GKE Policy Automation" align="left" height="70" />
+<!-- markdownlint-enable MD041 -->
+
 # GKE Policy Automation
 
 This repository contains the tool and the [policy library](./gke-policies) for validating [GKE](https://cloud.google.com/kubernetes-engine)
