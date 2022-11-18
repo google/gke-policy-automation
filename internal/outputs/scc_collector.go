@@ -28,15 +28,15 @@ import (
 )
 
 const (
-	defaultNoThreads = 5
-	collectorName    = "Security Command Center"
+	defaultGoroutinesNo = 20
+	collectorName       = "Security Command Center"
 )
 
 type sccCollector struct {
 	ctx          context.Context
 	cli          scc.SecurityCommandCenterClient
 	createSource bool
-	threadsNo    int
+	goRoutinesNo int
 	findings     []*scc.Finding
 }
 
@@ -58,7 +58,7 @@ func newSccCollector(ctx context.Context, createSource bool, cli scc.SecurityCom
 	return &sccCollector{
 		ctx:          ctx,
 		cli:          cli,
-		threadsNo:    defaultNoThreads,
+		goRoutinesNo: defaultGoroutinesNo,
 		createSource: createSource,
 	}
 }
@@ -112,49 +112,46 @@ func (c *sccCollector) getSccSource() (string, error) {
 }
 
 func (c *sccCollector) processFindings(source string) []error {
-	divided := divideFindings(c.threadsNo, c.findings)
-	var wg sync.WaitGroup
-	results := make(chan error, len(c.findings))
-	log.Debugf("Starting %d upsert goroutines", len(divided))
-	for i := range divided {
-		wg.Add(1)
-		go c.upsertFindings(i, &wg, divided[i], source, results)
-	}
-	log.Debugf("waiting for upsert goroutines to finish")
-	wg.Wait()
-	log.Debugf("all upsert goroutines finished")
-	close(results)
-	log.Debugf("results channel closed")
+	log.Debugf("using %d maxGoRoutines", c.goRoutinesNo)
+	findingsChan := make(chan *scc.Finding, c.goRoutinesNo)
+	errorsChan := make(chan error, c.goRoutinesNo)
+
+	log.Debugf("starting finding producing goroutine")
+	go func() {
+		for _, finding := range c.findings {
+			findingsChan <- finding
+		}
+		close(findingsChan)
+	}()
+
+	log.Debugf("starting finding consuming goroutine")
+	go func() {
+		var wg sync.WaitGroup
+		for i := 0; i < c.goRoutinesNo; i++ {
+			wg.Add(1)
+			go c.upsertFinding(i, &wg, findingsChan, source, errorsChan)
+		}
+		wg.Wait()
+		close(errorsChan)
+	}()
+	log.Debugf("processing errors")
 	var errors []error
-	for result := range results {
-		errors = append(errors, result)
+	for err := range errorsChan {
+		errors = append(errors, err)
 	}
 	return errors
 }
 
-func (c *sccCollector) upsertFindings(i int, wg *sync.WaitGroup, findings []*scc.Finding, source string, results chan error) {
+func (c *sccCollector) upsertFinding(i int, wg *sync.WaitGroup, findings chan *scc.Finding, source string, errors chan error) {
 	defer wg.Done()
-	log.Debugf("Upsert goroutine %d starting", i)
-	for i := range findings {
-		if err := c.cli.UpsertFinding(source, findings[i]); err != nil {
-			log.Warnf("failed to upsert finding %+v: %s", findings[i], err)
-			results <- err
+	for finding := range findings {
+		log.Debugf("goroutine %d processing finding (resName=%v category=%v)", i, finding.ResourceName, finding.Category)
+		if err := c.cli.UpsertFinding(source, finding); err != nil {
+			log.Warnf("failed to upsert finding (resName=%v category=%v): %s", finding.ResourceName, finding.Category, err)
+			errors <- err
 		}
 	}
 	log.Debugf("Upsert goroutine %d finished", i)
-}
-
-func divideFindings(chunksNo int, findings []*scc.Finding) [][]*scc.Finding {
-	var result [][]*scc.Finding
-	chunkSize := len(findings) / chunksNo
-	for i := 0; i < len(findings); i += chunkSize {
-		end := i + chunkSize
-		if end > len(findings) {
-			end = len(findings)
-		}
-		result = append(result, findings[i:end])
-	}
-	return result
 }
 
 func mapPolicyToFinding(resourceName string, eventTime time.Time, policy *policy.Policy) *scc.Finding {
