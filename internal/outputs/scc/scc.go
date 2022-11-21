@@ -16,20 +16,20 @@ package scc
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	scc "cloud.google.com/go/securitycenter/apiv1"
-	"github.com/dchest/uniuri"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/version"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	sccpb "google.golang.org/genproto/googleapis/cloud/securitycenter/v1"
-	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -153,16 +153,17 @@ func (c *securityCommandCenterClientImpl) FindSource() (*string, error) {
 }
 
 func (c *securityCommandCenterClientImpl) UpsertFinding(sourceName string, finding *Finding) error {
-	sccFindings, err := c.getFindings(sourceName, finding.ResourceName, finding.Category)
+	apiFinding := mapFindingToAPI(sourceName, finding)
+	curFinding, err := c.getFinding(apiFinding.Parent, apiFinding.Name)
 	if err != nil {
 		return err
 	}
-	if len(sccFindings) < 1 && finding.State == FINDING_STATE_STRING_ACTIVE {
-		_, err = c.createFinding(sourceName, finding)
-		return err
+	if curFinding == nil && finding.State == FINDING_STATE_STRING_INACTIVE {
+		log.Debugf("Skipping inactive finding that does not exist in SCC")
+		return nil
 	}
-	if errors := c.updateFindings(sccFindings, finding); len(errors) > 0 {
-		return errors.Error()
+	if _, err := c.upsertFinding(apiFinding); err != nil {
+		return err
 	}
 	return nil
 }
@@ -189,74 +190,36 @@ func (c *securityCommandCenterClientImpl) findSourceNameByDisplayName(displayNam
 	return &name, nil
 }
 
-// getFindings returns slice of findings for a given SCC source, resource and category.
-func (c *securityCommandCenterClientImpl) getFindings(source string, resource string, category string) ([]*sccpb.ListFindingsResponse_ListFindingsResult, error) {
+// getFinding returns the finding for a given source with a given name.
+// When not found, nil is returned.
+func (c *securityCommandCenterClientImpl) getFinding(source, name string) (*sccpb.Finding, error) {
 	req := &sccpb.ListFindingsRequest{
 		Parent: source,
-		Filter: fmt.Sprintf("resourceName=%q AND category=%q", resource, category),
+		Filter: fmt.Sprintf("name=%q", name),
 	}
 	it := c.client.ListFindings(c.ctx, req)
-	return resourceIteratorToSlice[*sccpb.ListFindingsResponse_ListFindingsResult](
+	results, err := resourceIteratorToSlice[*sccpb.ListFindingsResponse_ListFindingsResult](
 		it,
 		c.sourcesSearchLimit,
 		func(lfr *sccpb.ListFindingsResponse_ListFindingsResult) bool { return true })
-}
-
-// createFinding creates given finding under the given source.
-func (c *securityCommandCenterClientImpl) createFinding(sourceName string, finding *Finding) (string, error) {
-	sccFinding := &sccpb.Finding{
-		Name:             fmt.Sprintf("%s/findings/%s", sourceName, uniuri.NewLen(32)),
-		Parent:           sourceName,
-		Description:      finding.Description,
-		ResourceName:     finding.ResourceName,
-		State:            sccpb.Finding_ACTIVE,
-		Category:         finding.Category,
-		Severity:         mapFindingSeverityString(finding.Severity),
-		FindingClass:     sccpb.Finding_MISCONFIGURATION,
-		EventTime:        timestamppb.New(finding.Time),
-		SourceProperties: mapFindingSourceProperties(finding),
-		Compliances:      mapFindingCompliances(finding),
-		ExternalUri:      finding.ExternalURI,
-	}
-	sccFinding, err := c.upsertFinding(sccFinding, nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return sccFinding.Name, nil
-}
-
-// updateFinding updates all findings with a names from given slice
-func (c *securityCommandCenterClientImpl) updateFindings(findingListResults []*sccpb.ListFindingsResponse_ListFindingsResult, finding *Finding) MultipleErrors {
-	errors := MultipleErrors{}
-	for _, result := range findingListResults {
-		if err := c.updateFinding(result.Finding, finding); err != nil {
-			errors = append(errors, err)
-		}
+	if len(results) < 1 {
+		log.Debugf("No finding for source = %v with name %v found", source, name)
+		return nil, nil
 	}
-	return errors
-}
-
-// updateFinding updates state and event time for a given finding
-func (c *securityCommandCenterClientImpl) updateFinding(result *sccpb.Finding, finding *Finding) error {
-	result.EventTime = timestamppb.New(finding.Time)
-	result.SourceProperties = mapFindingSourceProperties(finding)
-	updateMask := []string{"state", "event_time", "source_properties"}
-	log.Debugf("updating finding: data %v; updateMask %v", finding, updateMask)
-	_, err := c.upsertFinding(result, updateMask)
-	return err
+	if len(results) > 1 {
+		log.Warnf("Multiple findings for source = %v with name %v found", source, name)
+	}
+	return results[0].Finding, nil
 }
 
 // upsertFinding creates or updates given SCC finding using patch operation.
-// For creation, the given finding should have valid identifier in the name field.
-// For update, the updateMaskPaths should be given to indicate fields to be updated.
-func (c *securityCommandCenterClientImpl) upsertFinding(finding *sccpb.Finding, updateMaskPaths []string) (*sccpb.Finding, error) {
+// In case of update operation, all mutable fields are replaced.
+func (c *securityCommandCenterClientImpl) upsertFinding(finding *sccpb.Finding) (*sccpb.Finding, error) {
 	req := &sccpb.UpdateFindingRequest{
 		Finding: finding,
-	}
-	if len(updateMaskPaths) > 0 {
-		req.UpdateMask = &fieldmaskpb.FieldMask{
-			Paths: updateMaskPaths,
-		}
 	}
 	log.Debugf("SCC finding update with req: %+v", req)
 	return c.client.UpdateFinding(c.ctx, req)
@@ -309,12 +272,12 @@ func mapFindingSourceProperties(finding *Finding) map[string]*structpb.Value {
 	result["PolicyName"] = structpb.NewStringValue(finding.SourcePolicyName)
 	result["PolicyFile"] = structpb.NewStringValue(finding.SourcePolicyFile)
 	result["PolicyGroup"] = structpb.NewStringValue(finding.SourcePolicyGroup)
-
 	result["Recommendation"] = structpb.NewStringValue(finding.Recommendation)
+	result["GKEPolicyAutomationVersion"] = structpb.NewStringValue(version.Version)
 
 	if finding.CisID != "" && finding.CisVersion != "" {
 		standards := map[string]interface{}{
-			"cis": []interface{}{
+			"cis_gke": []interface{}{
 				map[string]interface{}{
 					"version": finding.CisVersion,
 					"ids":     []interface{}{finding.CisID},
@@ -335,8 +298,46 @@ func mapFindingCompliances(finding *Finding) []*sccpb.Compliance {
 		return nil
 	}
 	return []*sccpb.Compliance{{
-		Standard: "cis",
+		Standard: "cis_gke",
 		Version:  finding.CisVersion,
 		Ids:      []string{finding.CisID}},
+	}
+}
+
+// calculateFindingID generates identifier (hash) from resource name and finding category
+func calculateFindingID(resourceName, findingCategory string) string {
+	val := resourceName + "/" + findingCategory
+	hash := md5.Sum([]byte(val))
+	return hex.EncodeToString(hash[:])
+}
+
+// mapFindingToAPI maps the finding model to finding protobuf struct
+func mapFindingToAPI(sourceName string, finding *Finding) *sccpb.Finding {
+	name := fmt.Sprintf("%s/findings/%s", sourceName, calculateFindingID(finding.ResourceName, finding.Category))
+	return &sccpb.Finding{
+		Name:             name,
+		Parent:           sourceName,
+		Description:      finding.Description,
+		ResourceName:     finding.ResourceName,
+		State:            mapFindingStateString(finding.State),
+		Category:         finding.Category,
+		Severity:         mapFindingSeverityString(finding.Severity),
+		FindingClass:     sccpb.Finding_MISCONFIGURATION,
+		EventTime:        timestamppb.New(finding.Time),
+		SourceProperties: mapFindingSourceProperties(finding),
+		Compliances:      mapFindingCompliances(finding),
+		ExternalUri:      finding.ExternalURI,
+	}
+}
+
+// mapFindingStateString maps state string to SCC protobuf state int32
+func mapFindingStateString(state string) sccpb.Finding_State {
+	switch state {
+	case FINDING_STATE_STRING_ACTIVE:
+		return sccpb.Finding_ACTIVE
+	case FINDING_STATE_STRING_INACTIVE:
+		return sccpb.Finding_INACTIVE
+	default:
+		return sccpb.Finding_STATE_UNSPECIFIED
 	}
 }

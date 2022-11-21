@@ -8,7 +8,6 @@ require (
 	cloud.google.com/go/pubsub v1.25.1
 	cloud.google.com/go/securitycenter v1.14.0
 	cloud.google.com/go/storage v1.27.0
-	github.com/dchest/uniuri v1.2.0
 	github.com/go-git/go-billy/v5 v5.3.1
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/googleapis/gax-go/v2 v2.5.1
