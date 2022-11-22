@@ -46,7 +46,7 @@ violation[msg] {
 }
 
 violation[msg] {
-	count(input.addons_config.network_policy_config) == 0
+	count(input.Data.gke.addons_config.network_policy_config) == 0
 	not input.Data.gke.network_policy.enabled
 	not input.Data.gke.network_config.datapath_provider == 2
 	msg := "Network Policies enabled but without configuration"

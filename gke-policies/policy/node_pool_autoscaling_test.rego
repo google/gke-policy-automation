@@ -31,5 +31,5 @@ test_multiple_node_pool_autoscaling_enabled {
 }
 
 test_node_pool_without_autoscaling_field {
-    not valid with input as {"name": "cluster", "node_pools": [{"name": "default"}]}
+    not valid with input as {"Data": {"gke": {"name": "cluster", "node_pools": [{"name": "default"}]}}}
 }
