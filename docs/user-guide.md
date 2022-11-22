@@ -223,6 +223,66 @@ outputs:
   - file: cluster_data.json
 ```
 
+## Inputs
+
+### GKE API and GKE Local
+
+GKE API input should be enabled for both - cluster configuration verification
+and for scalability checks on clusters which can be accessed online by the tool.
+Example input configuration for on-line verification:
+
+```yaml
+gkeAPI:
+    enabled: true
+  gkeLocal:
+    enabled: false
+```
+
+Alternatively, dump of cluster data can be provided,
+via GKE Local input. Than, the path to the dump file need to be specified:
+
+```yaml
+  gkeAPI:
+    enabled: false
+  gkeLocal:
+    enabled: true
+    file: cluster-dump.json
+```
+
+### Metrics API
+
+Metrics API is intended to use for some scalability checks.
+Configuration for each metric consists of metric name that is used in policy,
+and the PromQL query that needs to be fetch.
+Example configuration for Metrics API:
+
+```yaml
+  metricsAPI:
+    enabled: true
+    project: sample-project
+    metrics:
+      - name: number_of_pods
+        query: apiserver_storage_objects{resource="pods"}
+      - name: number_of_pods_by_cluster
+        query: apiserver_storage_objects{resource="pods", cluster=CLUSTER_NAME}
+```
+
+Project id is optional parameter,
+if not set - cluster the project id will be used.
+
+### Kubernetes API
+
+Kubernetes API is intended to use for some scalability checks alternatively to Metrics API.
+Example configuration enabling Kubernetes API:
+
+```yaml
+k8sAPI: 
+    enabled: true
+    resourceAPIVersions:
+      - v1
+    clientMaxQPS: 30
+```
+
 ## Configuring policies
 
 ### Specifying GIT policy source
@@ -461,6 +521,22 @@ policyExclusions:
     - gke.policy.enable_ilb_subsetting
   policyGroups:
     - Scalability
+inputs:
+  gkeAPI:
+    enabled: true
+  gkeLocal:
+    enabled: false
+    file:
+  k8sAPI: 
+    enabled: false
+    resourceAPIVersions: 
+    clientMaxQPS:
+  metricsAPI:
+    enabled: false
+    project: 
+    metrics:
+      - name: number_of_pods
+        query: apiserver_storage_objects{resource="pods"}
 outputs:
   - file: output-file.json
   - pubsub:

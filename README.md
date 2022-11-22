@@ -149,6 +149,33 @@ Examples:
         organization: "153963171798"
   ```
 
+### Defining inputs
+
+Data for cluster validation can be retrieved from multiple datasources,
+eg. GKE API, Kubernetes API, Cloud Monitoring API or local JSON file exported from GKE API.
+Check [Inputs user guide](./docs/user-guide.md#inputs)
+for more details.
+Example:
+
+```yaml
+inputs:
+  gkeAPI:
+    enabled: true
+  gkeLocal:
+    enabled: false
+    file:
+  k8sAPI: 
+    enabled: false
+    resourceAPIVersions: 
+    clientMaxQPS:
+  metricsAPI:
+    enabled: true
+    project: sample-project
+    metrics:
+      - name: number_of_pods_by_cluster
+        query: apiserver_storage_objects{resource="pods", cluster=CLUSTER_NAME}
+```
+
 ### Custom Policy repository
 
 Specify custom repository with the GKE cluster best practices and check the cluster against them.
