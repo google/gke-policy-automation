@@ -20,9 +20,9 @@
 package gke.policy.secret_encryption
 
 test_enabled_encryption {
-	valid with input as {"name": "cluster-1", "database_encryption": {"state": 1}}
+	valid with input as {"Data": {"gke": {"name": "cluster-1", "database_encryption": {"state": 1}}}
 }
 
 test_disabled_encryption {
-	not valid with input as {"name": "cluster-1", "database_encryption": {"state": 2}}
+	not valid with input as {"Data": {"gke": {"name": "cluster-1", "database_encryption": {"state": 2}}}
 }

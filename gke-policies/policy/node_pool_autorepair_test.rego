@@ -15,21 +15,21 @@
 package gke.policy.node_pool_autorepair
 
 test_autorepair_for_node_pool_enabled {
-    valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}
+    valid with input as {"Data": {"gke": {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}}}
 }
 
 test_autorepair_for_node_pool_disabled{
-    not valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_repair": false, "auto_upgrade": true }}]}
+    not valid with input as {"Data": {"gke": {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_repair": false, "auto_upgrade": true }}]}}}
 }
 
 test_autorepair_for_multiple_node_pools_but_only_one_disabled{
-    not valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }},{"name": "custom", "management": {"auto_repair": false, "auto_upgrade": true }}]}
+    not valid with input as {"Data": {"gke": {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }},{"name": "custom", "management": {"auto_repair": false, "auto_upgrade": true }}]}}}
 }
 
 test_autorepair_for_node_pool_empty_managment{
-    not valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {}}]}
+    not valid with input as {"Data": {"gke": {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {}}]}}}
 }
 
 test_autorepair_for_managment_without_auto_repair_field{
-    not valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_upgrade": true }}]}
+    not valid with input as {"Data": {"gke": {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_upgrade": true }}]}}}
 }

@@ -20,13 +20,13 @@
 package gke.policy.enable_ilb_subsetting
 
 test_enabled_ilb_subsetting_high_nodes {
-	valid with input as {"name": "test-cluster", "current_node_count": 251, "network_config": { "enable_l4ilb_subsetting": true }}
+	valid with input as {"Data": {"gke": {"name": "test-cluster", "current_node_count": 251, "network_config": { "enable_l4ilb_subsetting": true }}}}
 }
 
 test_disabled_ilb_subsetting_low_nodes {
-	valid with input as {"name": "test-cluster", "current_node_count": 3, "network_config": {}}
+	valid with input as {"Data": {"gke": {"name": "test-cluster", "current_node_count": 3, "network_config": {}}}}
 }
 
 test_disabled_ilb_subsetting_high_nodes {
-	not valid with input as {"name": "test-cluster", "current_node_count": 251, "network_config": {}}
+	not valid with input as {"Data": {"gke": {"name": "test-cluster", "current_node_count": 251, "network_config": {}}}}
 }

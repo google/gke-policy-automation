@@ -15,11 +15,11 @@
 package gke.policy.nap_integrity_monitoring
 
 test_cluster_not_enabled_nap {
-    valid with input as {"name": "cluster-without-nap", "autoscaling": {"enable_node_autoprovisioning": false}}
+    valid with input as {"Data": {"gke": {"name": "cluster-without-nap", "autoscaling": {"enable_node_autoprovisioning": false}}}}
 }
 
 test_cluster_enabled_nap_with_integrity_monitoring_enabled {
-    valid with input as {
+    valid with input as {"Data": {"gke": {
         "name": "cluster-with-nap", 
         "autoscaling": {
             "enable_node_autoprovisioning": true, 
@@ -27,11 +27,11 @@ test_cluster_enabled_nap_with_integrity_monitoring_enabled {
                 "shielded_instance_config":{"enable_integrity_monitoring": true}
             }
         }
-    }
+    }}}
 }
 
 test_cluster_enabled_nap_without_integrity_monitoring_enabled {
-    not valid with input as {
+    not valid with input as {"Data": {"gke": {
         "name": "cluster-with-nap", 
         "autoscaling": {
             "enable_node_autoprovisioning": true, 
@@ -39,5 +39,5 @@ test_cluster_enabled_nap_without_integrity_monitoring_enabled {
                 "shielded_instance_config":{"enable_integrity_monitoring": false}
             },
         }
-    }
+    }}}
 }

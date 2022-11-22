@@ -20,9 +20,9 @@
 package gke.policy.workload_identity
 
 test_enabled_workload_identity {
-	valid with input as {"name": "test-cluster", "workload_identity_config": { "workload_pool": "foo_pool.svc.id.goog" }}
+	valid with input as {"Data": {"gke": {"name": "test-cluster", "workload_identity_config": { "workload_pool": "foo_pool.svc.id.goog" }}}}
 }
 
 test_disabled_workload_identity {
-	not valid with input as {"name": "test-cluster"}
+	not valid with input as {"Data": {"gke": {"name": "test-cluster"}}}
 }

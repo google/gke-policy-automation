@@ -23,6 +23,7 @@
 #     The cluster must be recreated, ensuring that regional location type is choosen.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/regional-clusters
 #   sccCategory: CONTROL_PLANE_ZONAL
+#   dataSource: gke
 
 package gke.policy.control_plane_redundancy
 
@@ -35,11 +36,11 @@ valid {
 }
 
 violation[msg] {
-  not input.location
+  not input.Data.gke.location
   msg := "Missing GKE cluster location object"
 }
 
 violation[msg] {
-  not regional(input.location)
-  msg := sprintf("Invalid GKE Control plane location %q (not regional)", [input.location])
+  not regional(input.Data.gke.location)
+  msg := sprintf("Invalid GKE Control plane location %q (not regional)", [input.Data.gke.location])
 }

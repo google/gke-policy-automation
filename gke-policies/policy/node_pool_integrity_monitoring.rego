@@ -27,6 +27,7 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.5.6"
+#   dataSource: gke
 
 package gke.policy.node_pool_integrity_monitoring
 
@@ -37,6 +38,6 @@ valid {
 }
 
 violation[msg] {  
-  not input.node_pools[pool].config.shielded_instance_config.enable_integrity_monitoring
-  msg := sprintf("Node pool %q has disabled integrity monitoring feature.", [input.node_pools[pool].name])
+  not input.Data.gke.node_pools[pool].config.shielded_instance_config.enable_integrity_monitoring
+  msg := sprintf("Node pool %q has disabled integrity monitoring feature.", [input.Data.gke.node_pools[pool].name])
 } 

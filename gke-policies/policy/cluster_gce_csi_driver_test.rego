@@ -15,13 +15,13 @@
 package gke.policy.cluster_gce_csi_driver
 
 test_gce_csi_driver_addon_empty {
-    not valid with input as {"name":"cluster-demo","addons_config":{"gce_persistent_disk_csi_driver_config":{}}}
+    not valid with input as {"Data": {"gke": {"name":"cluster-demo","addons_config":{"gce_persistent_disk_csi_driver_config":{}}}}}
 }
 
 test_gce_csi_driver_addon_empty {
-    not valid with input as {"name":"cluster-demo","addons_config":{"gce_persistent_disk_csi_driver_config":{"enabled":false}}}
+    not valid with input as {"Data": {"gke": {"name":"cluster-demo","addons_config":{"gce_persistent_disk_csi_driver_config":{"enabled":false}}}}}
 }
 
 test_gce_csi_driver_addon_enabled {
-   valid with input as {"name":"cluster-demo","addons_config":{"gce_persistent_disk_csi_driver_config":{"enabled":true}}}
+   valid with input as {"Data": {"gke": {"name":"cluster-demo","addons_config":{"gce_persistent_disk_csi_driver_config":{"enabled":true}}}}}
 }

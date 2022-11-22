@@ -15,13 +15,13 @@
 package gke.policy.control_plane_endpoint
 
 test_private_endpoint_enabled {
-    valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_endpoint": true}}
+    valid with input as {"Data": {"gke": {"name": "test-cluster", "private_cluster_config": {"enable_private_endpoint": true}}}}
 }
 
 test_private_endpoint_disabled {
-    not valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_endpoint": false}}
+    not valid with input as {"Data": {"gke": {"name": "test-cluster", "private_cluster_config": {"enable_private_endpoint": false}}}}
 }
 
 test_private_cluster_config_missing {
-    not valid with input as {"name": "test-cluster"}
+    not valid with input as {"Data": {"gke": {"name": "test-cluster"}}}
 }

@@ -27,6 +27,7 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.5.7"
+#   dataSource: gke
 
 package gke.policy.node_pool_secure_boot
 
@@ -37,6 +38,6 @@ valid {
 }
 
 violation[msg] {  
-  not input.node_pools[pool].config.shielded_instance_config.enable_secure_boot
-  msg := sprintf("Node pool %q has disabled secure boot.", [input.node_pools[pool].name])
+  not input.Data.gke.node_pools[pool].config.shielded_instance_config.enable_secure_boot
+  msg := sprintf("Node pool %q has disabled secure boot.", [input.Data.gke.node_pools[pool].name])
 } 

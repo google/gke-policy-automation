@@ -19,6 +19,7 @@
 #   group: Scalability
 #   severity: High
 #   sccCategory: HPAS_LIMIT
+#   dataSource: k8s
 
 package gke.scalability.hpas
 
@@ -31,7 +32,7 @@ valid {
 }
 
 violation[msg] {
-	hpas := {object | object := input.Resources[_]; object.Data.kind == "HorizontalPodAutoscaler"}
+	hpas := {object | object := input.Data.k8s.Resources[_]; object.Data.kind == "HorizontalPodAutoscaler"}
 	count(hpas) > hpas_limit
 	msg := sprintf("HPAs found: %d higher than the limit: %d", [count(hpas), hpas_limit])
 	print(msg)

@@ -15,9 +15,9 @@
 package gke.policy.disable_legacy_authorization
 
 test_enabled_legacy_authorization {
-	not valid with input as {"name": "cluster-1", "legacy_abac": {"enabled": true}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true}}]}
+	not valid with input as {"Data": {"gke": {"name": "cluster-1", "legacy_abac": {"enabled": true}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true}}]}}}
 }
 
 test_disabled_legacy_authorization {
-	valid with input as {"name": "cluster-1", "legacy_abac": {}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true}}]}
+	valid with input as {"Data": {"gke": {"name": "cluster-1", "legacy_abac": {}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true}}]}}}
 }

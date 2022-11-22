@@ -28,6 +28,7 @@ import (
 const (
 	k8sApiInputID            = "k8sAPI"
 	k8sApiInputDescription   = "Cluster resource data from Kubernetes API"
+	k8sDataSourceName        = "k8s"
 	k8sKubeConfigContextName = "gke"
 )
 
@@ -125,6 +126,10 @@ func (i *k8sApiInput) GetID() string {
 
 func (i *k8sApiInput) GetDescription() string {
 	return k8sApiInputDescription
+}
+
+func (i *k8sApiInput) GetDataSourceName() string {
+	return k8sDataSourceName
 }
 
 func (i *k8sApiInput) GetData(clusterID string) (interface{}, error) {

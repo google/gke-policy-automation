@@ -26,6 +26,7 @@ import (
 
 const (
 	metricsInputID          = "metricsAPI"
+	metricsDataSourceName   = "CloudMonitoring"
 	metricsInputDescription = "Cluster metrics data from Prometheus API"
 )
 
@@ -113,6 +114,10 @@ func (i *metricsInput) GetID() string {
 
 func (i *metricsInput) GetDescription() string {
 	return metricsInputDescription
+}
+
+func (i *metricsInput) GetDataSourceName() string {
+	return metricsDataSourceName
 }
 
 func (i *metricsInput) GetData(clusterID string) (interface{}, error) {

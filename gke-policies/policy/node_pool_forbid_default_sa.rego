@@ -27,6 +27,7 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.2.1"
+#   dataSource: gke
 
 package gke.policy.node_pool_forbid_default_sa
 
@@ -37,7 +38,7 @@ valid {
 }
 
 violation[msg] {
-	not input.autopilot.enabled
-	input.node_pools[pool].config.service_account == "default"
-	msg := sprintf("GKE cluster node_pool %q should have a dedicated SA", [input.node_pools[pool].name])
+	not input.Data.gke.autopilot.enabled
+	input.Data.gke.node_pools[pool].config.service_account == "default"
+	msg := sprintf("GKE cluster node_pool %q should have a dedicated SA", [input.Data.gke.node_pools[pool].name])
 }

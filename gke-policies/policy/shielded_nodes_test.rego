@@ -20,9 +20,9 @@
 package gke.policy.shielded_nodes
 
 test_enabled_shielded_nodes {
-	valid with input as {"name": "test-cluster", "shielded_nodes": { "enabled": true }}
+	valid with input as {"Data": {"gke": {"name": "test-cluster", "shielded_nodes": { "enabled": true }}}}
 }
 
 test_disabled_shielded_nodes {
-	not valid with input as {"name": "test-cluster", "shielded_nodes": {}}
+	not valid with input as {"Data": {"gke": {"name": "test-cluster", "shielded_nodes": {}}}}
 }

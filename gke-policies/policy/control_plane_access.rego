@@ -29,6 +29,7 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.6.3"
+#   dataSource: gke
 
 package gke.policy.control_plane_access
 
@@ -39,16 +40,16 @@ valid {
 }
 
 violation[msg] {
-  not input.master_authorized_networks_config.enabled
+  not input.Data.gke.master_authorized_networks_config.enabled
   msg := "GKE cluster has not enabled master authorized networks configuration" 
 }
 
 violation[msg] {
-  not input.master_authorized_networks_config.cidr_blocks
+  not input.Data.gke.master_authorized_networks_config.cidr_blocks
   msg := "GKE cluster's master authorized networks has no CIDR blocks element" 
 }
 
 violation[msg] {
-  count(input.master_authorized_networks_config.cidr_blocks) < 1
+  count(input.Data.gke.master_authorized_networks_config.cidr_blocks) < 1
   msg := "GKE cluster's master authorized networks has no CIDR blocks defined" 
 }
