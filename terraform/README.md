@@ -45,7 +45,6 @@ Provision infrastructure with Terraform:
    region     = "europe-west2"
 
    discovery {
-     enabled = true
      projects = ["gke-project-one", "gke-project-two"]
    }
 
@@ -137,7 +136,6 @@ Lastly, the script creates a Cloud Scheduler running once per day to trigger Clo
   region     = "europe-west2"
 
   discovery = {
-    enabled      = true
     projects = [
       "gke-project-01",
       "gke-project-02"
@@ -158,7 +156,6 @@ Lastly, the script creates a Cloud Scheduler running once per day to trigger Clo
   region     = "europe-west2"
 
   discovery = {
-    enabled      = true
     folders = [
       "112316249356",
       "246836235717"
@@ -183,7 +180,6 @@ Lastly, the script creates a Cloud Scheduler running once per day to trigger Clo
   region     = "europe-west2"
 
   discovery = {
-    enabled      = true
     organization = "123456789012"
   }
 
