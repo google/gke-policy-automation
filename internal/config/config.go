@@ -70,6 +70,7 @@ type ConfigInput struct {
 	GKEApi        GKEApiInput   `yaml:"gkeAPI"`
 	GKELocalInput GKELocalInput `yaml:"gkeLocal"`
 	K8sApi        K8SApiInput   `yaml:"k8sAPI"`
+	Rest          RestInput     `yaml:"rest"`
 }
 
 type GKEApiInput struct {
@@ -85,6 +86,11 @@ type K8SApiInput struct {
 	Enabled     bool     `yaml:"enabled"`
 	ApiVersions []string `yaml:"resourceAPIVersions"`
 	MaxQPS      int      `yaml:"clientMaxQPS"`
+}
+
+type RestInput struct {
+	Enabled  bool   `yaml:"enabled"`
+	Endpoint string `yaml:"endpoint"`
 }
 
 type ConfigOutput struct {
