@@ -71,6 +71,7 @@ type ConfigInput struct {
 	GKELocalInput GKELocalInput   `yaml:"gkeLocal"`
 	K8sApi        K8SApiInput     `yaml:"k8sAPI"`
 	MetricsApi    MetricsApiInput `yaml:"metricsAPI"`
+	Rest          RestInput       `yaml:"rest"`
 }
 
 type GKEApiInput struct {
@@ -92,6 +93,10 @@ type MetricsApiInput struct {
 	Enabled   bool           `yaml:"enabled"`
 	ProjectId string         `yaml:"project"`
 	Metrics   []ConfigMetric `yaml:"metrics"`
+}
+type RestInput struct {
+	Enabled  bool   `yaml:"enabled"`
+	Endpoint string `yaml:"endpoint"`
 }
 
 type ConfigOutput struct {

@@ -14,4 +14,7 @@
 gke-policy
 
 terraform/.terraform*
-terraform/terraform*
+terraform/terraform.tfvars
+terraform/*.tfstate
+terraform/*.tfstate.*
+node_modules

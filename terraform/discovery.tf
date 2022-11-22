@@ -15,9 +15,7 @@
  */
 
 locals {
-  discovery_apis     = try(var.discovery.enabled) ? ["cloudasset.googleapis.com"] : []
-  discovery_projects = can(var.discovery.projects) ? var.discovery.projects : [data.google_project.project.project_id]
-  discovery_folders  = try(var.discovery.enabled) && can(var.discovery.folders) ? var.discovery.folders : []
+  discovery_apis = var.discovery.organization != null || length(var.discovery.projects) > 0 || length(var.discovery.projects) > 0 ? ["cloudasset.googleapis.com"] : []
 }
 
 resource "google_project_service" "discovery" {
@@ -28,42 +26,42 @@ resource "google_project_service" "discovery" {
 }
 
 resource "google_project_iam_member" "discovery" {
-  for_each = toset(local.discovery_projects)
+  for_each = toset(var.discovery.projects)
   project  = each.key
   role     = "roles/cloudasset.viewer"
   member   = "serviceAccount:${google_service_account.sa.email}"
 }
 
 resource "google_project_iam_member" "cluster-viewer" {
-  for_each = toset(local.discovery_projects)
+  for_each = toset(var.discovery.projects)
   project  = each.key
   role     = "roles/container.clusterViewer"
   member   = "serviceAccount:${google_service_account.sa.email}"
 }
 
 resource "google_folder_iam_member" "discovery" {
-  for_each = toset(local.discovery_folders)
+  for_each = toset(var.discovery.folders)
   folder   = "folders/${each.key}"
   role     = "roles/cloudasset.viewer"
   member   = "serviceAccount:${google_service_account.sa.email}"
 }
 
 resource "google_folder_iam_member" "cluster-viewer" {
-  for_each = toset(local.discovery_folders)
+  for_each = toset(var.discovery.folders)
   folder   = "folders/${each.key}"
   role     = "roles/container.clusterViewer"
   member   = "serviceAccount:${google_service_account.sa.email}"
 }
 
 resource "google_organization_iam_member" "discovery" {
-  count  = try(var.discovery.enabled) && can(var.discovery.organization) ? 1 : 0
+  count  = var.discovery.organization != null ? 1 : 0
   org_id = var.discovery.organization
   role   = "roles/cloudasset.viewer"
   member = "serviceAccount:${google_service_account.sa.email}"
 }
 
 resource "google_organization_iam_member" "cluster-viewer" {
-  count  = try(var.discovery.enabled) && can(var.discovery.organization) ? 1 : 0
+  count  = var.discovery.organization != null ? 1 : 0
   org_id = var.discovery.organization
   role   = "roles/container.clusterViewer"
   member = "serviceAccount:${google_service_account.sa.email}"
