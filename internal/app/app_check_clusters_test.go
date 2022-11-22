@@ -16,30 +16,14 @@ package app
 
 import (
 	"context"
-	"errors"
 	"reflect"
 	"testing"
 
 	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/outputs"
-	"github.com/googleapis/gax-go/v2/apierror"
-	apiCodes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
-
-type mockGKEClient struct {
-	getClusterFn func(name string) (*gke.Cluster, error)
-	closeFn      func() error
-}
-
-func (m *mockGKEClient) GetCluster(name string) (*gke.Cluster, error) {
-	return m.getClusterFn(name)
-}
-
-func (m *mockGKEClient) Close() error {
-	return m.closeFn()
-}
 
 type mockAPIError struct {
 	gRPCStatusFn func() *status.Status
@@ -174,65 +158,5 @@ func TestDiscoverClusters_projects(t *testing.T) {
 	allProjectsContent = append(allProjectsContent, projectsContent[projects[1]]...)
 	if !reflect.DeepEqual(results, allProjectsContent) {
 		t.Fatalf("results are %v; want %v", results, allProjectsContent)
-	}
-}
-
-func TestGetClusterData(t *testing.T) {
-	mock := &mockGKEClient{
-		getClusterFn: func(name string) (*gke.Cluster, error) {
-			switch name {
-			case "cluster-one":
-				return &gke.Cluster{}, nil
-			default:
-				mockErr := mockAPIError{
-					errorFn: func() string {
-						return "not found"
-					},
-					gRPCStatusFn: func() *status.Status {
-						return status.New(apiCodes.NotFound, "cluster not found")
-					},
-				}
-				mockApiErr, _ := apierror.FromError(mockErr)
-				return nil, mockApiErr
-			}
-
-		},
-		closeFn: func() error {
-			return nil
-		},
-	}
-	pa := &PolicyAutomationApp{
-		ctx: context.TODO(),
-		out: outputs.NewSilentOutput(),
-		gke: mock,
-	}
-	ids := []string{"cluster-one", "cluster-two"}
-	data, err := pa.getClusterData(ids)
-	if err != nil {
-		t.Fatalf("err is %v; want nil", err)
-	}
-	if len(data) != 1 {
-		t.Errorf("len(data) is %v; want %v", len(data), 1)
-	}
-}
-
-func TestGetClusterData_error(t *testing.T) {
-	mock := &mockGKEClient{
-		getClusterFn: func(name string) (*gke.Cluster, error) {
-			return nil, errors.New("test error")
-		},
-		closeFn: func() error {
-			return nil
-		},
-	}
-	pa := &PolicyAutomationApp{
-		ctx: context.TODO(),
-		out: outputs.NewSilentOutput(),
-		gke: mock,
-	}
-	ids := []string{"cluster-one", "cluster-two"}
-	_, err := pa.getClusterData(ids)
-	if err == nil {
-		t.Fatalf("err is nil; want error")
 	}
 }

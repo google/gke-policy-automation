@@ -16,14 +16,14 @@ package app
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 
+	"github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/gke"
+	"github.com/google/gke-policy-automation/internal/inputs"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/outputs"
 	"github.com/google/gke-policy-automation/internal/policy"
-	"github.com/googleapis/gax-go/v2/apierror"
-	apiCodes "google.golang.org/grpc/codes"
 )
 
 // getClusters retrieves lists of a clusters for further processing
@@ -52,11 +52,12 @@ func (p *PolicyAutomationApp) getClusters() ([]string, error) {
 	}
 	clusters := make([]string, 0, len(p.config.Clusters))
 	for _, configCluster := range p.config.Clusters {
-		clusterName, err := getClusterName(configCluster)
+		clusterId, err := getClusterId(configCluster)
+		log.Debugf("cluster id from config: %s", clusterId)
 		if err != nil {
 			return nil, err
 		}
-		clusters = append(clusters, clusterName)
+		clusters = append(clusters, clusterId)
 	}
 	return clusters, nil
 }
@@ -119,27 +120,28 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 		log.Errorf("could not identify clusters: %s", err)
 		return err
 	}
-	clusterData, err := p.getClusterData(clusterIds)
-	if err != nil {
-		p.out.ErrorPrint("could not fetch the cluster details", err)
-		log.Errorf("could not fetch cluster details: %s", err)
-		return err
+	clusterData, errors := inputs.GetAllInputsData(p.inputs, clusterIds)
+	if errors != nil && len(errors) > 0 {
+		p.out.ErrorPrint("could not fetch the cluster details", errors[0])
+		log.Errorf("could not fetch cluster details: %s", errors[0])
+		return errors[0]
 	}
+	val, err := json.MarshalIndent(clusterData, "", "    ")
+	log.Debugf("[DEBUG] cluster: " + string(val))
 
 	evalResults := &evaluationResults{}
 	for _, cluster := range clusterData {
-		clusterId := cluster.ReadableId()
 		p.out.ColorPrintf("%s [light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
-			outputs.ICON_INFO, clusterId)
-		log.Infof("Evaluating policies against GKE cluster %s", clusterId)
+			outputs.ICON_INFO, cluster.Name)
+		log.Infof("Evaluating policies against GKE cluster %s", cluster.Name)
 		for _, pkgBase := range regoPackageBases {
 			evalResult, err := pa.Evaluate(cluster, pkgBase)
 			if err != nil {
 				p.out.ErrorPrint("failed to evaluate policies", err)
-				log.Errorf("could not evaluate rego policies on cluster %s: %s", clusterId, err)
+				log.Errorf("could not evaluate rego policies on cluster %s: %s", cluster.Name, err)
 				return err
 			}
-			evalResult.ClusterID = clusterId
+			evalResult.ClusterID = cluster.Name
 			evalResults.Add(evalResult)
 		}
 	}
@@ -164,28 +166,12 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 	return nil
 }
 
-func (p *PolicyAutomationApp) getClusterData(ids []string) ([]*gke.Cluster, error) {
-	results := make([]*gke.Cluster, 0)
-	for _, clusterId := range ids {
-		log.Infof("Fetching GKE cluster %s", clusterId)
-		p.out.ColorPrintf("%s [light_gray][bold]Fetching GKE cluster details... [%s]\n", outputs.ICON_INFO, clusterId)
-		cluster, err := p.gke.GetCluster(clusterId)
-		if err != nil {
-			var apiErr *apierror.APIError
-			if errors.As(err, &apiErr) {
-				if apiErr.GRPCStatus().Code() == apiCodes.NotFound {
-					p.out.ColorPrintf("%s [yellow][bold]Could not fetch cluster: cluster not found [%s]\n", outputs.ICON_INFO, clusterId)
-					log.Warnf("could not fetch cluster details: %s", err)
-					continue
-				}
-			}
-			return nil, err
-		}
-
-		val, err := json.MarshalIndent(cluster, "", "    ")
-		log.Debugf("[DEBUG] cluster: " + string(val))
-
-		results = append(results, cluster)
+func getClusterId(c config.ConfigCluster) (string, error) {
+	if c.ID != "" {
+		return c.ID, nil
 	}
-	return results, nil
+	if c.Name != "" && c.Location != "" && c.Project != "" {
+		return fmt.Sprintf("projects/%s/locations/%s/clusters/%s", c.Project, c.Location, c.Name), nil
+	}
+	return "", fmt.Errorf("cluster mandatory parameters not set (project, name, location)")
 }

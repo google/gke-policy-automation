@@ -15,7 +15,7 @@
 package outputs
 
 import (
-	"github.com/google/gke-policy-automation/internal/gke"
+	"github.com/google/gke-policy-automation/internal/inputs"
 	"github.com/google/gke-policy-automation/internal/policy"
 )
 
@@ -26,6 +26,6 @@ type ValidationResultCollector interface {
 }
 
 type ClusterDumpCollector interface {
-	RegisterCluster(cluster *gke.Cluster)
+	RegisterCluster(cluster *inputs.Cluster)
 	Close() error
 }

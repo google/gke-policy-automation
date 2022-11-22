@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gke
+package clients
 
 import (
 	"context"
@@ -35,7 +35,7 @@ type MetricQuery struct {
 
 type Metric struct {
 	Name  string
-	Value string //? which type - json
+	Value string
 }
 
 type MetricsClient interface {
@@ -50,7 +50,7 @@ type metricsClient struct {
 	maxGoRoutines int
 }
 
-func NewMetricClient(ctx context.Context, projectId string, authToken string) (MetricsClient, error) {
+func newMetricsClient(ctx context.Context, projectId string, authToken string, maxGoroutines int) (MetricsClient, error) {
 
 	// Creates a client.
 	client, err := api.NewClient(api.Config{
@@ -69,8 +69,50 @@ func NewMetricClient(ctx context.Context, projectId string, authToken string) (M
 		ctx:           ctx,
 		client:        client,
 		api:           api,
-		maxGoRoutines: defaultMaxGoroutines,
+		maxGoRoutines: maxGoroutines,
 	}, nil
+}
+
+type metricsClientBuilder struct {
+	ctx           context.Context
+	projectId     string
+	authToken     string
+	maxGoroutines int
+	timeout       int
+}
+
+func NewMetricsClientBuilder(ctx context.Context, projectId string, authToken string) *metricsClientBuilder {
+	return &metricsClientBuilder{
+		ctx:       ctx,
+		projectId: projectId,
+		authToken: authToken,
+	}
+}
+
+func (b *metricsClientBuilder) WithMaxGoroutines(maxGoroutines int) *metricsClientBuilder {
+	b.maxGoroutines = maxGoroutines
+	return b
+}
+
+func (b *metricsClientBuilder) WithTimeout(timeout int) *metricsClientBuilder {
+	b.timeout = timeout
+	return b
+}
+
+func (b *metricsClientBuilder) Build() (MetricsClient, error) {
+
+	var maxGoRoutines = defaultMaxGoroutines
+	if b.maxGoroutines != 0 {
+		maxGoRoutines = b.maxGoroutines
+	}
+
+	metricsClient, err := newMetricsClient(b.ctx, b.projectId, b.authToken, maxGoRoutines)
+
+	if err != nil {
+		log.Fatalf("Failed to create metrics client: %v", err)
+		return nil, err
+	}
+	return metricsClient, nil
 }
 
 func (m *metricsClient) GetMetric(metricQuery MetricQuery, clusterName string) (string, error) {
@@ -111,7 +153,7 @@ func (m *metricsClient) GetMetric(metricQuery MetricQuery, clusterName string) (
 		log.Warnf("query %s returned no value found for cluster %s", query, clusterName)
 	}
 
-	return ret, nil //get first value only
+	return ret, nil
 }
 
 func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterName string) (map[string]Metric, error) {
@@ -138,6 +180,7 @@ func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterName 
 			log.Debugf("Starting getMetrics goroutine")
 			go func() {
 				for q := range queryChannel {
+					log.Debugf("GetMetric for %s, cluster %s", q, clusterName)
 					r, err := m.GetMetric(q, clusterName)
 					if err != nil {
 						log.Debugf("unable to get metric: %s", err)

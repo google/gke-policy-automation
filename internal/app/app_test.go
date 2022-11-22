@@ -153,9 +153,6 @@ func TestLoadConfig(t *testing.T) {
 	if !reflect.DeepEqual(config, pa.config) {
 		t.Errorf("pa.config is not same as input config")
 	}
-	if pa.gke == nil {
-		t.Errorf("pa.gke is nil; want gke.GKEClient")
-	}
 	err = pa.Close()
 	if err != nil {
 		t.Errorf("err on close is not nil; want nil; err = %s", err)
@@ -211,31 +208,6 @@ func TestNewConfigFromCli(t *testing.T) {
 	}
 	if policySrc.GitDirectory != input.GitDirectory {
 		t.Errorf("policy gitDirectory = %v; want %v", policySrc.GitDirectory, input.GitDirectory)
-	}
-}
-
-func TestGetClusterName(t *testing.T) {
-	input := []cfg.ConfigCluster{
-		{ID: "projects/myproject/locations/europe-central2/clusters/testCluster"},
-		{Name: "testClusterTwo", Location: "europe-east2", Project: "testProject"},
-	}
-	expected := []string{
-		"projects/myproject/locations/europe-central2/clusters/testCluster",
-		"projects/testProject/locations/europe-east2/clusters/testClusterTwo",
-	}
-	for i := range input {
-		name, _ := getClusterName(input[i])
-		if name != expected[i] {
-			t.Errorf("clusterName = %v; want %v", name, expected[i])
-		}
-	}
-}
-
-func TestGetClusterName_negative(t *testing.T) {
-	input := cfg.ConfigCluster{Name: "test", Location: "europe-east2"}
-	_, err := getClusterName(input)
-	if err == nil {
-		t.Errorf("error is nil; want error")
 	}
 }
 

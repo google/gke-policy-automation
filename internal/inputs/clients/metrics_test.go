@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gke
+package clients
 
 import (
 	"context"
@@ -115,7 +115,7 @@ func (m *metricsApiClientMock) WalReplay(ctx context.Context) (v1.WalReplayStatu
 
 func TestNewMetricClient(t *testing.T) {
 	ctx := context.TODO()
-	cli, err := NewMetricClient(ctx, "test-project", "fake-token")
+	cli, err := newMetricsClient(ctx, "test-project", "fake-token", 20)
 	if err != nil {
 		t.Fatalf("err is not nil; want nil; err = %s", err)
 	}

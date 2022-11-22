@@ -25,6 +25,8 @@ import (
 
 	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/gke"
+	"github.com/google/gke-policy-automation/internal/inputs"
+	"github.com/google/gke-policy-automation/internal/inputs/clients"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/outputs"
 	pbc "github.com/google/gke-policy-automation/internal/outputs/pubsub"
@@ -79,9 +81,9 @@ type PolicyAutomationApp struct {
 	ctx                   context.Context
 	config                *cfg.Config
 	out                   *outputs.Output
+	inputs                []inputs.Input
 	collectors            []outputs.ValidationResultCollector
 	clusterDumpCollectors []outputs.ClusterDumpCollector
-	gke                   gke.GKEClient
 	discovery             gke.DiscoveryClient
 	policyDocsFile        string
 }
@@ -128,31 +130,58 @@ func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 
 		p.clusterDumpCollectors = append(p.clusterDumpCollectors, outputs.NewOutputClusterDumpCollector(p.out))
 	}
-	if p.config.DumpFile != "" {
-		p.gke = gke.NewGKELocalClient(p.ctx, p.config.DumpFile)
-	} else {
-		builder := gke.NewGKEApiClientBuilder(p.ctx)
+
+	inputsFromConfig := p.config.Inputs
+	if inputsFromConfig.GKEApi.Enabled {
+		var gkeInput inputs.Input
 		if p.config.CredentialsFile != "" {
-			builder = builder.WithCredentialsFile(p.config.CredentialsFile)
-		}
-		if p.config.K8SApiConfig.Enabled {
-			builder = builder.WithK8SClient(config.K8SApiConfig.ApiVersions, config.K8SApiConfig.MaxQPS)
-		}
-
-		if len(p.config.Metrics) > 0 {
-			var metricQueries []gke.MetricQuery
-
-			for _, m := range p.config.Metrics {
-				metricQueries = append(metricQueries, gke.MetricQuery{Name: m.MetricName, Query: m.Query})
+			gkeInput, err = inputs.NewGKEApiInputWithCredentials(p.ctx, p.config.CredentialsFile)
+			if err != nil {
+				return err
 			}
-
-			builder = builder.WithMetricsClient(metricQueries)
+		} else {
+			gkeInput, err = inputs.NewGKEApiInput(p.ctx)
+			if err != nil {
+				return err
+			}
 		}
+		p.inputs = append(p.inputs, gkeInput)
+	}
+	if inputsFromConfig.GKELocalInput.Enabled {
+		gkeLocalInput := inputs.NewGKELocalInput(inputsFromConfig.GKELocalInput.DumpFile)
+		p.inputs = append(p.inputs, gkeLocalInput)
+	}
+	if inputsFromConfig.K8sApi.Enabled {
+		k8InputBuilder := inputs.NewK8sApiInputBuilder(p.ctx, inputsFromConfig.K8sApi.ApiVersions)
 
-		p.gke, err = builder.Build()
+		if p.config.CredentialsFile != "" {
+			k8InputBuilder.WithCredentialsFile(p.config.CredentialsFile)
+		}
+		k8Input, err := k8InputBuilder.Build()
 		if err != nil {
-			return
+			return err
 		}
+		p.inputs = append(p.inputs, k8Input)
+	}
+	if inputsFromConfig.MetricsApi.Enabled {
+		var metricQueries []clients.MetricQuery
+		if len(inputsFromConfig.MetricsApi.Metrics) > 0 {
+
+			for _, m := range inputsFromConfig.MetricsApi.Metrics {
+				metricQueries = append(metricQueries, clients.MetricQuery{Name: m.MetricName, Query: m.Query})
+			}
+		}
+
+		metricInputBuilder := inputs.NewMetricsInputBuilder(p.ctx, metricQueries)
+
+		if p.config.CredentialsFile != "" {
+			metricInputBuilder.WithCredentialsFile(p.config.CredentialsFile)
+		}
+		metricInput, err := metricInputBuilder.Build()
+		if err != nil {
+			return err
+		}
+		p.inputs = append(p.inputs, metricInput)
 	}
 
 	for _, o := range p.config.Outputs {
@@ -203,9 +232,9 @@ func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
 
 func (p *PolicyAutomationApp) Close() error {
 	errors := make([]error, 0)
-	if p.gke != nil {
-		if err := p.gke.Close(); err != nil {
-			log.Warnf("error when closing GKE client: %s", err)
+	for _, i := range p.inputs {
+		if err := i.Close(); err != nil {
+			log.Warnf("error when closing input %s: %s", i.GetID(), err)
 			errors = append(errors, err)
 		}
 	}
@@ -239,8 +268,32 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 		p.out.ErrorPrint("could not get clusters", err)
 		log.Errorf("could not get clusters: %s", err)
 	}
-	for _, clusterId := range clusterIds {
-		cluster, err := p.gke.GetCluster(clusterId)
+
+	//for dumping JSON data - create gkeInput
+	var gkeInput inputs.Input
+	if p.config.CredentialsFile != "" {
+		gkeInput, err = inputs.NewGKEApiInputWithCredentials(p.ctx, p.config.CredentialsFile)
+		if err != nil {
+			return err
+		}
+	} else {
+		gkeInput, err = inputs.NewGKEApiInput(p.ctx)
+		if err != nil {
+			return err
+		}
+	}
+	p.inputs = append(p.inputs, gkeInput)
+
+	clusterData, errors := inputs.GetAllInputsData(p.inputs, clusterIds)
+	if errors != nil && len(errors) > 0 {
+		p.out.ErrorPrint("could not fetch the cluster details", errors[0])
+		log.Errorf("could not fetch cluster details: %s", errors[0])
+		return errors[0]
+	}
+	val, err := json.MarshalIndent(clusterData, "", "    ")
+	log.Debugf("[DEBUG] cluster: " + string(val))
+
+	for _, cluster := range clusterData {
 
 		if err != nil {
 			p.out.ErrorPrint("could not fetch the cluster details", err)
@@ -261,12 +314,13 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 	for _, dumpCollector := range p.clusterDumpCollectors {
 		colType := reflect.TypeOf(dumpCollector).String()
 		log.Debugf("closing cluster dump collector %s", colType)
-		p.out.ColorPrintf("%s [light_gray][bold]Writing evaluation results ...\n", outputs.ICON_INFO)
+		p.out.ColorPrintf("%s [light_gray][bold]closing cluster dump collector ...\n", outputs.ICON_INFO)
 		if err := dumpCollector.Close(); err != nil {
 			log.Errorf("failed to close cluster dump collector %s due to %s", colType, err)
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -410,14 +464,4 @@ func newConfigFromCli(cliConfig *CliConfig) *cfg.Config {
 		})
 	}
 	return config
-}
-
-func getClusterName(c cfg.ConfigCluster) (string, error) {
-	if c.ID != "" {
-		return c.ID, nil
-	}
-	if c.Name != "" && c.Location != "" && c.Project != "" {
-		return gke.GetClusterName(c.Project, c.Location, c.Name), nil
-	}
-	return "", fmt.Errorf("cluster mandatory parameters not set (project, name, location)")
 }
