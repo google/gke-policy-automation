@@ -351,7 +351,7 @@ func TestMapFindingSourceProperties(t *testing.T) {
 	if complianceStruct == nil {
 		t.Fatalf("result compliance_standards struct is nil")
 	}
-	cisList := complianceStruct.Fields["cis"].GetListValue()
+	cisList := complianceStruct.Fields["cis_gke"].GetListValue()
 	if cisList == nil {
 		t.Fatalf("result compliance_standards struct is nil")
 	}
@@ -386,7 +386,7 @@ func TestMapFindingSourceProperties(t *testing.T) {
 
 func TestMapFindingCompliances_positive(t *testing.T) {
 	finding := &Finding{CisVersion: "1.0", CisID: "6.1.2"}
-	expected := []*sccpb.Compliance{{Standard: "cis", Version: "1.0", Ids: []string{"6.1.2"}}}
+	expected := []*sccpb.Compliance{{Standard: "cis_gke", Version: "1.0", Ids: []string{"6.1.2"}}}
 
 	results := mapFindingCompliances(finding)
 	if len(results) != len(expected) {
