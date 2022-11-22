@@ -17,7 +17,6 @@ package outputs
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -63,11 +62,8 @@ func TestNewSccCollector(t *testing.T) {
 	if sccCol.createSource != createSource {
 		t.Errorf("collector createSource = %v; want %v", sccCol.createSource, createSource)
 	}
-	if defaultNoThreads < 2 {
-		t.Errorf("defaultNoThreads = %v; want at least 2", defaultNoThreads)
-	}
-	if sccCol.threadsNo != defaultNoThreads {
-		t.Errorf("collector threadsNo = %v; want %v", sccCol.threadsNo, defaultNoThreads)
+	if sccCol.goRoutinesNo != defaultGoroutinesNo {
+		t.Errorf("collector threadsNo = %v; want %v", sccCol.goRoutinesNo, defaultGoroutinesNo)
 	}
 }
 
@@ -99,7 +95,7 @@ func TestProcessFindings(t *testing.T) {
 			return findingsToErr[finding.Category]
 		},
 	}
-	c := &sccCollector{cli: mock, findings: findings, threadsNo: 2}
+	c := &sccCollector{cli: mock, findings: findings, goRoutinesNo: 2}
 	result := c.processFindings(source)
 	if len(result) != len(findingsToErr) {
 		t.Fatalf("number of results = %v; want %v", len(result), len(findingsToErr))
@@ -147,42 +143,23 @@ func TestUpsertFindings(t *testing.T) {
 	}
 	findings := []*scc.Finding{
 		{Category: "test-one"},
-		{Category: "test-two"},
-		{Category: "test-three"},
 	}
+	c := &sccCollector{cli: &mock, goRoutinesNo: 1}
+	findingsChan := make(chan *scc.Finding, c.goRoutinesNo)
+	errorsChan := make(chan error, c.goRoutinesNo)
+	for _, finding := range findings {
+		findingsChan <- finding
+	}
+	close(findingsChan)
+
 	var wg sync.WaitGroup
 	wg.Add(1)
-	ch := make(chan error)
-	c := &sccCollector{cli: &mock}
-	c.upsertFindings(0, &wg, findings, sourceName, ch)
+	c.upsertFinding(0, &wg, findingsChan, sourceName, errorsChan)
 	wg.Wait()
-	close(ch)
+	close(errorsChan)
 	assert.ElementsMatch(t, findings, upserted, "upserted findings match test findings")
-	if len(ch) != 0 {
-		t.Errorf("number of errors in result channel = %v; want %v", len(ch), 0)
-	}
-}
-
-func TestDivideFindings(t *testing.T) {
-	chunksNo := 7
-	var findings []*scc.Finding
-	for i := 0; i < 24; i++ {
-		findings = append(findings, &scc.Finding{
-			Category: fmt.Sprintf("test-%d", i),
-		})
-	}
-	result := divideFindings(chunksNo, findings)
-	var mergedBack []*scc.Finding
-	for i := range result {
-		for j := range result[i] {
-			mergedBack = append(mergedBack, result[i][j])
-		}
-	}
-	if len(mergedBack) != len(findings) {
-		t.Errorf("sum len of slices in result = %v; want %v", len(mergedBack), len(findings))
-	}
-	for i := range findings {
-		assert.Containsf(t, mergedBack, findings[i], "result contains finding %+v", findings[i])
+	if len(errorsChan) != 0 {
+		t.Errorf("number of errors in result channel = %v; want %v", len(errorsChan), 0)
 	}
 }
 
