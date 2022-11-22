@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-locals {
-  apis = ["container.googleapis.com", "run.googleapis.com", "cloudscheduler.googleapis.com", "secretmanager.googleapis.com", "artifactregistry.googleapis.com"]
+project_id = "gke-policy-demo"
+region     = "europe-west2"
+
+discovery = {
+  organization = "123456789012"
 }
 
-data "google_project" "project" {
-  project_id = var.project_id
-}
-
-resource "google_project_service" "project" {
-  for_each           = toset(local.apis)
-  project            = data.google_project.project.project_id
-  service            = each.key
-  disable_on_destroy = false
+output_scc = {
+  enabled      = true
+  organization = "123456789012"
 }

@@ -15,7 +15,7 @@
  */
 
 locals {
-  storage_apis = try(var.output_storage.enabled) ? ["storage.googleapis.com"] : []
+  storage_apis = var.output_storage.enabled ? ["storage.googleapis.com"] : []
 }
 
 resource "google_project_service" "storage-out" {
@@ -26,12 +26,12 @@ resource "google_project_service" "storage-out" {
 }
 
 resource "random_id" "storage-out" {
-  count       = try(var.output_storage.enabled) ? 1 : 0
+  count       = var.output_storage.enabled ? 1 : 0
   byte_length = 8
 }
 
 resource "google_storage_bucket" "storage-out" {
-  count                       = try(var.output_storage.enabled) ? 1 : 0
+  count                       = var.output_storage.enabled ? 1 : 0
   project                     = data.google_project.project.project_id
   name                        = "${var.output_storage.bucket_name}-${random_id.storage-out[count.index].hex}"
   location                    = var.output_storage.bucket_location
@@ -43,7 +43,7 @@ resource "google_storage_bucket" "storage-out" {
 }
 
 resource "google_storage_bucket_iam_member" "storage-out" {
-  count  = try(var.output_storage.enabled) ? 1 : 0
+  count  = var.output_storage.enabled ? 1 : 0
   bucket = google_storage_bucket.storage-out[count.index].name
   role   = "roles/storage.objectCreator"
   member = "serviceAccount:${google_service_account.sa.email}"

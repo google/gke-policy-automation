@@ -14,17 +14,6 @@
  * limitations under the License.
  */
 
-locals {
-  apis = ["container.googleapis.com", "run.googleapis.com", "cloudscheduler.googleapis.com", "secretmanager.googleapis.com", "artifactregistry.googleapis.com"]
-}
-
-data "google_project" "project" {
-  project_id = var.project_id
-}
-
-resource "google_project_service" "project" {
-  for_each           = toset(local.apis)
-  project            = data.google_project.project.project_id
-  service            = each.key
-  disable_on_destroy = false
+terraform {
+  required_version = ">= 1.3"
 }
