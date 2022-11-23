@@ -26,7 +26,7 @@ import (
 
 const (
 	metricsInputID          = "metricsAPI"
-	metricsDataSourceName   = "CloudMonitoring"
+	metricsDataSourceName   = "monitoring"
 	metricsInputDescription = "Cluster metrics data from Prometheus API"
 )
 

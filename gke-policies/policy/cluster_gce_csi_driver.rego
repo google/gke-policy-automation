@@ -35,6 +35,7 @@ valid {
 }
 
 violation[msg] {
-  not input.Data.gke.addons_config.gce_persistent_disk_csi_driver_config.enabled
+
+  not input.data.gke.addons_config.gce_persistent_disk_csi_driver_config.enabled
   msg := "GKE cluster has not configured GCE persistent disk CSI driver"
 }

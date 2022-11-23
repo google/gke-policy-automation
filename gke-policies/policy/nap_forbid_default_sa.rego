@@ -39,8 +39,8 @@ valid {
 }
 
 violation[msg] {
-	not input.Data.gke.autopilot.enabled
-	input.Data.gke.autoscaling.enable_node_autoprovisioning == true
-	input.Data.gke.autoscaling.autoprovisioning_node_pool_defaults.service_account == "default"
+	not input.data.gke.autopilot.enabled
+	input.data.gke.autoscaling.enable_node_autoprovisioning == true
+	input.data.gke.autoscaling.autoprovisioning_node_pool_defaults.service_account == "default"
 	msg := "GKE cluster Node Auto-Provisioning should have a dedicated Service Account configured"
 }

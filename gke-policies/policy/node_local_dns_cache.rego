@@ -35,6 +35,6 @@ valid {
 }
 
 violation[msg] {
-    not input.Data.gke.addons_config.dns_cache_config.enabled = true
+    not input.data.gke.addons_config.dns_cache_config.enabled = true
     msg := "The GKE cluster does not have node local DNS cache enabled"
 }

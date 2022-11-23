@@ -38,7 +38,7 @@ valid {
 }
 
 violation[msg] {
-	not input.Data.gke.shielded_nodes.enabled = true
+	not input.data.gke.shielded_nodes.enabled = true
 
 	msg := "The GKE cluster does not have shielded nodes enabled"
 }

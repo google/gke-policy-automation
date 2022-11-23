@@ -38,6 +38,6 @@ valid {
 }
 
 violation[msg] {
-  not input.Data.gke.private_cluster_config.enable_private_endpoint
+  not input.data.gke.private_cluster_config.enable_private_endpoint
   msg := "GKE cluster has not enabled private endpoint" 
 }

@@ -38,7 +38,7 @@ valid {
 }
 
 violation[msg] {
-	input.Data.gke.autoscaling.enable_node_autoprovisioning == true
-	count(input.Data.gke.autoscaling.autoprovisioning_locations) == 1
+	input.data.gke.autoscaling.enable_node_autoprovisioning == true
+	count(input.data.gke.autoscaling.autoprovisioning_locations) == 1
 	msg := "GKE cluster Node Auto-Provisioning configuration should cover more than one zone"
 }

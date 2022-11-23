@@ -40,8 +40,8 @@ valid {
 }
 
 violation[msg] {
-	input.Data.gke.autoscaling.enable_node_autoprovisioning == true
-	not lower(input.Data.gke.autoscaling.autoprovisioning_node_pool_defaults.image_type) in { "cos", "cos_containerd"}
+	input.data.gke.autoscaling.enable_node_autoprovisioning == true
+	not lower(input.data.gke.autoscaling.autoprovisioning_node_pool_defaults.image_type) in { "cos", "cos_containerd"}
 	
 	msg := "GKE cluster Node Auto-Provisioning configuration use Container-Optimized OS"
 }

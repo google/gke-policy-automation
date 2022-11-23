@@ -15,17 +15,17 @@
 package gke.policy.cluster_receive_updates
 
 test_cluster_with_topic_configured {
-    valid with input as {"Data": {"gke": {"name": "cluster-not-repairing", "release_channel": {}, "notification_config": { "pubsub": { "enabled": true, "topic": "projects/project-id/topics/cluster-updates-topic"}}}}}
+    valid with input as {"data": {"gke": {"name": "cluster-not-repairing", "release_channel": {}, "notification_config": { "pubsub": { "enabled": true, "topic": "projects/project-id/topics/cluster-updates-topic"}}}}}
 }
 
 test_cluster_without_notification_config {
-    not valid with input as {"Data": {"gke": {"name": "cluster-not-repairing", "release_channel": {"channel": 2 }, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}}}
+    not valid with input as {"data": {"gke": {"name": "cluster-not-repairing", "release_channel": {"channel": 2 }, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}}}
 }
 
 test_cluster_without_topic_specified {
-    not valid with input as {"Data": {"gke": {"name": "cluster-not-repairing", "release_channel": {"channel": 2 }, "notification_config": { "pubsub": { "enabled": true }}}}}
+    not valid with input as {"data": {"gke": {"name": "cluster-not-repairing", "release_channel": {"channel": 2 }, "notification_config": { "pubsub": { "enabled": true }}}}}
 }
 
 test_cluster_without_pubsub_enabled {
-    not valid with input as {"Data": {"gke": {"name": "cluster-not-repairing", "release_channel": {"channel": 2 }, "notification_config": { "pubsub": { "enabled": false, "topic": "projects/project-id/topics/cluster-updates-topic"}}}}}
+    not valid with input as {"data": {"gke": {"name": "cluster-not-repairing", "release_channel": {"channel": 2 }, "notification_config": { "pubsub": { "enabled": false, "topic": "projects/project-id/topics/cluster-updates-topic"}}}}}
 }

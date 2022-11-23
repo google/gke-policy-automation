@@ -40,6 +40,6 @@ valid {
 }
 
 violation[msg] {
-	not input.Data.gke.workload_identity_config.workload_pool
+	not input.data.gke.workload_identity_config.workload_pool
 	msg := "The GKE cluster does not have workload identity enabled"
 }

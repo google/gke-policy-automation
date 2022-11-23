@@ -35,9 +35,9 @@ valid {
 }
 
 violation[msg] {
-	input.Data.gke.current_node_count > 250
-    not input.Data.gke.network_config.enable_l4ilb_subsetting = true
+	input.data.gke.current_node_count > 250
+    not input.data.gke.network_config.enable_l4ilb_subsetting = true
 
-	msg := sprintf("The GKE cluster has %v nodes but is not configured to use L4 ILB Subsetting", [input.Data.gke.current_node_count])
+	msg := sprintf("The GKE cluster has %v nodes but is not configured to use L4 ILB Subsetting", [input.data.gke.current_node_count])
 
 }

@@ -37,6 +37,6 @@ valid {
 }
 
 violation[msg] {
-  not input.Data.gke.node_pools[pool].autoscaling.enabled
-  msg := sprintf("Node pool %q does not have autoscaling configured.", [input.Data.gke.node_pools[pool].name])
+  not input.data.gke.node_pools[pool].autoscaling.enabled
+  msg := sprintf("Node pool %q does not have autoscaling configured.", [input.data.gke.node_pools[pool].name])
 }

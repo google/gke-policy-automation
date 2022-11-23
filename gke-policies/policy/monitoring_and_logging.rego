@@ -42,13 +42,13 @@ valid {
 }
 
 violation[msg] {
-	not input.Data.gke.logging_config.component_config.enable_components
+	not input.data.gke.logging_config.component_config.enable_components
 
 	msg := "The GKE cluster does not have Cloud Logging enabled"
 }
 
 violation[msg] {
-	not input.Data.gke.monitoring_config.component_config.enable_components
+	not input.data.gke.monitoring_config.component_config.enable_components
 
 	msg := "The GKE cluster does not have Cloud Monitoring enabled"
 }

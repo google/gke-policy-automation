@@ -15,15 +15,15 @@
 package gke.policy.nap_forbid_single_zone
 
 test_cluster_not_enabled_nap {
-    valid with input as {"Data": {"gke": {"name": "cluster-without-nap", "autoscaling": {"enable_node_autoprovisioning": false}}}}
+    valid with input as {"data": {"gke": {"name": "cluster-without-nap", "autoscaling": {"enable_node_autoprovisioning": false}}}}
 }
 
 test_cluster_enabled_nap_without_enabled_autoprovisioning_locations_not_enabled {
-    valid with input as {"Data": {"gke": {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true}}}}
+    valid with input as {"data": {"gke": {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true}}}}
 }
 
 test_cluster_enabled_nap_with_enabled_autoprovisioning_locations_multiple {
-    valid with input as {"Data": {"gke": {
+    valid with input as {"data": {"gke": {
         "name": "cluster-with-nap", 
         "autoscaling": {
             "enable_node_autoprovisioning": true, 
@@ -36,7 +36,7 @@ test_cluster_enabled_nap_with_enabled_autoprovisioning_locations_multiple {
 }
 
 test_cluster_enabled_nap_with_enabled_autoprovisioning_locations_single {
-    not valid with input as {"Data": {"gke": {
+    not valid with input as {"data": {"gke": {
         "name": "cluster-with-nap", 
         "autoscaling": {
             "enable_node_autoprovisioning": true, 

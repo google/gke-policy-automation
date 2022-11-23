@@ -38,7 +38,7 @@ valid {
 }
 
 violation[msg] {
-	not input.Data.gke.autopilot.enabled
-	input.Data.gke.node_pools[pool].config.service_account == "default"
-	msg := sprintf("GKE cluster node_pool %q should have a dedicated SA", [input.Data.gke.node_pools[pool].name])
+	not input.data.gke.autopilot.enabled
+	input.data.gke.node_pools[pool].config.service_account == "default"
+	msg := sprintf("GKE cluster node_pool %q should have a dedicated SA", [input.data.gke.node_pools[pool].name])
 }

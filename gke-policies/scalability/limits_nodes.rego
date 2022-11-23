@@ -19,7 +19,7 @@
 #   group: Scalability
 #   severity: High
 #   sccCategory: NODES_LIMIT
-#   dataSource: CloudMonitoring, gke
+#   dataSource: monitoring, gke
 
 package gke.scalability.nodes
 
@@ -33,8 +33,8 @@ valid {
 }
 
 violation[msg] {
-	nodes := to_number(input.Data.CloudMonitoring.number_of_nodes_by_cluster.Value)
-	is_private := input.Data.gke.private_cluster_config.enable_private_nodes
+	nodes := to_number(input.data.monitoring.number_of_nodes_by_cluster.Value)
+	is_private := input.data.gke.private_cluster_config.enable_private_nodes
 	is_private = true 
 	nodes > private_nodes_limit
 	msg := sprintf("nodes found: %d higher than the limit for private clusters: %d", [nodes, private_nodes_limit])
@@ -42,8 +42,8 @@ violation[msg] {
 }
 
 violation[msg] {
-	nodes := to_number(input.Data.CloudMonitoring.number_of_nodes_by_cluster.Value)
-	is_private := input.Data.gke.private_cluster_config.enable_private_nodes
+	nodes := to_number(input.data.monitoring.number_of_nodes_by_cluster.Value)
+	is_private := input.data.gke.private_cluster_config.enable_private_nodes
 	is_private = false 
 	nodes > public_nodes_limit
 	msg := sprintf("nodes found: %d higher than the limit for non private clusters: %d", [nodes, public_nodes_limit])
