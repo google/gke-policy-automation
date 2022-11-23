@@ -41,6 +41,6 @@ valid {
 }
 
 violation[msg] {  
-  not input.Data.gke.authenticator_groups_config.enabled
-  msg := sprintf("RBAC security group not enabled for cluster %q", [input.Data.gke.name])
+  not input.data.gke.authenticator_groups_config.enabled
+  msg := sprintf("RBAC security group not enabled for cluster %q", [input.data.gke.name])
 }

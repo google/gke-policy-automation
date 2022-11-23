@@ -38,6 +38,6 @@ valid {
 }
 
 violation[msg] {
-	input.Data.gke.legacy_abac.enabled
+	input.data.gke.legacy_abac.enabled
 	msg := "The GKE cluster is configured to use legacy ABAC authorization mechanism"
 }

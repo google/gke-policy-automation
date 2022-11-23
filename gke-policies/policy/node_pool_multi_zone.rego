@@ -36,6 +36,6 @@ valid {
 }
 
 violation[msg] {  
-  count(input.Data.gke.node_pools[pool].locations) < 2
-  msg := sprintf("Node pool %q is not on multiple zones.", [input.Data.gke.node_pools[pool].name])
+  count(input.data.gke.node_pools[pool].locations) < 2
+  msg := sprintf("Node pool %q is not on multiple zones.", [input.data.gke.node_pools[pool].name])
 } 

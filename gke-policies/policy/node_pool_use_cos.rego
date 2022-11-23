@@ -42,6 +42,6 @@ valid {
 }
 
 violation[msg] {  
-  not lower(input.Data.gke.node_pools[pool].config.image_type) in {"cos", "cos_containerd"}
-  msg := sprintf("Node pool %q does not use Container-Optimized OS.", [input.Data.gke.node_pools[pool].name])
+  not lower(input.data.gke.node_pools[pool].config.image_type) in {"cos", "cos_containerd"}
+  msg := sprintf("Node pool %q does not use Container-Optimized OS.", [input.data.gke.node_pools[pool].name])
 } 

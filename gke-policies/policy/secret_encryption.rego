@@ -40,6 +40,6 @@ valid {
 }
 
 violation[msg] {
-	input.Data.gke.database_encryption.state != 1
+	input.data.gke.database_encryption.state != 1
 	msg := "The GKE cluster is not configured to encrypt kubernetes application secrets"
 }

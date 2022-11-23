@@ -15,7 +15,7 @@
 package gke.policy.control_plane_access
 
 test_authorized_networks_enabled {
-    valid with input as {"Data": {"gke": {"name":"test-cluster","master_authorized_networks_config": {
+    valid with input as {"data": {"gke": {"name":"test-cluster","master_authorized_networks_config": {
         "enabled":true,
         "cidr_blocks":[
             {"display_name":"Test Block","cidr_block":"192.168.0.0./16"}
@@ -24,19 +24,19 @@ test_authorized_networks_enabled {
 }
 
 test_authoized_networks_missing{
-    not valid with input as {"Data": {"gke": {"name":"test-cluster"}}}
+    not valid with input as {"data": {"gke": {"name":"test-cluster"}}}
 }
 
 test_authorized_networks_disabled{
-    not valid with input as {"Data": {"gke": {"name":"test-cluster","master_authorized_networks_config": {"enabled":false}}}}
+    not valid with input as {"data": {"gke": {"name":"test-cluster","master_authorized_networks_config": {"enabled":false}}}}
 }
 
 test_authorized_networks_no_cidrs_block{
-    not valid with input as {"Data": {"gke": {"name":"test-cluster","master_authorized_networks_config": {"enabled":true}}}}
+    not valid with input as {"data": {"gke": {"name":"test-cluster","master_authorized_networks_config": {"enabled":true}}}}
 }
 
 test_authorized_networks_empty_cidrs_block{
-    not valid with input as {"Data": {"gke": {"name":"test-cluster","master_authorized_networks_config": {
+    not valid with input as {"data": {"gke": {"name":"test-cluster","master_authorized_networks_config": {
         "enabled":true,
         "cidr_blocks":[]
     }}}}

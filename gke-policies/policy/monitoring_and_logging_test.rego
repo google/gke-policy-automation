@@ -20,7 +20,7 @@
 package gke.policy.logging_and_monitoring
 
 test_enabled_logging_and_monitoring {
-	valid with input as {"Data": {"gke": {
+	valid with input as {"data": {"gke": {
 	  "name": "test-cluster",
 	  "logging_config": {
 		"component_config": {
@@ -37,7 +37,7 @@ test_enabled_logging_and_monitoring {
 }
 
 test_disabled_logging {
-	not valid with input as {"Data": {"gke": {
+	not valid with input as {"data": {"gke": {
 	  "name": "test-cluster",
 	  "logging_config": {"component_config": {}},
 	  "monitoring_config": {
@@ -49,7 +49,7 @@ test_disabled_logging {
 }
 
 test_disabled_monitoring {
-	not valid with input as {"Data": {"gke": {
+	not valid with input as {"data": {"gke": {
 	  "name": "test-cluster",
 	  "logging_config": {
 		"component_config": {

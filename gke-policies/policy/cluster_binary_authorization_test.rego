@@ -19,7 +19,7 @@ test_cluster_not_configured_binary_authorization {
 }
 
 test_cluster_configured_binary_authorization {
-    valid with input as {"Data": {"gke": {
+    valid with input as {"data": {"gke": {
         "name": "cluster-not-repairing", 
         "binary_authorization": {
             "enabled": true

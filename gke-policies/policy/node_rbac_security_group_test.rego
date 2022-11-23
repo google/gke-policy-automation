@@ -15,13 +15,13 @@
 package gke.policy.rbac_security_group_enabled
 
 test_rbac_group_enabled {
-    valid with input as {"Data": {"gke": {"name": "cluster1", "authenticator_groups_config": {"enabled": true}}}}
+    valid with input as {"data": {"gke": {"name": "cluster1", "authenticator_groups_config": {"enabled": true}}}}
 }
 
 test_rbac_group_disabled {
-    not valid with input as {"Data": {"gke": {"name": "cluster1", "authenticator_groups_config": {"enabled": false}}}}
+    not valid with input as {"data": {"gke": {"name": "cluster1", "authenticator_groups_config": {"enabled": false}}}}
 }
 
 test_rbac_group_without_authenticator_group {
-    not valid with input as {"Data": {"gke": {"name": "cluster1"}}}
+    not valid with input as {"data": {"gke": {"name": "cluster1"}}}
 }

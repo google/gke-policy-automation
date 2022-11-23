@@ -15,11 +15,11 @@
 package gke.rule.nodepool.location
 
 regional[nodepool] {
-    nodepool := input.Data.gke.node_pools[_]
+    nodepool := input.data.gke.node_pools[_]
     count(nodepool.locations) > 1
 }
 
 zonal[nodepool] {
-    nodepool := input.Data.gke.node_pools[_]
+    nodepool := input.data.gke.node_pools[_]
     count(nodepool.locations) < 2
 }

@@ -37,6 +37,6 @@ valid {
 }
 
 violation[msg] {
-  not input.Data.gke.private_cluster_config.enable_private_nodes
+  not input.data.gke.private_cluster_config.enable_private_nodes
   msg := "GKE cluster has not enabled private nodes"
 }

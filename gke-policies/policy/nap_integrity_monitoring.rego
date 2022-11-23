@@ -43,8 +43,8 @@ valid {
 }
 
 violation[msg] {
-	input.Data.gke.autoscaling.enable_node_autoprovisioning == true
-	input.Data.gke.autoscaling.autoprovisioning_node_pool_defaults.shielded_instance_config.enable_integrity_monitoring == false
+	input.data.gke.autoscaling.enable_node_autoprovisioning == true
+	input.data.gke.autoscaling.autoprovisioning_node_pool_defaults.shielded_instance_config.enable_integrity_monitoring == false
 	
 	msg := "GKE cluster Node Auto-Provisioning configuration use integrity monitoring"
 }

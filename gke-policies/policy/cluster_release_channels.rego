@@ -39,6 +39,6 @@ valid {
 }
 
 violation[msg] {
-  not input.Data.gke.release_channel.channel  
+  not input.data.gke.release_channel.channel  
   msg := "GKE cluster is not enrolled in release channel"
 }

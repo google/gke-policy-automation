@@ -38,24 +38,24 @@ valid {
 }
 
 violation[msg] {
-	input.Data.gke.addons_config.network_policy_config.disabled
-	not input.Data.gke.network_policy
-	not input.Data.gke.network_config.datapath_provider == 2
+	input.data.gke.addons_config.network_policy_config.disabled
+	not input.data.gke.network_policy
+	not input.data.gke.network_config.datapath_provider == 2
 
 	msg := "No Network Policies Engines enabled"
 }
 
 violation[msg] {
-	count(input.Data.gke.addons_config.network_policy_config) == 0
-	not input.Data.gke.network_policy.enabled
-	not input.Data.gke.network_config.datapath_provider == 2
+	count(input.data.gke.addons_config.network_policy_config) == 0
+	not input.data.gke.network_policy.enabled
+	not input.data.gke.network_config.datapath_provider == 2
 	msg := "Network Policies enabled but without configuration"
 }
 
 violation[msg] {
-	input.Data.gke.addons_config.network_policy_config.disabled
-	count(input.Data.gke.network_policy) == 0
-	not input.Data.gke.network_config.datapath_provider == 2
+	input.data.gke.addons_config.network_policy_config.disabled
+	count(input.data.gke.network_policy) == 0
+	not input.data.gke.network_config.datapath_provider == 2
 
 	msg := "Not DPv2 nor Network Policies are enabled onto the cluster"
 }

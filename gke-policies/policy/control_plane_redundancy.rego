@@ -36,11 +36,11 @@ valid {
 }
 
 violation[msg] {
-  not input.Data.gke.location
+  not input.data.gke.location
   msg := "Missing GKE cluster location object"
 }
 
 violation[msg] {
-  not regional(input.Data.gke.location)
-  msg := sprintf("Invalid GKE Control plane location %q (not regional)", [input.Data.gke.location])
+  not regional(input.data.gke.location)
+  msg := sprintf("Invalid GKE Control plane location %q (not regional)", [input.data.gke.location])
 }

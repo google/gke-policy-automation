@@ -37,9 +37,9 @@ valid {
 }
 
 violation[msg] {
-  not input.Data.gke.notification_config.pubsub.enabled 
+  not input.data.gke.notification_config.pubsub.enabled 
   msg := "Pub/Sub notifications are not enabled"
 } {
-  not input.Data.gke.notification_config.pubsub.topic 
+  not input.data.gke.notification_config.pubsub.topic 
   msg := "Pub/Sub topic is not configured"
 }

@@ -34,6 +34,6 @@ valid {
 }
 
 violation[msg] {
-	not input.Data.gke.autopilot.enabled
+	not input.data.gke.autopilot.enabled
 	msg := "GKE Autopilot mode is the recommended way to operate a GKE cluster"
 }

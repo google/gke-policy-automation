@@ -38,6 +38,6 @@ valid {
 }
 
 violation[msg] {
-  not input.Data.gke.binary_authorization.enabled
+  not input.data.gke.binary_authorization.enabled
   msg := "GKE cluster has not configured binary authorization policies"
 }

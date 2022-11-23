@@ -38,6 +38,6 @@ valid {
 }
 
 violation[msg] {  
-  not input.Data.gke.node_pools[pool].config.shielded_instance_config.enable_integrity_monitoring
-  msg := sprintf("Node pool %q has disabled integrity monitoring feature.", [input.Data.gke.node_pools[pool].name])
+  not input.data.gke.node_pools[pool].config.shielded_instance_config.enable_integrity_monitoring
+  msg := sprintf("Node pool %q has disabled integrity monitoring feature.", [input.data.gke.node_pools[pool].name])
 } 
