@@ -17,5 +17,20 @@
 # description: GKE ConfigMaps Limit
 # custom:
 #   group: Scalability
-package gke.scalability.configmaps
+package gke.scalability.nodes
 
+test_nodes_nbr_not_exceeded_for_private {
+	valid with input as {"Data": {"CloudMonitoring": {"number_of_nodes_by_cluster": { "Name": "number_of_nodes_by_cluster", "Value": "1"}}, "gke": {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": true}}}}
+}
+
+test_nodes_nbr_exceeded_for_private {
+	not valid with input as {"Data": {"CloudMonitoring": {"number_of_nodes_by_cluster": { "Name": "number_of_nodes_by_cluster", "Value": "16000"}}, "gke":  {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": true}}}}
+}
+
+test_nodes_nbr_not_exceeded_for_public {
+	valid with input as {"Data": {"CloudMonitoring": {"number_of_nodes_by_cluster": { "Name": "number_of_nodes_by_cluster", "Value": "1"}}, "gke": {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": false}}}}
+}
+
+test_nodes_nbr_exceeded_for_public {
+	not valid with input as {"Data": {"CloudMonitoring": {"number_of_nodes_by_cluster": { "Name": "number_of_nodes_by_cluster", "Value": "6000"}}, "gke":  {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": false}}}}
+}
