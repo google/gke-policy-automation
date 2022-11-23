@@ -22,10 +22,11 @@ import (
 )
 
 type inputMock struct {
-	getIDFn          func() string
-	getDescriptionFn func() string
-	getDataFn        func(clusterID string) (interface{}, error)
-	closeFn          func() error
+	getIDFn             func() string
+	getDescriptionFn    func() string
+	getDataSourceNameFn func() string
+	getDataFn           func(clusterID string) (interface{}, error)
+	closeFn             func() error
 }
 
 func (m inputMock) GetID() string {
@@ -34,6 +35,10 @@ func (m inputMock) GetID() string {
 
 func (m inputMock) GetDescription() string {
 	return m.getDescriptionFn()
+}
+
+func (m inputMock) GetDataSourceName() string {
+	return m.getDataSourceNameFn()
 }
 
 func (m inputMock) GetData(clusterID string) (interface{}, error) {
@@ -47,10 +52,10 @@ func (m inputMock) Close() error {
 func TestGetAllInputsData(t *testing.T) {
 	clusterIDs := []string{"cluster-one", "cluster-two", "cluster-three", "cluster-four"}
 	inputs := []Input{
-		&inputMock{getIDFn: func() string { return "gke-api" }, getDataFn: func(clusterID string) (interface{}, error) { return "data", nil }},
-		&inputMock{getIDFn: func() string { return "kube-api" }, getDataFn: func(clusterID string) (interface{}, error) { return "data", nil }},
-		&inputMock{getIDFn: func() string { return "metrics-api" }, getDataFn: func(clusterID string) (interface{}, error) { return "data", nil }},
-		&inputMock{getIDFn: func() string { return "bad-api" }, getDataFn: func(clusterID string) (interface{}, error) { return nil, errors.New("error") }},
+		&inputMock{getIDFn: func() string { return "gke-api" }, getDataSourceNameFn: func() string { return "gke" }, getDataFn: func(clusterID string) (interface{}, error) { return "data", nil }},
+		&inputMock{getIDFn: func() string { return "kube-api" }, getDataSourceNameFn: func() string { return "k8s" }, getDataFn: func(clusterID string) (interface{}, error) { return "data", nil }},
+		&inputMock{getIDFn: func() string { return "metrics-api" }, getDataSourceNameFn: func() string { return "monitoring" }, getDataFn: func(clusterID string) (interface{}, error) { return "data", nil }},
+		&inputMock{getIDFn: func() string { return "bad-api" }, getDataSourceNameFn: func() string { return "bad" }, getDataFn: func(clusterID string) (interface{}, error) { return nil, errors.New("error") }},
 	}
 	results, errors := GetAllInputsData(inputs, clusterIDs)
 	if len(results) != len(clusterIDs) {
@@ -75,6 +80,7 @@ func TestGetInputData(t *testing.T) {
 			getDataFn: func(clusterID string) (interface{}, error) {
 				return nil, errors.New("test error")
 			},
+			getDataSourceNameFn: func() string { return "gke" },
 		},
 		clusterID: errClusterID,
 	}
@@ -86,6 +92,7 @@ func TestGetInputData(t *testing.T) {
 			getDataFn: func(clusterID string) (interface{}, error) {
 				return okResult, nil
 			},
+			getDataSourceNameFn: func() string { return "gke" },
 		},
 		clusterID: okClusterID,
 	}
@@ -124,19 +131,22 @@ func TestGetInputData(t *testing.T) {
 func TestProcessResults(t *testing.T) {
 	resultsChan := make(chan *getDataTaskResult, 3)
 	resultsChan <- &getDataTaskResult{
-		clusterID: "cluster-one",
-		inputID:   "gke-api",
-		result:    "cluster-one-gcp-data",
+		clusterID:      "cluster-one",
+		inputID:        "gke-api",
+		dataSourceName: "gke",
+		result:         "cluster-one-gcp-data",
 	}
 	resultsChan <- &getDataTaskResult{
-		clusterID: "cluster-one",
-		inputID:   "kube-api",
-		result:    "cluster-one-kube-data",
+		clusterID:      "cluster-one",
+		inputID:        "kube-api",
+		dataSourceName: "k8s",
+		result:         "cluster-one-kube-data",
 	}
 	resultsChan <- &getDataTaskResult{
-		clusterID: "cluster-two",
-		inputID:   "gke-api",
-		result:    "cluster-two-gcp-data",
+		clusterID:      "cluster-two",
+		inputID:        "gke-api",
+		dataSourceName: "gke",
+		result:         "cluster-two-gcp-data",
 	}
 	close(resultsChan)
 	result := processResults(resultsChan)
@@ -148,13 +158,13 @@ func TestProcessResults(t *testing.T) {
 	if !ok {
 		t.Fatalf("no results for cluster-two")
 	}
-	if data := cOneResults.Data["gke-api"]; data != "cluster-one-gcp-data" {
+	if data := cOneResults.Data["gke"]; data != "cluster-one-gcp-data" {
 		t.Errorf("cluster-one results for gcp-api: %v; want %v", data, "cluster-one-gcp-data")
 	}
-	if data := cOneResults.Data["kube-api"]; data != "cluster-one-kube-data" {
+	if data := cOneResults.Data["k8s"]; data != "cluster-one-kube-data" {
 		t.Errorf("cluster-one results for kube-api: %v; want %v", data, "cluster-one-kube-data")
 	}
-	if data := cTwoResults.Data["gke-api"]; data != "cluster-two-gcp-data" {
+	if data := cTwoResults.Data["gke"]; data != "cluster-two-gcp-data" {
 		t.Errorf("cluster-two results for kube-api: %v; want %v", data, "cluster-two-gcp-data")
 	}
 }

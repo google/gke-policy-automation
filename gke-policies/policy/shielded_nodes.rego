@@ -27,6 +27,7 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.5.5"
+#   dataSource: gke
 
 package gke.policy.shielded_nodes
 
@@ -37,7 +38,7 @@ valid {
 }
 
 violation[msg] {
-	not input.shielded_nodes.enabled = true
+	not input.data.gke.shielded_nodes.enabled = true
 
 	msg := "The GKE cluster does not have shielded nodes enabled"
 }

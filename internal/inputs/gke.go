@@ -28,6 +28,7 @@ import (
 
 const (
 	gkeApiInputID          = "gkeAPI"
+	gkeDataSourceName      = "gke"
 	gkeApiInputDescription = "GKE cluster data from GCP API"
 )
 
@@ -68,6 +69,10 @@ func (i *gkeApiInput) GetID() string {
 
 func (i *gkeApiInput) GetDescription() string {
 	return gkeApiInputDescription
+}
+
+func (i *gkeApiInput) GetDataSourceName() string {
+	return gkeDataSourceName
 }
 
 func (i *gkeApiInput) GetData(clusterID string) (interface{}, error) {

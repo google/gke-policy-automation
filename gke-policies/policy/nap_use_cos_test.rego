@@ -15,17 +15,17 @@
 package gke.policy.nap_use_cos
 
 test_cluster_not_enabled_nap {
-    valid with input as {"name": "cluster-without-nap", "autoscaling": {"enable_node_autoprovisioning": false}}
+    valid with input as {"data": {"gke": {"name": "cluster-without-nap", "autoscaling": {"enable_node_autoprovisioning": false}}}}
 }
 
 test_cluster_enabled_nap_without_cos {
-    not valid with input as {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": {"image_type": "ANOTHER"}}}
+    not valid with input as {"data": {"gke": {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": {"image_type": "ANOTHER"}}}}}
 }
 
 test_cluster_enabled_nap_with_cos_containerd {
-    valid with input as {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": {"image_type": "COS_CONTAINERD"}} }
+    valid with input as {"data": {"gke": {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": {"image_type": "COS_CONTAINERD"}} }}}
 }
 
 test_cluster_enabled_nap_with_cos {
-    valid with input as {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": {"image_type": "COS"}} }
+    valid with input as {"data": {"gke": {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": {"image_type": "COS"}} }}}
 }

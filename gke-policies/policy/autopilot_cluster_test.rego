@@ -15,9 +15,9 @@
 package gke.policy.autopilot
 
 test_autopilot_mode_enabled {
-	valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": true}, "autopilot": {"enabled": true}}
+	valid with input as {"data": {"gke": {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": true}, "autopilot": {"enabled": true}}}}
 }
 
 test_autopilot_mode_disabled {
-	not valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": false}, "autopilot": {}}
+	not valid with input as {"data": {"gke": {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": false}, "autopilot": {}}}}
 }

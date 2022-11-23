@@ -24,6 +24,7 @@ import (
 
 const (
 	gkeLocalInputID          = "gkeLocal"
+	gkeLocalDataSourceName   = "gke"
 	gkeLocalInputDescription = "GKE cluster data from JSON dump"
 )
 
@@ -45,6 +46,10 @@ func (i *gkeLocalInput) GetID() string {
 
 func (i *gkeLocalInput) GetDescription() string {
 	return gkeLocalInputDescription
+}
+
+func (i *gkeLocalInput) GetDataSourceName() string {
+	return gkeLocalDataSourceName
 }
 
 func (i *gkeLocalInput) GetData(clusterID string) (interface{}, error) {

@@ -15,9 +15,9 @@
 package gke.policy.cluster_release_channels
 
 test_cluster_not_enrolled_to_release_channels {
-    not valid with input as {"name": "cluster-not-repairing", "release_channel": {}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}
+    not valid with input as {"data": {"gke": {"name": "cluster-not-repairing", "release_channel": {}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}}}
 }
 
 test_cluster_enrolled_to_release_channels {
-    valid with input as {"name": "cluster-not-repairing", "release_channel": {"channel": 2 }, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}
+    valid with input as {"data": {"gke": {"name": "cluster-not-repairing", "release_channel": {"channel": 2 }, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}}}
 }

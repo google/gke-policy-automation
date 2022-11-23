@@ -15,29 +15,29 @@
 package gke.policy.node_pool_use_cos
 
 test_node_pool_using_cos {
-    valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos"}}]}
+    valid with input as {"data": {"gke": {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos"}}]}}}
 }
 
 test_node_pool_using_cos_containerd {
-    valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos_containerd"}}]}
+    valid with input as {"data": {"gke": {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos_containerd"}}]}}}
 }
 
 test_node_pool_using_cos_uppercase {
-    valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "COS"}}]}
+    valid with input as {"data": {"gke": {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "COS"}}]}}}
 }
 
 test_node_pool_using_cos_containerd_uppercase {
-    valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "COS_CONTAINERD"}}]}
+    valid with input as {"data": {"gke": {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "COS_CONTAINERD"}}]}}}
 }
 
 test_node_pool_not_using_cos {
-    not valid with input as {"name": "cluster-not-cos", "node_pools": [{"name": "default", "config": {"image_type": "another_image"}}]}
+    not valid with input as {"data": {"gke": {"name": "cluster-not-cos", "node_pools": [{"name": "default", "config": {"image_type": "another_image"}}]}}}
 }
 
 test_multiple_node_pool_using_cos_but_only_one {
-    not valid with input as {"name": "cluster-not-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos"}},{"name": "custom", "config": {"image_type": "other"}}]}
+    not valid with input as {"data": {"gke": {"name": "cluster-not-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos"}},{"name": "custom", "config": {"image_type": "other"}}]}}}
 }
 
 test_multiple_node_pool_using_cos {
-    valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos"}},{"name": "custom", "config": {"image_type": "cos_containerd"}}]}
+    valid with input as {"data": {"gke": {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos"}},{"name": "custom", "config": {"image_type": "cos_containerd"}}]}}}
 }

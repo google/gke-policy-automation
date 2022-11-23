@@ -19,6 +19,7 @@
 #   group: Scalability
 #   severity: Low
 #   sccCategory: HPAS_UNUSED
+#   dataSource: k8s
 
 package gke.scalability.unused_hpas
 
@@ -30,8 +31,8 @@ valid {
 }
 
 violation[msg] {
-	hpas := {object | object := input.Resources[_]; object.Data.kind == "HorizontalPodAutoscaler"}
+	hpas := {object | object := input.data.k8s.Resources[_]; object.data.kind == "HorizontalPodAutoscaler"}
 	some i
-	not hpas[i].Data.status.lastScaleTime
-	msg := sprintf("HPA %s in namespace %s never executed since %s", [hpas[i].Data.metadata.name, hpas[i].Data.metadata.namespace, hpas[i].Data.metadata.creationTimestamp])
+	not hpas[i].data.status.lastScaleTime
+	msg := sprintf("HPA %s in namespace %s never executed since %s", [hpas[i].data.metadata.name, hpas[i].data.metadata.namespace, hpas[i].data.metadata.creationTimestamp])
 }

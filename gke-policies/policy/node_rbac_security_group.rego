@@ -30,6 +30,7 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.8.3"
+#   dataSource: gke
 
 package gke.policy.rbac_security_group_enabled
 
@@ -40,6 +41,6 @@ valid {
 }
 
 violation[msg] {  
-  not input.authenticator_groups_config.enabled
-  msg := sprintf("RBAC security group not enabled for cluster %q", [input.name])
+  not input.data.gke.authenticator_groups_config.enabled
+  msg := sprintf("RBAC security group not enabled for cluster %q", [input.data.gke.name])
 }

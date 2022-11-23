@@ -27,14 +27,15 @@ const (
 
 type Input interface {
 	GetID() string
+	GetDataSourceName() string
 	GetDescription() string
 	GetData(clusterID string) (interface{}, error)
 	Close() error
 }
 
 type Cluster struct {
-	Name string
-	Data map[string]interface{}
+	Name string                 `json:"name"`
+	Data map[string]interface{} `json:"data"`
 }
 
 type getDataTask struct {
@@ -43,10 +44,11 @@ type getDataTask struct {
 }
 
 type getDataTaskResult struct {
-	clusterID string
-	inputID   string
-	result    interface{}
-	err       error
+	clusterID      string
+	inputID        string
+	dataSourceName string
+	result         interface{}
+	err            error
 }
 
 //GetAllInputsData fetches data from given inputs for all given clusters in a concurrent manner
@@ -99,7 +101,7 @@ func getInputData(i int, wg *sync.WaitGroup, tasks chan *getDataTask, results ch
 			errors <- &getDataTaskResult{clusterID: task.clusterID, inputID: task.input.GetID(), err: err}
 		} else {
 			log.Debugf("goroutine %d fetch success", i)
-			results <- &getDataTaskResult{clusterID: task.clusterID, inputID: task.input.GetID(), result: result}
+			results <- &getDataTaskResult{clusterID: task.clusterID, inputID: task.input.GetID(), dataSourceName: task.input.GetDataSourceName(), result: result}
 		}
 	}
 	log.Debugf("goroutine %d done", i)
@@ -112,7 +114,7 @@ func processResults(resultsChan chan *getDataTaskResult) map[string]*Cluster {
 		if !ok {
 			data = &Cluster{Name: result.clusterID, Data: make(map[string]interface{})}
 		}
-		data.Data[result.inputID] = result.result
+		data.Data[result.dataSourceName] = result.result
 		results[result.clusterID] = data
 	}
 	return results

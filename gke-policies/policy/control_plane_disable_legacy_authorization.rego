@@ -27,6 +27,7 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.8.4"
+#   dataSource: gke
 
 package gke.policy.disable_legacy_authorization
 
@@ -37,6 +38,6 @@ valid {
 }
 
 violation[msg] {
-	input.legacy_abac.enabled
+	input.data.gke.legacy_abac.enabled
 	msg := "The GKE cluster is configured to use legacy ABAC authorization mechanism"
 }

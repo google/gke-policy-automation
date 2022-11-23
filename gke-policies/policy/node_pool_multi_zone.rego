@@ -25,6 +25,7 @@
 #     zones. Slick "Save" button once done.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/node-pools#multiple-zones
 #   sccCategory: NODEPOOL_ZONAL
+#   dataSource: gke
 
 package gke.policy.node_pool_multi_zone
 
@@ -35,6 +36,6 @@ valid {
 }
 
 violation[msg] {  
-  count(input.node_pools[pool].locations) < 2
-  msg := sprintf("Node pool %q is not on multiple zones.", [input.node_pools[pool].name])
+  count(input.data.gke.node_pools[pool].locations) < 2
+  msg := sprintf("Node pool %q is not on multiple zones.", [input.data.gke.node_pools[pool].name])
 } 

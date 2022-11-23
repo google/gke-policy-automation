@@ -29,6 +29,7 @@ import (
 const (
 	restInputID                 = "rest"
 	restInputDescription        = "Generic REST API input with HTTPs transport and JSON encoding. CLUSTER_ID wildcard can be used in the endpoint path."
+	restDataSourceName          = "rest"
 	clusterIDWildcard           = "CLUSTER_ID"
 	defaultClientTimeoutSeconds = 3
 )
@@ -57,6 +58,10 @@ func (i *restInput) GetID() string {
 
 func (i *restInput) GetDescription() string {
 	return restInputDescription
+}
+
+func (i *restInput) GetDataSourceName() string {
+	return restDataSourceName
 }
 
 func (i *restInput) GetData(clusterID string) (interface{}, error) {

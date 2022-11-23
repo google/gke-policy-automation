@@ -27,6 +27,7 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.2.1"
+#   dataSource: gke
 
 package gke.policy.nap_use_cos
 
@@ -39,8 +40,8 @@ valid {
 }
 
 violation[msg] {
-	input.autoscaling.enable_node_autoprovisioning == true
-	not lower(input.autoscaling.autoprovisioning_node_pool_defaults.image_type) in { "cos", "cos_containerd"}
+	input.data.gke.autoscaling.enable_node_autoprovisioning == true
+	not lower(input.data.gke.autoscaling.autoprovisioning_node_pool_defaults.image_type) in { "cos", "cos_containerd"}
 	
 	msg := "GKE cluster Node Auto-Provisioning configuration use Container-Optimized OS"
 }

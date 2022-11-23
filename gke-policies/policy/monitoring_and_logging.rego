@@ -31,6 +31,7 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.7.1"
+#   dataSource: gke
 
 package gke.policy.logging_and_monitoring
 
@@ -41,13 +42,13 @@ valid {
 }
 
 violation[msg] {
-	not input.logging_config.component_config.enable_components
+	not input.data.gke.logging_config.component_config.enable_components
 
 	msg := "The GKE cluster does not have Cloud Logging enabled"
 }
 
 violation[msg] {
-	not input.monitoring_config.component_config.enable_components
+	not input.data.gke.monitoring_config.component_config.enable_components
 
 	msg := "The GKE cluster does not have Cloud Monitoring enabled"
 }

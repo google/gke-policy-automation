@@ -24,6 +24,7 @@
 #     Select the "Enable NodeLocal DNSCache" checkbox and click "Save changes" button.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/nodelocal-dns-cache
 #   sccCategory: DNS_CACHE_DISABLED
+#   dataSource: gke
 
 package gke.policy.node_local_dns_cache
 
@@ -34,6 +35,6 @@ valid {
 }
 
 violation[msg] {
-    not input.addons_config.dns_cache_config.enabled = true
+    not input.data.gke.addons_config.dns_cache_config.enabled = true
     msg := "The GKE cluster does not have node local DNS cache enabled"
 }
