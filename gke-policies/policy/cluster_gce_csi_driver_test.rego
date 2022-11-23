@@ -15,7 +15,6 @@
 package gke.policy.cluster_gce_csi_driver
 
 test_gce_csi_driver_addon_empty {
-
     not valid with input as {"data": {"gke": {"name":"cluster-demo","addons_config":{"gce_persistent_disk_csi_driver_config":{}}}}}
 }
 

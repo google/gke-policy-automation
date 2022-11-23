@@ -15,7 +15,6 @@
 package gke.policy.control_plane_access
 
 test_authorized_networks_enabled {
-
     valid with input as {"data": {"gke": {"name":"test-cluster","master_authorized_networks_config": {
         "enabled":true,
         "cidr_blocks":[

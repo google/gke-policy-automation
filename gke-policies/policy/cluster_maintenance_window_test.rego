@@ -15,7 +15,6 @@
 package gke.policy.cluster_maintenance_window
 
 test_cluster_not_configured_maintenance_window {
-
     not valid with input as {"data": {"gke": {"name": "cluster-not-repairing", "release_channel": {}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}}}
 }
 
