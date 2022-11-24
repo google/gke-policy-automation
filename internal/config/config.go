@@ -48,8 +48,6 @@ type Config struct {
 	Outputs          []ConfigOutput         `yaml:"outputs"`
 	ClusterDiscovery ClusterDiscovery       `yaml:"clusterDiscovery"`
 	PolicyExclusions ConfigPolicyExclusions `yaml:"policyExclusions"`
-	Metrics          []ConfigMetric         `yaml:"metrics"`
-	K8SApiConfig     K8SApiConfig           `yaml:"kubernetesAPIClient"`
 }
 
 type ConfigPolicy struct {
@@ -137,13 +135,6 @@ type ClusterDiscovery struct {
 type ConfigPolicyExclusions struct {
 	Policies     []string `yaml:"policies"`
 	PolicyGroups []string `yaml:"policyGroups"`
-}
-
-type K8SApiConfig struct {
-	Enabled        bool     `yaml:"enabled"`
-	ApiVersions    []string `yaml:"resourceAPIVersions"`
-	MaxQPS         int      `yaml:"clientMaxQPS"`
-	TimeoutSeconds int      `yaml:"clientTimeoutSeconds"`
 }
 
 func ReadConfig(path string, readFn ReadFileFn) (*Config, error) {
@@ -236,8 +227,8 @@ func ValidateScalabilityCheckConfig(config Config) error {
 	if err := ValidateClusterCheckConfig(config); err != nil {
 		return nil
 	}
-	if !config.K8SApiConfig.Enabled {
-		return errors.New("kubernetes API client is disabled")
+	if !config.Inputs.K8sApi.Enabled && !config.Inputs.MetricsApi.Enabled {
+		return errors.New("kubernetes API client and metrics client are disabled")
 	}
 	return nil
 }
@@ -344,10 +335,10 @@ func SetConfigDefaults(config *Config) {
 			GitBranch:     DefaultGitBranch,
 			GitDirectory:  DefaultGitPolicyDir})
 	}
-	if config.K8SApiConfig.MaxQPS == 0 {
-		config.K8SApiConfig.MaxQPS = DefaultK8SClientQPS
+	if config.Inputs.K8sApi.MaxQPS == 0 {
+		config.Inputs.K8sApi.MaxQPS = DefaultK8SClientQPS
 	}
-	if len(config.K8SApiConfig.ApiVersions) == 0 {
-		config.K8SApiConfig.ApiVersions = DefaultK8SApiVersions
+	if len(config.Inputs.K8sApi.ApiVersions) == 0 {
+		config.Inputs.K8sApi.ApiVersions = DefaultK8SApiVersions
 	}
 }

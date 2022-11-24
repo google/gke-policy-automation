@@ -24,6 +24,7 @@ of our policy files.
 |Scalability|GKE ConfigMaps Limit|GKE ConfigMaps Limit|[gke-policies/scalability/limits_configmaps.rego](../gke-policies/scalability/limits_configmaps.rego)|
 |Scalability|GKE HPAs Limit|GKE HPAs Limit|[gke-policies/scalability/limits_hpas.rego](../gke-policies/scalability/limits_hpas.rego)|
 |Scalability|GKE L4 ILB Subsetting|GKE cluster should use GKE L4 ILB Subsetting if nodes > 250|[gke-policies/policy/ilb_subsetting.rego](../gke-policies/policy/ilb_subsetting.rego)|
+|Scalability|GKE Nodes Limit|GKE Nodes Limit|[gke-policies/scalability/limits_nodes.rego](../gke-policies/scalability/limits_nodes.rego)|
 |Scalability|GKE Unused HPAs Limit|GKE Unused HPAs Limit|[gke-policies/scalability/limits_unused_hpas.rego](../gke-policies/scalability/limits_unused_hpas.rego)|
 |Scalability|GKE node local DNS cache|GKE cluster should use node local DNS cache|[gke-policies/policy/node_local_dns_cache.rego](../gke-policies/policy/node_local_dns_cache.rego)|
 |Scalability|Use node pool autoscaling|GKE node pools should have autoscaling configured to proper resize nodes according to traffic|[gke-policies/policy/node_pool_autoscaling.rego](../gke-policies/policy/node_pool_autoscaling.rego)|
