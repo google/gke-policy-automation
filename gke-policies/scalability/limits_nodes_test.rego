@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# METADATA
-# title: GKE ConfigMaps Limit
-# description: GKE ConfigMaps Limit
-# custom:
-#   group: Scalability
 package gke.scalability.nodes
 
 test_nodes_nbr_not_exceeded_for_private {

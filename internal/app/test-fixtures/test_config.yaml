@@ -34,7 +34,6 @@ inputs:
     enabled: true
   gkeLocal:
     enabled: false
-    file:
   k8sAPI: 
     enabled: true
     resourceAPIVersions:
