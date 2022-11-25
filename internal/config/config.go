@@ -35,7 +35,6 @@ const (
 )
 
 type ReadFileFn func(string) ([]byte, error)
-type ValidateConfig func(config Config) error
 
 type Config struct {
 	SilentMode       bool                   `yaml:"silent"`
@@ -48,6 +47,8 @@ type Config struct {
 	Outputs          []ConfigOutput         `yaml:"outputs"`
 	ClusterDiscovery ClusterDiscovery       `yaml:"clusterDiscovery"`
 	PolicyExclusions ConfigPolicyExclusions `yaml:"policyExclusions"`
+	Metrics          []ConfigMetric         `yaml:"metrics"`
+	K8SApiConfig     K8SApiConfig           `yaml:"kubernetesAPIClient"`
 }
 
 type ConfigPolicy struct {
@@ -137,43 +138,28 @@ type ConfigPolicyExclusions struct {
 	PolicyGroups []string `yaml:"policyGroups"`
 }
 
+type K8SApiConfig struct {
+	Enabled        bool     `yaml:"enabled"`
+	ApiVersions    []string `yaml:"resourceAPIVersions"`
+	MaxQPS         int      `yaml:"clientMaxQPS"`
+	TimeoutSeconds int      `yaml:"clientTimeoutSeconds"`
+}
+
 func ReadConfig(path string, readFn ReadFileFn) (*Config, error) {
 	data, err := readFn(path)
 	if err != nil {
 		return nil, err
 	}
 	config := &Config{}
-	if err := yaml.Unmarshal(data, config); err != nil {
+	if err := yaml.UnmarshalStrict(data, config); err != nil {
 		return nil, err
 	}
 	return config, nil
 }
 
-func ValidateClusterJSONDataConfig(config Config) error {
+func ValidateClusterDumpConfig(config Config) error {
 	var errors = make([]error, 0)
 	errors = append(errors, validateClustersConfig(config)...)
-	if len(errors) > 0 {
-		for _, err := range errors {
-			log.Warnf("configuration validation error: %s", err)
-		}
-		return errors[0]
-	}
-	return nil
-}
-
-func ValidateClusterOfflineReviewConfig(config Config) error {
-	var errors = make([]error, 0)
-	if config.DumpFile == "" {
-		errors = append(errors, fmt.Errorf("cluster dump file is not set"))
-	}
-	for i, cluster := range config.Clusters {
-		if cluster.ID == "" {
-			if cluster.Name == "" {
-				errors = append(errors, fmt.Errorf("cluster [%v]: name is not set", i))
-			}
-		}
-	}
-	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
 	if len(errors) > 0 {
 		for _, err := range errors {
 			log.Warnf("configuration validation error: %s", err)
@@ -227,8 +213,8 @@ func ValidateScalabilityCheckConfig(config Config) error {
 	if err := ValidateClusterCheckConfig(config); err != nil {
 		return nil
 	}
-	if !config.Inputs.K8sApi.Enabled && !config.Inputs.MetricsApi.Enabled {
-		return errors.New("kubernetes API client and metrics client are disabled")
+	if !config.Inputs.MetricsApi.Enabled {
+		return errors.New("metrics API client is disabled")
 	}
 	return nil
 }
@@ -325,8 +311,26 @@ func validatePubSubConfig(pubsub PubSubOutput) []error {
 	return errors
 }
 
-// setConfigDefaults checks passed config and sets default values if needed
-func SetConfigDefaults(config *Config) {
+func SetCheckConfigDefaults(config *Config) {
+	SetPolicyConfigDefaults(config)
+	log.Debugf("Configuring GKEApi input defaults")
+	config.Inputs.GKEApi.Enabled = true
+}
+
+func SetScalabilityConfigDefaults(config *Config) {
+	SetPolicyConfigDefaults(config)
+	log.Debugf("Configuring MetricsApi input defaults")
+	config.Inputs.MetricsApi.Enabled = true
+	log.Debugf("Configuring K8SApiConfig input defaults")
+	if config.Inputs.K8sApi.MaxQPS == 0 {
+		config.Inputs.K8sApi.MaxQPS = DefaultK8SClientQPS
+	}
+	if len(config.Inputs.K8sApi.ApiVersions) == 0 {
+		config.Inputs.K8sApi.ApiVersions = DefaultK8SApiVersions
+	}
+}
+
+func SetPolicyConfigDefaults(config *Config) {
 	if len(config.Policies) < 1 {
 		log.Debugf("no policies defined, using default GIT policy source: repo %s, branch %s, directory %s",
 			DefaultGitRepository, DefaultGitBranch, DefaultGitPolicyDir)
@@ -334,11 +338,5 @@ func SetConfigDefaults(config *Config) {
 			GitRepository: DefaultGitRepository,
 			GitBranch:     DefaultGitBranch,
 			GitDirectory:  DefaultGitPolicyDir})
-	}
-	if config.Inputs.K8sApi.MaxQPS == 0 {
-		config.Inputs.K8sApi.MaxQPS = DefaultK8SClientQPS
-	}
-	if len(config.Inputs.K8sApi.ApiVersions) == 0 {
-		config.Inputs.K8sApi.ApiVersions = DefaultK8SApiVersions
 	}
 }

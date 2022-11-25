@@ -15,18 +15,11 @@
 package app
 
 import (
-	"context"
 	"fmt"
-	"os"
-	"reflect"
 	"testing"
-	"time"
-
-	"gopkg.in/yaml.v2"
 
 	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/outputs"
-	"github.com/stretchr/testify/assert"
 )
 
 type DiscoveryClientMock struct {
@@ -72,147 +65,7 @@ func TestNewPolicyAutomationApp(t *testing.T) {
 	}
 }
 
-func TestLoadCliConfig_file(t *testing.T) {
-	testConfigPath := "./test-fixtures/test_config.yaml"
-	cliConfig := &CliConfig{ConfigFile: testConfigPath}
-	pa := PolicyAutomationApp{ctx: context.Background()}
-	err := pa.LoadCliConfig(cliConfig, nil)
-	if err != nil {
-		t.Fatalf("err is not nil; want nil; err = %s", err)
-	}
-
-	data, err := os.ReadFile(testConfigPath)
-	if err != nil {
-		t.Fatalf("read test config file err is not nil; want nil; err = %s", err)
-	}
-	config := &cfg.Config{}
-	err = yaml.Unmarshal(data, config)
-	if err != nil {
-		t.Fatalf("unmarshal test config file err is not nil; want nil; err = %s", err)
-	}
-	if !reflect.DeepEqual(pa.config, config) {
-		t.Errorf("policyAutomation config does not match test config")
-	}
-}
-
-func TestLoadCliConfig_with_validation(t *testing.T) {
-	validationErrMsg := "wrong validation"
-	validateFnMock := func(config cfg.Config) error {
-		return fmt.Errorf(validationErrMsg)
-	}
-	cliConfig := &CliConfig{}
-	pa := PolicyAutomationApp{ctx: context.Background()}
-	err := pa.LoadCliConfig(cliConfig, validateFnMock)
-	if err == nil {
-		t.Fatalf("expected error for loadCliConfig; got nil")
-	}
-	if err.Error() != validationErrMsg {
-		t.Fatalf("error msg = %v; want %v", err.Error(), validationErrMsg)
-	}
-}
-
-func TestLoadCliConfig_defaults(t *testing.T) {
-	cliConfig := &CliConfig{
-		CredentialsFile: "./test-fixtures/test_credentials.json",
-		ClusterName:     "test",
-		ClusterLocation: "europe-central2",
-		ProjectName:     "my-project",
-	}
-	pa := PolicyAutomationApp{ctx: context.Background()}
-	err := pa.LoadCliConfig(cliConfig, nil)
-	if err != nil {
-		t.Fatalf("err is not nil; want nil; err = %s", err)
-	}
-	if len(pa.config.Policies) != 1 {
-		t.Fatalf("len of config policies is %d; want %d", len(pa.config.Policies), 1)
-	}
-	policy := pa.config.Policies[0]
-	defaultPolicy := cfg.ConfigPolicy{
-		GitRepository: cfg.DefaultGitRepository,
-		GitBranch:     cfg.DefaultGitBranch,
-		GitDirectory:  cfg.DefaultGitPolicyDir,
-	}
-	if !reflect.DeepEqual(policy, defaultPolicy) {
-		t.Error("config policy is not same as default policy")
-	}
-	if pa.config.Inputs.K8sApi.MaxQPS != cfg.DefaultK8SClientQPS {
-		t.Errorf("K8SApiConfig MaxQPS = %v; want %v", pa.config.Inputs.K8sApi.MaxQPS, cfg.DefaultK8SClientQPS)
-	}
-	assert.ElementsMatchf(t, pa.config.Inputs.K8sApi.ApiVersions, cfg.DefaultK8SApiVersions, "K8SApiConfig ApiVersions match")
-}
-
-func TestLoadConfig(t *testing.T) {
-	config := &cfg.Config{
-		CredentialsFile: "./test-fixtures/test_credentials.json",
-	}
-	pa := PolicyAutomationApp{ctx: context.Background()}
-	err := pa.LoadConfig(config)
-	if err != nil {
-		t.Fatalf("err is not nil; want nil; err = %s", err)
-	}
-	if !reflect.DeepEqual(config, pa.config) {
-		t.Errorf("pa.config is not same as input config")
-	}
-	err = pa.Close()
-	if err != nil {
-		t.Errorf("err on close is not nil; want nil; err = %s", err)
-	}
-}
-
-func TestNewConfigFromCli(t *testing.T) {
-	input := &CliConfig{
-		SilentMode:      true,
-		JsonOutput:      true,
-		CredentialsFile: "/path/to/creds.json",
-		ClusterName:     "testCluster",
-		ClusterLocation: "europe-central2",
-		LocalDirectory:  "/path/to/policies",
-		GitRepository:   "https://github.com/test/test",
-		GitBranch:       "main",
-		GitDirectory:    "policies",
-	}
-	config := newConfigFromCli(input)
-	if config.SilentMode != input.SilentMode {
-		t.Errorf("silentMode = %v; want %v", config.SilentMode, input.SilentMode)
-	}
-	if config.JsonOutput != input.JsonOutput {
-		t.Errorf("jsonOutput = %v; want %v", config.JsonOutput, input.JsonOutput)
-	}
-	if config.CredentialsFile != input.CredentialsFile {
-		t.Errorf("credentialsFile = %v; want %v", config.CredentialsFile, input.CredentialsFile)
-	}
-	if len(config.Clusters) != 1 {
-		t.Fatalf("len(clusters) = %v; want %v", len(config.Clusters), 1)
-	}
-	if config.Clusters[0].Name != input.ClusterName {
-		t.Errorf("cluster[0] name = %v; want %v", config.Clusters[0].Name, input.ClusterName)
-	}
-	if config.Clusters[0].Location != input.ClusterLocation {
-		t.Errorf("cluster[0] location = %v; want %v", config.Clusters[0].Location, input.ClusterLocation)
-	}
-	if config.Clusters[0].Project != input.ProjectName {
-		t.Errorf("cluster[0] project = %v; want %v", config.Clusters[0].Project, input.ProjectName)
-	}
-	if len(config.Policies) != 1 {
-		t.Fatalf("len(policies) = %v; want %v", len(config.Policies), 1)
-	}
-	policySrc := config.Policies[0]
-	if policySrc.LocalDirectory != input.LocalDirectory {
-		t.Errorf("policy localDirectory = %v; want %v", policySrc.LocalDirectory, input.LocalDirectory)
-	}
-	if policySrc.GitRepository != input.GitRepository {
-		t.Errorf("policy gitRepository = %v; want %v", policySrc.LocalDirectory, input.GitRepository)
-	}
-	if policySrc.GitBranch != input.GitBranch {
-		t.Errorf("policy gitBranch = %v; want %v", policySrc.GitBranch, input.GitBranch)
-	}
-	if policySrc.GitDirectory != input.GitDirectory {
-		t.Errorf("policy gitDirectory = %v; want %v", policySrc.GitDirectory, input.GitDirectory)
-	}
-}
-
 func TestClusterReviewWithNoPolicies(t *testing.T) {
-
 	pa := PolicyAutomationApp{
 		out: outputs.NewSilentOutput(),
 		config: &cfg.Config{
@@ -221,7 +74,6 @@ func TestClusterReviewWithNoPolicies(t *testing.T) {
 	}
 
 	err := pa.Check()
-
 	if err != errNoPolicies {
 		t.Fatalf("need noPoliciesError but err = %s", err)
 	}
@@ -251,16 +103,4 @@ type MockDocumentation struct {
 
 func (m *MockDocumentation) GenerateDocumentation() string {
 	return m.content
-}
-
-func TestAddDatetimePrefix(t *testing.T) {
-
-	testDate := time.Date(1994, 7, 20, 5, 20, 0, 0, time.UTC)
-	expectedResult := "19940720_0520_value"
-
-	result := addDatetimePrefix("value", testDate)
-
-	if result != expectedResult {
-		t.Errorf("%s should be %s", result, expectedResult)
-	}
 }

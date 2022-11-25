@@ -17,6 +17,8 @@ package config
 import (
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestReadConfig(t *testing.T) {
@@ -118,6 +120,10 @@ func TestReadConfig(t *testing.T) {
 	if config.ClusterDiscovery.Folders[0] != clusterDiscoveryFolder {
 		t.Errorf("config clusterDiscovery Folders[0] = %v; want %v", config.ClusterDiscovery.Folders[0], clusterDiscoveryFolder)
 	}
+}
+
+func TestValidateClusterDumpConfig(t *testing.T) {
+
 }
 
 func TestValidateCheckConfig(t *testing.T) {
@@ -237,24 +243,6 @@ func TestValidatePolicyCheckConfig_negative(t *testing.T) {
 	}
 }
 
-func TestSetConfigDefaults_policySrc(t *testing.T) {
-	config := Config{}
-	SetConfigDefaults(&config)
-	if len(config.Policies) < 1 {
-		t.Fatalf("len of policy sources is %d; want %d", len(config.Policies), 1)
-	}
-	policySrc := config.Policies[0]
-	if policySrc.GitRepository != DefaultGitRepository {
-		t.Errorf("policy gitRepository = %v; want %v", policySrc.GitRepository, DefaultGitRepository)
-	}
-	if policySrc.GitBranch != DefaultGitBranch {
-		t.Errorf("policy gitBranch = %v; want %v", policySrc.GitBranch, DefaultGitBranch)
-	}
-	if policySrc.GitDirectory != DefaultGitPolicyDir {
-		t.Errorf("policy gitDirectory = %v; want %v", policySrc.GitDirectory, DefaultGitPolicyDir)
-	}
-}
-
 func TestValidateOutputConfig(t *testing.T) {
 	config := []ConfigOutput{
 		{FileName: "out.json"},
@@ -274,5 +262,49 @@ func TestValidateOutputConfig_negative(t *testing.T) {
 
 	if err := validateOutputConfig(badConfig); len(err) == 0 {
 		t.Errorf("expected error on invalid output config")
+	}
+}
+
+func TestSetPolicyConfigDefaults(t *testing.T) {
+	config := &Config{}
+	SetPolicyConfigDefaults(config)
+	assertPolicyConfigDefaults(t, config)
+}
+
+func TestSetCheckConfigDefaults(t *testing.T) {
+	config := &Config{}
+	SetCheckConfigDefaults(config)
+	assertPolicyConfigDefaults(t, config)
+	if !config.Inputs.GKEApi.Enabled {
+		t.Errorf("GKEApi.Enabled = %v; want %v", config.Inputs.GKEApi.Enabled, true)
+	}
+}
+
+func TestSetScalabilityConfigDefaults(t *testing.T) {
+	config := &Config{}
+	SetScalabilityConfigDefaults(config)
+	assertPolicyConfigDefaults(t, config)
+	if !config.Inputs.MetricsApi.Enabled {
+		t.Errorf("MetricsApi.Enabled = %v; want %v", config.Inputs.MetricsApi.Enabled, true)
+	}
+	if config.Inputs.K8sApi.MaxQPS != DefaultK8SClientQPS {
+		t.Errorf("K8sApi.MaxQPS = %v; want %v", config.Inputs.K8sApi.MaxQPS, DefaultK8SClientQPS)
+	}
+	assert.ElementsMatch(t, config.Inputs.K8sApi.ApiVersions, DefaultK8SApiVersions, "K8sApi.ApiVersions matches defaults")
+}
+
+func assertPolicyConfigDefaults(t *testing.T, config *Config) {
+	if len(config.Policies) < 1 {
+		t.Fatalf("len of policy sources is %d; want %d", len(config.Policies), 1)
+	}
+	policySrc := config.Policies[0]
+	if policySrc.GitRepository != DefaultGitRepository {
+		t.Errorf("policy gitRepository = %v; want %v", policySrc.GitRepository, DefaultGitRepository)
+	}
+	if policySrc.GitBranch != DefaultGitBranch {
+		t.Errorf("policy gitBranch = %v; want %v", policySrc.GitBranch, DefaultGitBranch)
+	}
+	if policySrc.GitDirectory != DefaultGitPolicyDir {
+		t.Errorf("policy gitDirectory = %v; want %v", policySrc.GitDirectory, DefaultGitPolicyDir)
 	}
 }
