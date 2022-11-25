@@ -215,7 +215,7 @@ the application.
 
 ### Policy authoring
 
-Please check [GKE Policy authoring guide](./gke-policies/README.md) for guides on authoring REGO rules
+Please check [GKE Policy authoring guide](./gke-policies-v2/README.md) for guides on authoring REGO rules
 for GKE Policy Automation.
 
 ## License
