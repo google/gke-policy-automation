@@ -15,17 +15,17 @@
 package gke.policy.nap_forbid_default_sa
 
 test_cluster_not_enabled_nap {
-    valid with input as {"data": {"gke": {"name": "cluster-without-nap", "autoscaling": {"enable_node_autoprovisioning": false}}}}
+    valid with input as {"name": "cluster-without-nap", "autoscaling": {"enable_node_autoprovisioning": false}}
 }
 
 test_cluster_enabled_nap_with_default_sa {
-    not valid with input as {"data": {"gke": {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": { "service_account": "default"} }}}}
+    not valid with input as {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": { "service_account": "default"} }}
 }
 
 test_cluster_enabled_nap_without_default_sa {
-    valid with input as {"data": {"gke": {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": { "service_account": "dedicated-sa@project.iam.gserviceaccount.com"} }}}}
+    valid with input as {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": { "service_account": "dedicated-sa@project.iam.gserviceaccount.com"} }}
 }
 
 test_cluster_autopilot_with_default {
-    valid with input as {"data": {"gke": {"name": "cluster-autopilot", "autopilot": {"enabled": true}, "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": { "service_account": "default"} }}}}
+    valid with input as {"name": "cluster-autopilot", "autopilot": {"enabled": true}, "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": { "service_account": "default"} }}
 }

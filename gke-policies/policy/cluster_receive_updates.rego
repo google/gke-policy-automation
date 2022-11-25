@@ -26,7 +26,6 @@
 #     Click "Save changes" once done.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-notifications
 #   sccCategory: UPDATE_NOTIFICATIONS_DISABLED
-#   dataSource: gke
 
 package gke.policy.cluster_receive_updates
 
@@ -37,9 +36,9 @@ valid {
 }
 
 violation[msg] {
-  not input.data.gke.notification_config.pubsub.enabled 
+  not input.notification_config.pubsub.enabled 
   msg := "Pub/Sub notifications are not enabled"
 } {
-  not input.data.gke.notification_config.pubsub.topic 
+  not input.notification_config.pubsub.topic 
   msg := "Pub/Sub topic is not configured"
 }

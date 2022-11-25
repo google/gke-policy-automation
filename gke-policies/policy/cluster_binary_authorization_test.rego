@@ -15,14 +15,14 @@
 package gke.policy.cluster_binary_authorization
 
 test_cluster_not_configured_binary_authorization {
-    not valid with input as {"Data": {"gke": {"name": "cluster-not-repairing", "release_channel": {}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}}}
+    not valid with input as {"name": "cluster-not-repairing", "release_channel": {}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}
 }
 
 test_cluster_configured_binary_authorization {
-    valid with input as {"data": {"gke": {
+    valid with input as {
         "name": "cluster-not-repairing", 
         "binary_authorization": {
             "enabled": true
         }
-    }}}
+    }
 }

@@ -15,13 +15,13 @@
 package gke.policy.control_plane_redundancy
 
 test_control_plane_regional_location {
-    valid with input as {"data": {"gke": {"name": "test-cluster", "location": "europe-central2"}}}
+    valid with input as {"name": "test-cluster", "location": "europe-central2"}
 }
 
 test_control_plane_zonal_location {
-    not valid with input as {"data": {"gke": {"name": "test-cluster", "location": "europe-central2-a"}}}
+    not valid with input as {"name": "test-cluster", "location": "europe-central2-a"}
 }
 
 test_control_plane_missing_location {
-    not valid with input as {"data": {"gke": {"name": "test-cluster"}}}
+    not valid with input as {"name": "test-cluster"}
 }

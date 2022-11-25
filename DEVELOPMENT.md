@@ -49,7 +49,7 @@ the standard GOPATH (i.e `$HOME/development/`).
 
 ## Testing the REGO rules
 
-The application repository comes with a set of [recommended REGO rules](./gke-policies/) that cover
+The application repository comes with a set of [recommended REGO rules](./gke-policies-v2/) that cover
 GKE cluster best practices. Rego rules can be tested with [OPA Policy Testing framework](https://www.openpolicyagent.org/docs/latest/policy-testing/).
 
 *NOTE*: `-v` flag sets verbose reporting mode.
@@ -61,10 +61,10 @@ opa test <POLICY_DIR> -v
 To test set of project policies:
 
 ```sh
-opa test gke-policies -v
+opa test gke-policies-v2 -v
 ```
 
 ## Developing REGO rules
 
-Please check [GKE Policy authoring guide](./gke-policies/README.md) for guides on authoring REGO rules
+Please check [GKE Policy authoring guide](./gke-policies-v2/README.md) for guides on authoring REGO rules
 for GKE Policy Automation.

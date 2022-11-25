@@ -28,7 +28,6 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.5.4"
-#   dataSource: gke
 
 package gke.policy.cluster_release_channels
 
@@ -39,6 +38,6 @@ valid {
 }
 
 violation[msg] {
-  not input.data.gke.release_channel.channel  
+  not input.release_channel.channel  
   msg := "GKE cluster is not enrolled in release channel"
 }
