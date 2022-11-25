@@ -66,11 +66,11 @@ type ConfigCluster struct {
 }
 
 type ConfigInput struct {
-	GKEApi        GKEApiInput     `yaml:"gkeAPI"`
-	GKELocalInput GKELocalInput   `yaml:"gkeLocal"`
-	K8sApi        K8SApiInput     `yaml:"k8sAPI"`
-	MetricsApi    MetricsApiInput `yaml:"metricsAPI"`
-	Rest          RestInput       `yaml:"rest"`
+	GKEApi        *GKEApiInput     `yaml:"gkeAPI"`
+	GKELocalInput *GKELocalInput   `yaml:"gkeLocal"`
+	K8sApi        *K8SApiInput     `yaml:"k8sAPI"`
+	MetricsApi    *MetricsApiInput `yaml:"metricsAPI"`
+	Rest          *RestInput       `yaml:"rest"`
 }
 
 type GKEApiInput struct {
@@ -174,6 +174,19 @@ func ValidateClusterCheckConfig(config Config) error {
 	errors = append(errors, validateClustersConfig(config)...)
 	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
 	errors = append(errors, validateOutputConfig(config.Outputs)...)
+	if config.Inputs.GKEApi == nil && config.Inputs.GKELocalInput == nil {
+		errors = append(errors, fmt.Errorf("either gkeAPI input or gkeLocalInput has to be declared"))
+	}
+	if config.Inputs.GKEApi != nil && !config.Inputs.GKEApi.Enabled {
+		if config.Inputs.GKELocalInput == nil || !config.Inputs.GKELocalInput.Enabled {
+			errors = append(errors, fmt.Errorf("either gkeAPI input or gkeLocalInput has to be enabled"))
+		}
+	}
+	if config.Inputs.GKELocalInput != nil && !config.Inputs.GKELocalInput.Enabled {
+		if config.Inputs.GKEApi == nil || !config.Inputs.GKEApi.Enabled {
+			errors = append(errors, fmt.Errorf("either gkeAPI input or gkeLocalInput has to be enabled"))
+		}
+	}
 	if len(errors) > 0 {
 		for _, err := range errors {
 			log.Warnf("configuration validation error: %s", err)
@@ -213,8 +226,8 @@ func ValidateScalabilityCheckConfig(config Config) error {
 	if err := ValidateClusterCheckConfig(config); err != nil {
 		return nil
 	}
-	if !config.Inputs.MetricsApi.Enabled {
-		return errors.New("metrics API client is disabled")
+	if !config.Inputs.MetricsApi.Enabled || !config.Inputs.K8sApi.Enabled {
+		return errors.New("either metricsAPI input or k8sAPI input has to be enabled")
 	}
 	return nil
 }
@@ -313,20 +326,30 @@ func validatePubSubConfig(pubsub PubSubOutput) []error {
 
 func SetCheckConfigDefaults(config *Config) {
 	SetPolicyConfigDefaults(config)
-	log.Debugf("Configuring GKEApi input defaults")
-	config.Inputs.GKEApi.Enabled = true
+	if config.Inputs.GKEApi == nil {
+		log.Debugf("Configuring GKEApi input defaults")
+		config.Inputs.GKEApi = &GKEApiInput{
+			Enabled: true,
+		}
+	}
 }
 
 func SetScalabilityConfigDefaults(config *Config) {
 	SetPolicyConfigDefaults(config)
-	log.Debugf("Configuring MetricsApi input defaults")
-	config.Inputs.MetricsApi.Enabled = true
-	log.Debugf("Configuring K8SApiConfig input defaults")
-	if config.Inputs.K8sApi.MaxQPS == 0 {
-		config.Inputs.K8sApi.MaxQPS = DefaultK8SClientQPS
+	if config.Inputs.MetricsApi == nil {
+		log.Debugf("Configuring MetricsApi input defaults")
+		config.Inputs.MetricsApi = &MetricsApiInput{
+			Enabled: true,
+		}
 	}
-	if len(config.Inputs.K8sApi.ApiVersions) == 0 {
-		config.Inputs.K8sApi.ApiVersions = DefaultK8SApiVersions
+	if config.Inputs.K8sApi != nil {
+		log.Debugf("Configuring K8SApiConfig input defaults")
+		if config.Inputs.K8sApi.MaxQPS == 0 {
+			config.Inputs.K8sApi.MaxQPS = DefaultK8SClientQPS
+		}
+		if len(config.Inputs.K8sApi.ApiVersions) == 0 {
+			config.Inputs.K8sApi.ApiVersions = DefaultK8SApiVersions
+		}
 	}
 }
 

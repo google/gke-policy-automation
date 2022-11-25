@@ -35,11 +35,12 @@ func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, defaultsFn set
 	var config *cfg.Config
 	var err error
 	if cliConfig.ConfigFile != "" {
-		if config, err = newConfigFromFile(cliConfig.ConfigFile); err != nil {
-			return err
-		}
+		config, err = newConfigFromFile(cliConfig.ConfigFile)
 	} else {
 		config = newConfigFromCli(cliConfig)
+	}
+	if err != nil {
+		return err
 	}
 	if defaultsFn != nil {
 		defaultsFn(config)
@@ -88,8 +89,8 @@ func (p *PolicyAutomationApp) loadInputsConfig(config *cfg.Config) error {
 	return nil
 }
 
-func (p *PolicyAutomationApp) loadGKEApiInputConfig(config cfg.GKEApiInput, credentialsFile string) error {
-	if !config.Enabled {
+func (p *PolicyAutomationApp) loadGKEApiInputConfig(config *cfg.GKEApiInput, credentialsFile string) error {
+	if config == nil || !config.Enabled {
 		return nil
 	}
 	var input inputs.Input
@@ -106,15 +107,15 @@ func (p *PolicyAutomationApp) loadGKEApiInputConfig(config cfg.GKEApiInput, cred
 	return nil
 }
 
-func (p *PolicyAutomationApp) loadGKELocalInputConfig(config cfg.GKELocalInput) error {
-	if config.Enabled {
+func (p *PolicyAutomationApp) loadGKELocalInputConfig(config *cfg.GKELocalInput) error {
+	if config != nil && config.Enabled {
 		p.inputs = append(p.inputs, inputs.NewGKELocalInput(config.DumpFile))
 	}
 	return nil
 }
 
-func (p *PolicyAutomationApp) loadK8SApiInputConfig(config cfg.K8SApiInput, credentialsFile string) error {
-	if !config.Enabled {
+func (p *PolicyAutomationApp) loadK8SApiInputConfig(config *cfg.K8SApiInput, credentialsFile string) error {
+	if config == nil || !config.Enabled {
 		return nil
 	}
 	k8InputBuilder := inputs.NewK8sApiInputBuilder(p.ctx, config.ApiVersions).
@@ -127,8 +128,8 @@ func (p *PolicyAutomationApp) loadK8SApiInputConfig(config cfg.K8SApiInput, cred
 	return nil
 }
 
-func (p *PolicyAutomationApp) loadMetricsApiInputConfig(config cfg.MetricsApiInput, credentialsFile string) error {
-	if !config.Enabled {
+func (p *PolicyAutomationApp) loadMetricsApiInputConfig(config *cfg.MetricsApiInput, credentialsFile string) error {
+	if config == nil || !config.Enabled {
 		return nil
 	}
 	var metricQueries []clients.MetricQuery

@@ -136,6 +136,11 @@ func TestValidateCheckConfig(t *testing.T) {
 			{LocalDirectory: "./directory"},
 			{GitRepository: "repo", GitBranch: "main", GitDirectory: "./dir"},
 		},
+		Inputs: ConfigInput{
+			GKEApi: &GKEApiInput{
+				Enabled: true,
+			},
+		},
 	}
 	if err := ValidateClusterCheckConfig(config); err != nil {
 		t.Errorf("expected no error, got: %v", err)
@@ -282,6 +287,9 @@ func TestSetCheckConfigDefaults(t *testing.T) {
 
 func TestSetScalabilityConfigDefaults(t *testing.T) {
 	config := &Config{}
+	config.Inputs.K8sApi = &K8SApiInput{
+		Enabled: true,
+	}
 	SetScalabilityConfigDefaults(config)
 	assertPolicyConfigDefaults(t, config)
 	if !config.Inputs.MetricsApi.Enabled {
