@@ -242,3 +242,41 @@ func newConfigFromFile(path string) (*cfg.Config, error) {
 func addDateTimePrefix(value string, time time.Time) string {
 	return fmt.Sprintf("%s_%s", time.Format("20060102_1504"), value)
 }
+
+func newConfigFromCli(cliConfig *CliConfig) *cfg.Config {
+	config := &cfg.Config{}
+	config.SilentMode = cliConfig.SilentMode
+	config.JsonOutput = cliConfig.JsonOutput
+	config.CredentialsFile = cliConfig.CredentialsFile
+	config.DumpFile = cliConfig.DumpFile
+	if cliConfig.DiscoveryEnabled {
+		config.ClusterDiscovery.Enabled = true
+		if cliConfig.ProjectName != "" {
+			config.ClusterDiscovery.Projects = []string{cliConfig.ProjectName}
+		}
+	} else {
+		if cliConfig.ClusterName != "" || cliConfig.ClusterLocation != "" || cliConfig.ProjectName != "" {
+			config.Clusters = []cfg.ConfigCluster{
+				{
+					Name:     cliConfig.ClusterName,
+					Location: cliConfig.ClusterLocation,
+					Project:  cliConfig.ProjectName,
+				},
+			}
+		}
+	}
+	if cliConfig.OutputFile != "" {
+		config.Outputs = append(config.Outputs, cfg.ConfigOutput{
+			FileName: cliConfig.OutputFile,
+		})
+	}
+	if cliConfig.LocalDirectory != "" || cliConfig.GitRepository != "" {
+		config.Policies = append(config.Policies, cfg.ConfigPolicy{
+			LocalDirectory: cliConfig.LocalDirectory,
+			GitRepository:  cliConfig.GitRepository,
+			GitBranch:      cliConfig.GitBranch,
+			GitDirectory:   cliConfig.GitDirectory,
+		})
+	}
+	return config
+}
