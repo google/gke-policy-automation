@@ -27,7 +27,6 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.6.4"
-#   dataSource: gke
 
 package gke.policy.control_plane_endpoint
 
@@ -38,6 +37,6 @@ valid {
 }
 
 violation[msg] {
-  not input.data.gke.private_cluster_config.enable_private_endpoint
+  not input.private_cluster_config.enable_private_endpoint
   msg := "GKE cluster has not enabled private endpoint" 
 }

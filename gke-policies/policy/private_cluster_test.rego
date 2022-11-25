@@ -15,13 +15,13 @@
 package gke.policy.private_cluster
 
 test_private_nodes_enabled {
-    valid with input as {"data": {"gke": {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": true}}}}
+    valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": true}}
 }
 
 test_private_nodes_disabled {
-    not valid with input as {"data": {"gke": {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": false}}}}
+    not valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": false}}
 }
 
 test_private_cluster_config_missing {
-    not valid with input as {"data": {"gke": {"name": "test-cluster"}}}
+    not valid with input as {"name": "test-cluster"}
 }

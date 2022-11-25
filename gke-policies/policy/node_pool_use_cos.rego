@@ -29,7 +29,6 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.5.1"
-#   dataSource: gke
 
 package gke.policy.node_pool_use_cos
 
@@ -42,6 +41,6 @@ valid {
 }
 
 violation[msg] {  
-  not lower(input.data.gke.node_pools[pool].config.image_type) in {"cos", "cos_containerd"}
-  msg := sprintf("Node pool %q does not use Container-Optimized OS.", [input.data.gke.node_pools[pool].name])
+  not lower(input.node_pools[pool].config.image_type) in {"cos", "cos_containerd"}
+  msg := sprintf("Node pool %q does not use Container-Optimized OS.", [input.node_pools[pool].name])
 } 

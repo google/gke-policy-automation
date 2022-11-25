@@ -15,13 +15,13 @@
 package gke.policy.node_pool_multi_zone
 
 test_node_pool_one_zone {
-    not valid with input as {"data": {"gke": {"name": "cluster", "node_pools": [{"name": "default", "locations": ["us-central1-a"]}]}}}
+    not valid with input as {"name": "cluster", "node_pools": [{"name": "default", "locations": ["us-central1-a"]}]}
 }
 
 test_node_pool_two_zones {
-    valid with input as {"data": {"gke": {"name": "cluster", "node_pools": [{"name": "default", "locations": ["us-central1-a", "us-central1-b"]}]}}}
+    valid with input as {"name": "cluster", "node_pools": [{"name": "default", "locations": ["us-central1-a", "us-central1-b"]}]}
 }
 
 test_node_pool_three_zones {
-    valid with input as {"data": {"gke": {"name": "cluster", "node_pools": [{"name": "default", "locations": ["us-central1-a", "us-central1-b", "us-central1-c"]}]}}}
+    valid with input as {"name": "cluster", "node_pools": [{"name": "default", "locations": ["us-central1-a", "us-central1-b", "us-central1-c"]}]}
 }

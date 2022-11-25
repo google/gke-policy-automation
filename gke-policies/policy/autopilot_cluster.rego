@@ -23,7 +23,6 @@
 #     autoscaling, auto-upgrades, baseline security configurations, and baseline networking configuration.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/choose-cluster-mode
 #   sccCategory: AUTOPILOT_DISABLED
-#   dataSource: gke
 
 package gke.policy.autopilot
 
@@ -34,6 +33,6 @@ valid {
 }
 
 violation[msg] {
-	not input.data.gke.autopilot.enabled
+	not input.autopilot.enabled
 	msg := "GKE Autopilot mode is the recommended way to operate a GKE cluster"
 }

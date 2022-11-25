@@ -5,7 +5,7 @@ title="GKE Policy Automation" align="left" height="70" />
 
 # GKE Policy Automation
 
-This repository contains the tool and the [policy library](./gke-policies) for validating [GKE](https://cloud.google.com/kubernetes-engine)
+This repository contains the tool and the [policy library](./gke-policies-v2) for validating [GKE](https://cloud.google.com/kubernetes-engine)
 clusters against configuration best practices.
 
 [![Build](https://github.com/google/gke-policy-automation/actions/workflows/build.yml/badge.svg)](https://github.com/google/gke-policy-automation/actions/workflows/build.yml)
@@ -160,7 +160,7 @@ Specify custom repository with the GKE cluster best practices and check the clus
   --project my-project --location europe-west2 --name my-cluster \
   --git-policy-repo "https://github.com/google/gke-policy-automation" \
   --git-policy-branch "main" \
-  --git-policy-dir "gke-policies"
+  --git-policy-dir "gke-policies-v2"
   ```
 
 * Custom policies source with configuration file
@@ -179,7 +179,7 @@ Specify custom repository with the GKE cluster best practices and check the clus
   policies:
     - repository: https://domain.com/your/custom/repository
       branch: main
-      directory: gke-policies
+      directory: gke-policies-v2
   ```
 
 ### Authentication

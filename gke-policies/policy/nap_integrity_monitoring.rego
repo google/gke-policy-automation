@@ -32,7 +32,6 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.2.1"
-#   dataSource: gke
 
 package gke.policy.nap_integrity_monitoring
 
@@ -43,8 +42,8 @@ valid {
 }
 
 violation[msg] {
-	input.data.gke.autoscaling.enable_node_autoprovisioning == true
-	input.data.gke.autoscaling.autoprovisioning_node_pool_defaults.shielded_instance_config.enable_integrity_monitoring == false
+	input.autoscaling.enable_node_autoprovisioning == true
+	input.autoscaling.autoprovisioning_node_pool_defaults.shielded_instance_config.enable_integrity_monitoring == false
 	
 	msg := "GKE cluster Node Auto-Provisioning configuration use integrity monitoring"
 }

@@ -30,7 +30,7 @@ var (
 const (
 	DefaultGitRepository = "https://github.com/google/gke-policy-automation"
 	DefaultGitBranch     = "main"
-	DefaultGitPolicyDir  = "gke-policies"
+	DefaultGitPolicyDir  = "gke-policies-v2"
 	DefaultK8SClientQPS  = 50
 )
 

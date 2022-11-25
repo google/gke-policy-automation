@@ -26,7 +26,6 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.6.5"
-#   dataSource: gke
 
 package gke.policy.private_cluster
 
@@ -37,6 +36,6 @@ valid {
 }
 
 violation[msg] {
-  not input.data.gke.private_cluster_config.enable_private_nodes
+  not input.private_cluster_config.enable_private_nodes
   msg := "GKE cluster has not enabled private nodes"
 }

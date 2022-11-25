@@ -27,7 +27,6 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.10.5"
-#   dataSource: gke
 
 package gke.policy.cluster_binary_authorization
 
@@ -38,6 +37,6 @@ valid {
 }
 
 violation[msg] {
-  not input.data.gke.binary_authorization.enabled
+  not input.binary_authorization.enabled
   msg := "GKE cluster has not configured binary authorization policies"
 }

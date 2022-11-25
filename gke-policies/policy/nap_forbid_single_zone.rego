@@ -27,7 +27,6 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.2.1"
-#   dataSource: gke
 
 package gke.policy.nap_forbid_single_zone
 
@@ -38,7 +37,7 @@ valid {
 }
 
 violation[msg] {
-	input.data.gke.autoscaling.enable_node_autoprovisioning == true
-	count(input.data.gke.autoscaling.autoprovisioning_locations) == 1
+	input.autoscaling.enable_node_autoprovisioning == true
+	count(input.autoscaling.autoprovisioning_locations) == 1
 	msg := "GKE cluster Node Auto-Provisioning configuration should cover more than one zone"
 }

@@ -19,7 +19,6 @@
 #   group: Scalability
 #   severity: High
 #   sccCategory: CONFIGMAPS_LIMIT
-#   dataSource: k8s
 
 package gke.scalability.configmaps
 
@@ -32,7 +31,7 @@ valid {
 }
 
 violation[msg] {
-	configmaps := {object | object := input.data.k8s.Resources[_]; object.data.kind == "ConfigMap"}
+	configmaps := {object | object := input.Resources[_]; object.Data.kind == "ConfigMap"}
 	count(configmaps) > configmaps_limit
 	msg := sprintf("Configmaps found: %d higher than the limit: %d", [count(configmaps), configmaps_limit])
 	print(msg)

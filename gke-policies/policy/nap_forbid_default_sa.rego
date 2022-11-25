@@ -28,7 +28,6 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.2.1"
-#   dataSource: gke
 
 package gke.policy.nap_forbid_default_sa
 
@@ -39,8 +38,8 @@ valid {
 }
 
 violation[msg] {
-	not input.data.gke.autopilot.enabled
-	input.data.gke.autoscaling.enable_node_autoprovisioning == true
-	input.data.gke.autoscaling.autoprovisioning_node_pool_defaults.service_account == "default"
+	not input.autopilot.enabled
+	input.autoscaling.enable_node_autoprovisioning == true
+	input.autoscaling.autoprovisioning_node_pool_defaults.service_account == "default"
 	msg := "GKE cluster Node Auto-Provisioning should have a dedicated Service Account configured"
 }

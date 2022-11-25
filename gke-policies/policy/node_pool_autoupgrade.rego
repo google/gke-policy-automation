@@ -28,7 +28,6 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.5.3"
-#   dataSource: gke
 
 package gke.policy.node_pool_autoupgrade
 
@@ -39,7 +38,7 @@ valid {
 }
 
 violation[msg] {
-  not input.data.gke.node_pools[pool].management.auto_upgrade
-  msg := sprintf("autoupgrade not set for GKE node pool %q", [input.data.gke.node_pools[pool].name])
+  not input.node_pools[pool].management.auto_upgrade
+  msg := sprintf("autoupgrade not set for GKE node pool %q", [input.node_pools[pool].name])
 } 
 

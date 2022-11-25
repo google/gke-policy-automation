@@ -59,7 +59,7 @@ jobs:
       - name: Build
         run: make build
       - name: Generate policy documentation 
-        run: ./gke-policy generate policy-docs -s --creds internal/app/test-fixtures/test_credentials.json --local-policy-dir ./gke-policies -f generated-policy-docs.md
+        run: ./gke-policy generate policy-docs -s --creds internal/app/test-fixtures/test_credentials.json --local-policy-dir ./gke-policies-v2 -f generated-policy-docs.md
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
