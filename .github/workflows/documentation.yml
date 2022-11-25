@@ -65,4 +65,4 @@ jobs:
         with:
           python-version: 3.9
       - name: Check policy documentation
-        run: python3 scripts/policyDocCheck.py gke-policies/README.md generated-policy-docs.md
+        run: python3 scripts/policyDocCheck.py gke-policies-v2/README.md generated-policy-docs.md
