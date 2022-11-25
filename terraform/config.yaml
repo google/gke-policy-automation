@@ -15,8 +15,7 @@
 silent: true
 clusterDiscovery:
   enabled: true
-  organization:
-    - ${SCC_ORGANIZATION}
+  organization: ${SCC_ORGANIZATION}
 outputs:
   - securityCommandCenter:
       organization: ${SCC_ORGANIZATION}

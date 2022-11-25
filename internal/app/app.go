@@ -431,7 +431,6 @@ func newConfigFromCli(cliConfig *CliConfig) *cfg.Config {
 	config := &cfg.Config{}
 	config.SilentMode = cliConfig.SilentMode
 	config.JsonOutput = cliConfig.JsonOutput
-	config.K8SApiConfig.Enabled = cliConfig.K8SCheck
 	config.CredentialsFile = cliConfig.CredentialsFile
 	config.DumpFile = cliConfig.DumpFile
 	if cliConfig.DiscoveryEnabled {

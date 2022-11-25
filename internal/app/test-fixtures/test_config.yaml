@@ -29,8 +29,13 @@ outputs:
 - pubsub:
     project: my-pubsub-project
     topic: my-topic
-kubernetesAPIClient:
-  enabled: true
-  clientMaxQPS: 55
-  resourceAPIVersions:
-    - v1
+inputs:
+  gkeAPI:
+    enabled: true
+  gkeLocal:
+    enabled: false
+  k8sAPI: 
+    enabled: true
+    resourceAPIVersions:
+      - v1
+    clientMaxQPS: 55
