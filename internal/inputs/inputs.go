@@ -59,6 +59,7 @@ func GetAllInputsData(inputs []Input, clusterIDs []string) (map[string]*Cluster,
 //GetAllInputsDataWithMaxGoRoutines fetches data from given inputs for all given clusters
 //in a concurrent manner. The maxGoRoutines parameter determines concurrency level
 func GetAllInputsDataWithMaxGoRoutines(inputs []Input, clusterIDs []string, maxGoRoutines int) (map[string]*Cluster, []error) {
+	log.Infof("Fetching data from %d inputs for %d clusters", len(inputs), len(clusterIDs))
 	log.Debugf("using %d maxGoRoutines", maxGoRoutines)
 	tasksChan := make(chan *getDataTask, maxGoRoutines)
 	resultsChan := make(chan *getDataTaskResult, maxGoRoutines)
