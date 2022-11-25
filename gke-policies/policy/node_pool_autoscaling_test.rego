@@ -15,21 +15,21 @@
 package gke.policy.node_pool_autoscaling
 
 test_node_pool_autoscaling_enabled {
-    valid with input as {"data": {"gke": {"name": "cluster", "node_pools": [{"name": "default", "autoscaling": {"enabled": true}}]}}}
+    valid with input as {"name": "cluster", "node_pools": [{"name": "default", "autoscaling": {"enabled": true}}]}
 }
 
 test_node_pool_autoscaling_disabled {
-    not valid with input as {"data": {"gke": {"name": "cluster", "node_pools": [{"name": "default", "autoscaling": {"enabled": false}}]}}}
+    not valid with input as {"name": "cluster", "node_pools": [{"name": "default", "autoscaling": {"enabled": false}}]}
 }
 
 test_multiple_node_pool_autoscaling_but_only_one_enabled {
-    not valid with input as {"data": {"gke": {"name": "cluster", "node_pools": [{"name": "default", "autoscaling": {"enabled": true}}, {"name": "custom", "autoscaling": {"enabled": false}}]}}}
+    not valid with input as {"name": "cluster", "node_pools": [{"name": "default", "autoscaling": {"enabled": true}}, {"name": "custom", "autoscaling": {"enabled": false}}]}
 }
 
 test_multiple_node_pool_autoscaling_enabled {
-    valid with input as {"data": {"gke": {"name": "cluster", "node_pools": [{"name": "default", "autoscaling": {"enabled": true}}, {"name": "custom", "autoscaling": {"enabled": true}}]}}}
+    valid with input as {"name": "cluster", "node_pools": [{"name": "default", "autoscaling": {"enabled": true}}, {"name": "custom", "autoscaling": {"enabled": true}}]}
 }
 
 test_node_pool_without_autoscaling_field {
-    not valid with input as {"data": {"gke": {"name": "cluster", "node_pools": [{"name": "default"}]}}}
+    not valid with input as {"name": "cluster", "node_pools": [{"name": "default"}]}
 }

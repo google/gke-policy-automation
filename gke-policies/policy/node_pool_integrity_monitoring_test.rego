@@ -15,13 +15,13 @@
 package gke.policy.node_pool_integrity_monitoring
 
 test_empty_shielded_instance_config {
-    not valid with input as {"data": {"gke": {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{}}}]}}}
+    not valid with input as {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{}}}]}
 }
 
 test_disabled_integrity_monitoring {
-    not valid with input as {"data": {"gke": {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{"enable_integrity_monitoring": false}}}]}}}
+    not valid with input as {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{"enable_integrity_monitoring": false}}}]}
 }
 
 test_enabled_integrity_monitoring {
-    valid with input as {"data": {"gke": {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{"enable_integrity_monitoring": true}}}]}}}
+    valid with input as {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{"enable_integrity_monitoring": true}}}]}
 }

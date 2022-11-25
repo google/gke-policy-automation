@@ -142,5 +142,5 @@ in a [policy library README](README.md).
 Example:
 
 ```sh
-./gke-policy generate policy-docs --local-policy-dir ./gke-policies -f generated-policy-docs.md
+./gke-policy generate policy-docs --local-policy-dir ./gke-policies-v2 -f generated-policy-docs.md
 ```

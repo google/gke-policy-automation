@@ -29,7 +29,6 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.2.2"
-#   dataSource: gke
 
 package gke.policy.workload_identity
 
@@ -40,6 +39,6 @@ valid {
 }
 
 violation[msg] {
-	not input.data.gke.workload_identity_config.workload_pool
+	not input.workload_identity_config.workload_pool
 	msg := "The GKE cluster does not have workload identity enabled"
 }

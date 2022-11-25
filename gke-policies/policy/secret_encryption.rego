@@ -29,7 +29,6 @@
 #   cis:
 #     version: "1.2"
 #     id: "5.3.1"
-#   dataSource: gke
 
 package gke.policy.secret_encryption
 
@@ -40,6 +39,6 @@ valid {
 }
 
 violation[msg] {
-	input.data.gke.database_encryption.state != 1
+	input.database_encryption.state != 1
 	msg := "The GKE cluster is not configured to encrypt kubernetes application secrets"
 }
