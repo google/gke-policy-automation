@@ -13,6 +13,8 @@
 # limitations under the License.
 
 silent: true
+jsonOutput: true
+dumpFile: ./dump.json
 credentialsFile: ./test-fixtures/test_credentials.json
 clusters:
   - name: warsaw
@@ -21,14 +23,38 @@ clusters:
   - name: another
     project: my-project
     location: europe-central2
+clusterDiscovery:
+  enabled: true
+  organization: "123456789123"
+  folders:
+    - "112233"
+    - "445566"
+  projects:
+    - "112233"
+    - "445566"
+policyExclusions:
+  policies:
+    - "one"
+    - "two"
+  policyGroups:
+    - "security"
 policies:
   - local: /tmp
-  - repo: https://bla.com
+  - repository: https://bla.com
+    branch: devTest
+    directory: subDir
 outputs:
-- file: /some/file.json
-- pubsub:
-    project: my-pubsub-project
-    topic: my-topic
+  - file: /some/file.json
+  - cloudStorage:
+      bucket: test
+      path: some/path/to/files
+      skipDatePrefix: true
+  - pubsub:
+      project: my-pubsub-project
+      topic: my-topic
+  - securityCommandCenter:
+      organization: "1234567890123"
+      provisionSource: true
 inputs:
   gkeAPI:
     enabled: true

@@ -120,13 +120,15 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 		log.Errorf("could not identify clusters: %s", err)
 		return err
 	}
+	p.out.ColorPrintf("%s [light_gray][bold]Fetching data from %d input(s) for %d cluster(s)\n",
+		outputs.ICON_INFO, len(p.inputs), len(clusterIds))
 	clusterData, errors := inputs.GetAllInputsData(p.inputs, clusterIds)
-	if errors != nil && len(errors) > 0 {
+	if len(errors) > 0 {
 		p.out.ErrorPrint("could not fetch the cluster details", errors[0])
 		log.Errorf("could not fetch cluster details: %s", errors[0])
 		return errors[0]
 	}
-	val, err := json.MarshalIndent(clusterData, "", "    ")
+	val, _ := json.MarshalIndent(clusterData, "", "    ")
 	log.Debugf("[DEBUG] cluster: " + string(val))
 
 	evalResults := &evaluationResults{}
