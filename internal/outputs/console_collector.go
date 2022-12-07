@@ -52,7 +52,7 @@ func (p *consoleResultCollector) Close() error {
 		for _, evaluation := range policy.ClusterEvaluations {
 			statusString := "[ \033[1m\033[32mVALID\033[0m ]"
 			if !evaluation.Valid {
-				statusString = "[\033[1m\033[31mVIOLATION\033[0m]"
+				statusString = "[\033[1m\033[31mINVALID\033[0m]"
 			}
 			p.out.TabPrintf("  - %s\t"+statusString+"\n", evaluation.ClusterID)
 			if !evaluation.Valid {
