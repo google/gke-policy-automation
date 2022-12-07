@@ -50,9 +50,9 @@ func (p *consoleResultCollector) Close() error {
 		p.out.ColorPrintf("%s [bold][light_gray][%s][yellow] %s[reset]: %s\n", ICON_MAGNIFIER, policy.PolicyGroup, policy.PolicyName, policyTitle)
 
 		for _, evaluation := range policy.ClusterEvaluations {
-			statusString := "[ \033[1m\033[32mOK\033[0m ]"
+			statusString := "[ \033[1m\033[32mVALID\033[0m ]"
 			if !evaluation.Valid {
-				statusString = "[\033[1m\033[31mFAIL\033[0m]"
+				statusString = "[\033[1m\033[31mVIOLATION\033[0m]"
 			}
 			p.out.TabPrintf("  - %s\t"+statusString+"\n", evaluation.ClusterID)
 			if !evaluation.Valid {
