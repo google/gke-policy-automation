@@ -15,12 +15,14 @@
 package config
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/google/gke-policy-automation/internal/log"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -150,8 +152,10 @@ func ReadConfig(path string, readFn ReadFileFn) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
 	config := &Config{}
-	if err := yaml.UnmarshalStrict(data, config); err != nil {
+	if err := decoder.Decode(&config); err != nil && err != io.EOF {
 		return nil, err
 	}
 	return config, nil

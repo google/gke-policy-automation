@@ -15,15 +15,17 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"testing"
 	"time"
 
 	cfg "github.com/google/gke-policy-automation/internal/config"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 func TestLoadCliConfig_file(t *testing.T) {
@@ -39,9 +41,10 @@ func TestLoadCliConfig_file(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read test config file err is not nil; want nil; err = %s", err)
 	}
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
 	config := &cfg.Config{}
-	err = yaml.UnmarshalStrict(data, config)
-	if err != nil {
+	if err := decoder.Decode(&config); err != nil && err != io.EOF {
 		t.Fatalf("unmarshal test config file err is not nil; want nil; err = %s", err)
 	}
 	if !reflect.DeepEqual(pa.config, config) {
