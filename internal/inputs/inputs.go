@@ -51,13 +51,13 @@ type getDataTaskResult struct {
 	err            error
 }
 
-//GetAllInputsData fetches data from given inputs for all given clusters in a concurrent manner
+// GetAllInputsData fetches data from given inputs for all given clusters in a concurrent manner
 func GetAllInputsData(inputs []Input, clusterIDs []string) (map[string]*Cluster, []error) {
 	return GetAllInputsDataWithMaxGoRoutines(inputs, clusterIDs, defaultMaxDataGetCoroutines)
 }
 
-//GetAllInputsDataWithMaxGoRoutines fetches data from given inputs for all given clusters
-//in a concurrent manner. The maxGoRoutines parameter determines concurrency level
+// GetAllInputsDataWithMaxGoRoutines fetches data from given inputs for all given clusters
+// in a concurrent manner. The maxGoRoutines parameter determines concurrency level
 func GetAllInputsDataWithMaxGoRoutines(inputs []Input, clusterIDs []string, maxGoRoutines int) (map[string]*Cluster, []error) {
 	log.Infof("Fetching data from %d inputs for %d clusters", len(inputs), len(clusterIDs))
 	log.Debugf("using %d maxGoRoutines", maxGoRoutines)
