@@ -29,7 +29,7 @@ func main() {
 	var kClient *kubernetes.Clientset
 	var err error
 	if config.KubeConfigGKE != "" {
-		log.Debug("Creating kube client: GKE client for cluster %s", config.KubeConfigGKE)
+		log.Debugf("Creating kube client: GKE client for cluster %s", config.KubeConfigGKE)
 		kClient, err = k8s.NewClientFromGKE(ctx, config.KubeConfigGKE)
 	} else {
 		log.Debug("Creating kube client: in cluster client")

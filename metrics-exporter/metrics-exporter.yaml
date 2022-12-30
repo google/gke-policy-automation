@@ -13,30 +13,64 @@
 # limitations under the License.
 
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: gpa-metrics-exporter
+---
+apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: metrics-exporter
+  name: gpa-metrics-exporter
+  namespace: gpa-metrics-exporter
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gpa-metrics-exporter-resource-reader
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: gpa-metrics-exporter-resource-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: gpa-metrics-exporter-resource-reader
+subjects:
+- kind: ServiceAccount
+  name: gpa-metrics-exporter
+  namespace: gpa-metrics-exporter
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: metrics-exporter
+  name: gpa-metrics-exporter
+  namespace: gpa-metrics-exporter
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: metrics-exporter
+      app: gpa-metrics-exporter
   template:
     metadata:
       labels:
-        app: metrics-exporter
+        app: gpa-metrics-exporter
     spec:
       securityContext:
         fsGroup: 1011
         runAsGroup: 1011
         runAsNonRoot: true
         runAsUser: 1011
-      serviceAccountName: metrics-exporter
+      serviceAccountName: gpa-metrics-exporter
       containers:
       - name: metrics-exporter
         image: image
@@ -63,11 +97,11 @@ spec:
 apiVersion: monitoring.googleapis.com/v1
 kind: PodMonitoring
 metadata:
-  name: metrics-exporter
+  name: gpa-metrics-exporter
 spec:
   selector:
     matchLabels:
-      app: metrics-exporter
+      app: gpa-metrics-exporter
   endpoints:
   - port: http
     interval: 30s
