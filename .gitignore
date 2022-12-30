@@ -18,3 +18,6 @@ terraform/terraform.tfvars
 terraform/*.tfstate
 terraform/*.tfstate.*
 node_modules
+package-lock.json
+generated-policy-docs.md
+
