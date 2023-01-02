@@ -26,7 +26,7 @@ type validationReportMapperMock struct {
 	addResultFn     func(result *policy.PolicyEvaluationResult)
 	addResultsFn    func(results []*policy.PolicyEvaluationResult)
 	getReportFn     func() *ValidationReport
-	getJsonReportFn func() ([]byte, error)
+	getJSONReportFn func() ([]byte, error)
 }
 
 func (m validationReportMapperMock) AddResult(result *policy.PolicyEvaluationResult) {
@@ -41,8 +41,8 @@ func (m validationReportMapperMock) GetReport() *ValidationReport {
 	return m.getReportFn()
 }
 
-func (m validationReportMapperMock) GetJsonReport() ([]byte, error) {
-	return m.getJsonReportFn()
+func (m validationReportMapperMock) GetJSONReport() ([]byte, error) {
+	return m.getJSONReportFn()
 }
 
 func TestGetReport(t *testing.T) {

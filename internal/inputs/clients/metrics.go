@@ -50,11 +50,11 @@ type metricsClient struct {
 	maxGoRoutines int
 }
 
-func newMetricsClient(ctx context.Context, projectId string, authToken string, maxGoroutines int) (MetricsClient, error) {
+func newMetricsClient(ctx context.Context, projectID string, authToken string, maxGoroutines int) (MetricsClient, error) {
 
 	// Creates a client.
 	client, err := api.NewClient(api.Config{
-		Address:      "https://monitoring.googleapis.com/v1/projects/" + projectId + "/location/global/prometheus/",
+		Address:      "https://monitoring.googleapis.com/v1/projects/" + projectID + "/location/global/prometheus/",
 		RoundTripper: config.NewAuthorizationCredentialsRoundTripper("Bearer", config.Secret(authToken), api.DefaultRoundTripper),
 	})
 
@@ -75,16 +75,16 @@ func newMetricsClient(ctx context.Context, projectId string, authToken string, m
 
 type metricsClientBuilder struct {
 	ctx           context.Context
-	projectId     string
+	projectID     string
 	authToken     string
 	maxGoroutines int
 	timeout       int
 }
 
-func NewMetricsClientBuilder(ctx context.Context, projectId string, authToken string) *metricsClientBuilder {
+func NewMetricsClientBuilder(ctx context.Context, projectID string, authToken string) *metricsClientBuilder {
 	return &metricsClientBuilder{
 		ctx:       ctx,
-		projectId: projectId,
+		projectID: projectID,
 		authToken: authToken,
 	}
 }
@@ -106,7 +106,7 @@ func (b *metricsClientBuilder) Build() (MetricsClient, error) {
 		maxGoRoutines = b.maxGoroutines
 	}
 
-	metricsClient, err := newMetricsClient(b.ctx, b.projectId, b.authToken, maxGoRoutines)
+	metricsClient, err := newMetricsClient(b.ctx, b.projectID, b.authToken, maxGoRoutines)
 
 	if err != nil {
 		log.Fatalf("Failed to create metrics client: %v", err)

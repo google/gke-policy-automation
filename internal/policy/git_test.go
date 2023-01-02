@@ -107,8 +107,8 @@ func TestNewGitPolicySource(t *testing.T) {
 	if !ok {
 		t.Errorf("Result of NewGitPolicySource is not *GitPolicySource")
 	}
-	if gitSrc.repoUrl != repoURL {
-		t.Errorf("repoUrl = %s; want %s", gitSrc.repoUrl, repoURL)
+	if gitSrc.repoURL != repoURL {
+		t.Errorf("repoUrl = %s; want %s", gitSrc.repoURL, repoURL)
 	}
 	if gitSrc.repoBranch != repoBranch {
 		t.Errorf("repoBranch = %s; want %s", gitSrc.repoBranch, repoBranch)
@@ -129,7 +129,7 @@ func TestClone(t *testing.T) {
 	}
 
 	policySrc := &GitPolicySource{
-		repoUrl:    "https://test.com/repository",
+		repoURL:    "https://test.com/repository",
 		repoBranch: "main",
 		cloneFn:    cloneFn,
 	}
@@ -138,8 +138,8 @@ func TestClone(t *testing.T) {
 	if err != nil {
 		t.Errorf("err is not nil; want nil")
 	}
-	if opts.URL != policySrc.repoUrl {
-		t.Errorf("URL = %s; want %s", opts.URL, policySrc.repoUrl)
+	if opts.URL != policySrc.repoURL {
+		t.Errorf("URL = %s; want %s", opts.URL, policySrc.repoURL)
 	}
 	refName := plumbing.ReferenceName("refs/heads/" + policySrc.repoBranch)
 	if opts.ReferenceName != refName {

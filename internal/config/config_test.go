@@ -287,18 +287,18 @@ func TestSetCheckConfigDefaults(t *testing.T) {
 
 func TestSetScalabilityConfigDefaults(t *testing.T) {
 	config := &Config{}
-	config.Inputs.K8sApi = &K8SApiInput{
+	config.Inputs.K8sAPI = &K8SAPIInput{
 		Enabled: true,
 	}
 	SetScalabilityConfigDefaults(config)
 	assertPolicyConfigDefaults(t, config)
-	if !config.Inputs.MetricsApi.Enabled {
-		t.Errorf("MetricsApi.Enabled = %v; want %v", config.Inputs.MetricsApi.Enabled, true)
+	if !config.Inputs.MetricsAPI.Enabled {
+		t.Errorf("MetricsApi.Enabled = %v; want %v", config.Inputs.MetricsAPI.Enabled, true)
 	}
-	if config.Inputs.K8sApi.MaxQPS != DefaultK8SClientQPS {
-		t.Errorf("K8sApi.MaxQPS = %v; want %v", config.Inputs.K8sApi.MaxQPS, DefaultK8SClientQPS)
+	if config.Inputs.K8sAPI.MaxQPS != DefaultK8SClientQPS {
+		t.Errorf("K8sApi.MaxQPS = %v; want %v", config.Inputs.K8sAPI.MaxQPS, DefaultK8SClientQPS)
 	}
-	assert.ElementsMatch(t, config.Inputs.K8sApi.ApiVersions, DefaultK8SApiVersions, "K8sApi.ApiVersions matches defaults")
+	assert.ElementsMatch(t, config.Inputs.K8sAPI.APIVersions, DefaultK8SApiVersions, "K8sApi.ApiVersions matches defaults")
 }
 
 func assertPolicyConfigDefaults(t *testing.T, config *Config) {

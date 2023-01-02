@@ -49,7 +49,7 @@ func TestMetricsInputBuilder(t *testing.T) {
 	testCredsFile := "test-fixtures/test_credentials.json"
 	queries := make([]clients.MetricQuery, 2)
 	numberOfGoroutines := 5
-	projectId := "testProject"
+	projectID := "testProject"
 
 	queries[0] = clients.MetricQuery{
 		Name:  "numberOfNodes",
@@ -63,7 +63,7 @@ func TestMetricsInputBuilder(t *testing.T) {
 	b := NewMetricsInputBuilder(context.Background(), queries).
 		WithCredentialsFile(testCredsFile).
 		WithMaxGoroutines(numberOfGoroutines).
-		WithProjectId(projectId)
+		WithProjectID(projectID)
 
 	input, err := b.Build()
 	if err != nil {
@@ -82,8 +82,8 @@ func TestMetricsInputBuilder(t *testing.T) {
 	if !reflect.DeepEqual(metricsInput.queries, queries) {
 		t.Errorf("queries = %v; want %v", metricsInput.queries, queries)
 	}
-	if metricsInput.projectId != projectId {
-		t.Errorf("projectId = %v; want %v", metricsInput.projectId, projectId)
+	if metricsInput.projectID != projectID {
+		t.Errorf("projectId = %v; want %v", metricsInput.projectID, projectID)
 	}
 }
 
@@ -112,17 +112,17 @@ func TestMetricsInputGetData(t *testing.T) {
 		Query: "apiserver_storage_objects{resource=\"pods\"}",
 	}
 
-	projectId := "testProject"
-	clusterId := "projects/testProject/locations/us/clusters/cluster1"
+	projectID := "testProject"
+	clusterID := "projects/testProject/locations/us/clusters/cluster1"
 
 	input := metricsInput{
 		ctx:           context.Background(),
-		projectId:     projectId,
+		projectID:     projectID,
 		queries:       queries,
 		metricsClient: metricsClientMock{},
 	}
 
-	_, err := input.GetData(clusterId)
+	_, err := input.GetData(clusterID)
 	if err != nil {
 		t.Fatalf("err = %v; want nil", err)
 	}

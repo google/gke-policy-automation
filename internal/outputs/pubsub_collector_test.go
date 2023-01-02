@@ -48,13 +48,13 @@ func TestPublishingToPubSub(t *testing.T) {
 
 	project := "my-project"
 	topicName := "my-topic"
-	mockMessageId := "xxxxxx"
+	mockMessageID := "xxxxxx"
 
 	evalResults := make([]*policy.PolicyEvaluationResult, 0)
 	evalResults = append(evalResults, policyResult)
 
 	mockPubSub := &PubSubMock{}
-	mockPubSub.On("Publish", topicName, mock.Anything).Return(mockMessageId, nil)
+	mockPubSub.On("Publish", topicName, mock.Anything).Return(mockMessageID, nil)
 	mockPubSub.On("Close").Return(nil)
 
 	var collector = NewPubSubResultCollector(mockPubSub, project, topicName)

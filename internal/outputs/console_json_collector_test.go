@@ -23,17 +23,17 @@ import (
 
 func TestConsoleJsonResultCollector(t *testing.T) {
 	var buff bytes.Buffer
-	var expectedJson = "json string"
+	var expectedJSON = "json string"
 
 	out := &Output{w: &buff}
 	reportMapperMock := &validationReportMapperMock{
 		addResultsFn: func(results []*policy.PolicyEvaluationResult) {},
-		getJsonReportFn: func() ([]byte, error) {
-			return []byte(expectedJson), nil
+		getJSONReportFn: func() ([]byte, error) {
+			return []byte(expectedJSON), nil
 		},
 	}
 
-	collector := &consoleJsonResultCollector{out: out, reportMapper: reportMapperMock}
+	collector := &consoleJSONResultCollector{out: out, reportMapper: reportMapperMock}
 	err := collector.RegisterResult([]*policy.PolicyEvaluationResult{{}})
 	if err != nil {
 		t.Fatalf("err on RegisterResult = %v; want nil", err)
@@ -45,7 +45,7 @@ func TestConsoleJsonResultCollector(t *testing.T) {
 	if len(buff.String()) <= 0 {
 		t.Errorf("nothing was written to the output buffer")
 	}
-	if buff.String() != expectedJson {
-		t.Errorf("expected \"%v\" but buffer was \"%v\"", expectedJson, buff.String())
+	if buff.String() != expectedJSON {
+		t.Errorf("expected \"%v\" but buffer was \"%v\"", expectedJSON, buff.String())
 	}
 }

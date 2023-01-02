@@ -26,14 +26,14 @@ import (
 	"time"
 
 	scc "cloud.google.com/go/securitycenter/apiv1"
+	sccpb "cloud.google.com/go/securitycenter/apiv1/securitycenterpb"
 	"github.com/google/gke-policy-automation/internal/version"
 	gax "github.com/googleapis/gax-go/v2"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/api/iterator"
-	sccpb "google.golang.org/genproto/googleapis/cloud/securitycenter/v1"
 )
 
-type sccApiClientMock struct {
+type sccAPIClientMock struct {
 	ListSourcesFn   func(ctx context.Context, req *sccpb.ListSourcesRequest, opts ...gax.CallOption) *scc.SourceIterator
 	CreateSourceFn  func(ctx context.Context, req *sccpb.CreateSourceRequest, opts ...gax.CallOption) (*sccpb.Source, error)
 	ListFindingsFn  func(ctx context.Context, req *sccpb.ListFindingsRequest, opts ...gax.CallOption) *scc.ListFindingsResponse_ListFindingsResultIterator
@@ -41,23 +41,23 @@ type sccApiClientMock struct {
 	CloseFn         func() error
 }
 
-func (m *sccApiClientMock) ListSources(ctx context.Context, req *sccpb.ListSourcesRequest, opts ...gax.CallOption) *scc.SourceIterator {
+func (m *sccAPIClientMock) ListSources(ctx context.Context, req *sccpb.ListSourcesRequest, opts ...gax.CallOption) *scc.SourceIterator {
 	return m.ListSourcesFn(ctx, req, opts...)
 }
 
-func (m *sccApiClientMock) CreateSource(ctx context.Context, req *sccpb.CreateSourceRequest, opts ...gax.CallOption) (*sccpb.Source, error) {
+func (m *sccAPIClientMock) CreateSource(ctx context.Context, req *sccpb.CreateSourceRequest, opts ...gax.CallOption) (*sccpb.Source, error) {
 	return m.CreateSourceFn(ctx, req, opts...)
 }
 
-func (m *sccApiClientMock) ListFindings(ctx context.Context, req *sccpb.ListFindingsRequest, opts ...gax.CallOption) *scc.ListFindingsResponse_ListFindingsResultIterator {
+func (m *sccAPIClientMock) ListFindings(ctx context.Context, req *sccpb.ListFindingsRequest, opts ...gax.CallOption) *scc.ListFindingsResponse_ListFindingsResultIterator {
 	return m.ListFindingsFn(ctx, req, opts...)
 }
 
-func (m *sccApiClientMock) UpdateFinding(ctx context.Context, req *sccpb.UpdateFindingRequest, opts ...gax.CallOption) (*sccpb.Finding, error) {
+func (m *sccAPIClientMock) UpdateFinding(ctx context.Context, req *sccpb.UpdateFindingRequest, opts ...gax.CallOption) (*sccpb.Finding, error) {
 	return m.UpdateFindingFn(ctx, req, opts...)
 }
 
-func (m *sccApiClientMock) Close() error {
+func (m *sccAPIClientMock) Close() error {
 	return m.CloseFn()
 }
 
@@ -72,7 +72,7 @@ func (m *sccSourceIteratorMock) Next() (*sccpb.Source, error) {
 func TestCreateSource(t *testing.T) {
 	orgNumber := "123456789"
 	srcName := "testSourceName"
-	mock := &sccApiClientMock{
+	mock := &sccAPIClientMock{
 		CreateSourceFn: func(ctx context.Context, req *sccpb.CreateSourceRequest, opts ...gax.CallOption) (*sccpb.Source, error) {
 			if req.Source.DisplayName != sourceDisplayName {
 				t.Errorf("req source display name = %v; want %v", req.Source.DisplayName, sourceDisplayName)
@@ -99,9 +99,9 @@ func TestUpsertFinding_emptySearch_active(t *testing.T) {
 	finding := &Finding{
 		ResourceName: "resource",
 		Category:     "category",
-		State:        FINDING_STATE_STRING_ACTIVE,
+		State:        FindingStateStringActive,
 	}
-	mock := &sccApiClientMock{
+	mock := &sccAPIClientMock{
 		ListFindingsFn: func(ctx context.Context, req *sccpb.ListFindingsRequest, opts ...gax.CallOption) *scc.ListFindingsResponse_ListFindingsResultIterator {
 			return &scc.ListFindingsResponse_ListFindingsResultIterator{}
 		},
@@ -133,9 +133,9 @@ func TestUpsertFinding_emptySearch_inactive(t *testing.T) {
 	finding := &Finding{
 		ResourceName: "resource",
 		Category:     "category",
-		State:        FINDING_STATE_STRING_INACTIVE,
+		State:        FindingStateStringInactive,
 	}
-	mock := &sccApiClientMock{
+	mock := &sccAPIClientMock{
 		ListFindingsFn: func(ctx context.Context, req *sccpb.ListFindingsRequest, opts ...gax.CallOption) *scc.ListFindingsResponse_ListFindingsResultIterator {
 			return &scc.ListFindingsResponse_ListFindingsResultIterator{}
 		},
@@ -154,7 +154,7 @@ func TestUpsertFinding_emptySearch_inactive(t *testing.T) {
 
 func TestClose(t *testing.T) {
 	err := errors.New("test error")
-	mock := &sccApiClientMock{
+	mock := &sccAPIClientMock{
 		CloseFn: func() error {
 			return err
 		},
@@ -168,7 +168,7 @@ func TestClose(t *testing.T) {
 
 func TestFindSource(t *testing.T) {
 	orgNumber := "123456789"
-	mock := &sccApiClientMock{
+	mock := &sccAPIClientMock{
 		ListSourcesFn: func(ctx context.Context, req *sccpb.ListSourcesRequest, opts ...gax.CallOption) *scc.SourceIterator {
 			expectedParent := fmt.Sprintf("organizations/%s", orgNumber)
 			if req.Parent != expectedParent {
@@ -226,7 +226,7 @@ func TestGetFinding(t *testing.T) {
 	}
 	apiFinding := mapFindingToAPI(source, finding)
 
-	mock := &sccApiClientMock{
+	mock := &sccAPIClientMock{
 		ListFindingsFn: func(ctx context.Context, req *sccpb.ListFindingsRequest, opts ...gax.CallOption) *scc.ListFindingsResponse_ListFindingsResultIterator {
 			if req.Parent != source {
 				t.Errorf("parent = %v; want %v", req.Parent, source)
@@ -254,7 +254,7 @@ func TestGetFinding(t *testing.T) {
 
 func TestUpsertFinding(t *testing.T) {
 	finding := &sccpb.Finding{}
-	mock := &sccApiClientMock{
+	mock := &sccAPIClientMock{
 		UpdateFindingFn: func(ctx context.Context, req *sccpb.UpdateFindingRequest, opts ...gax.CallOption) (*sccpb.Finding, error) {
 			if req.Finding != finding {
 				t.Fatalf("finding pointer = %v; want %v", req.Finding, finding)
@@ -310,12 +310,12 @@ func TestResourceIteratorToSlice(t *testing.T) {
 
 func TestMapFindingSeverityString(t *testing.T) {
 	data := map[string]sccpb.Finding_Severity{
-		FINDING_SEVERITY_STRING_CRITICAL: sccpb.Finding_CRITICAL,
-		FINDING_SEVERITY_STRING_HIGH:     sccpb.Finding_HIGH,
-		FINDING_SEVERITY_STRING_MEDIUM:   sccpb.Finding_MEDIUM,
-		FINDING_SEVERITY_STRING_LOW:      sccpb.Finding_LOW,
-		"bogus":                          sccpb.Finding_SEVERITY_UNSPECIFIED,
-		"":                               sccpb.Finding_SEVERITY_UNSPECIFIED,
+		FindingSeverityStringCritical: sccpb.Finding_CRITICAL,
+		FindingSeverityStringHigh:     sccpb.Finding_HIGH,
+		FindingSeverityStringMedium:   sccpb.Finding_MEDIUM,
+		FindingSeverityStringLow:      sccpb.Finding_LOW,
+		"bogus":                       sccpb.Finding_SEVERITY_UNSPECIFIED,
+		"":                            sccpb.Finding_SEVERITY_UNSPECIFIED,
 	}
 	for k, v := range data {
 		r := mapFindingSeverityString(k)
@@ -439,8 +439,8 @@ func TestMapFindingToAPI(t *testing.T) {
 		ResourceName:      "cluster-resource",
 		Category:          "category",
 		Description:       "description",
-		State:             FINDING_STATE_STRING_ACTIVE,
-		Severity:          FINDING_SEVERITY_STRING_HIGH,
+		State:             FindingStateStringActive,
+		Severity:          FindingSeverityStringHigh,
 		SourcePolicyName:  "gke.policy.some_policy",
 		SourcePolicyGroup: "Security",
 		SourcePolicyFile:  "name.rego",
@@ -484,11 +484,11 @@ func TestMapFindingToAPI(t *testing.T) {
 
 func TestMapFindingStateString(t *testing.T) {
 	data := map[string]sccpb.Finding_State{
-		FINDING_STATE_STRING_ACTIVE:      sccpb.Finding_ACTIVE,
-		FINDING_STATE_STRING_INACTIVE:    sccpb.Finding_INACTIVE,
-		FINDING_STATE_STRING_UNSPECIFIED: sccpb.Finding_STATE_UNSPECIFIED,
-		"bogus":                          sccpb.Finding_STATE_UNSPECIFIED,
-		"":                               sccpb.Finding_STATE_UNSPECIFIED,
+		FindingStateStringActive:      sccpb.Finding_ACTIVE,
+		FindingStateStringInactive:    sccpb.Finding_INACTIVE,
+		FindingStateStringUnspecified: sccpb.Finding_STATE_UNSPECIFIED,
+		"bogus":                       sccpb.Finding_STATE_UNSPECIFIED,
+		"":                            sccpb.Finding_STATE_UNSPECIFIED,
 	}
 	for k, v := range data {
 		r := mapFindingStateString(k)

@@ -48,7 +48,7 @@ func (m *MockMapper) AddResults(results []*policy.PolicyEvaluationResult) {
 	m.Called()
 }
 
-func (m *MockMapper) GetJsonReport() ([]byte, error) {
+func (m *MockMapper) GetJSONReport() ([]byte, error) {
 	args := m.Called()
 	return args.Get(0).([]byte), args.Error(1)
 }
@@ -79,7 +79,7 @@ func TestCloudStorageCollector(t *testing.T) {
 
 		mockMapper := &MockMapper{}
 		mockMapper.On("AddResults").Return()
-		mockMapper.On("GetJsonReport").Return(mappedResult, nil)
+		mockMapper.On("GetJSONReport").Return(mappedResult, nil)
 
 		collector, err := NewCloudStorageResultCollector(mockStorage, bucket, object)
 		if err != nil {
@@ -120,7 +120,7 @@ func TestCloudStorageCollector(t *testing.T) {
 
 		mockMapper := &MockMapper{}
 		mockMapper.On("AddResults").Return()
-		mockMapper.On("GetJsonReport").Return(mappedResult, nil)
+		mockMapper.On("GetJSONReport").Return(mappedResult, nil)
 
 		collector, err := NewCloudStorageResultCollector(mockStorage, bucket, object)
 		if err != nil {

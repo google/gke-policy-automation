@@ -21,95 +21,94 @@ import (
 	"time"
 
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/prometheus/common/model"
 	pmodel "github.com/prometheus/common/model"
 )
 
-type metricsApiClientMock struct {
-	QueryFn func(ctx context.Context, query string, ts time.Time, opts ...v1.Option) (model.Value, v1.Warnings, error)
+type metricsAPIClientMock struct {
+	QueryFn func(ctx context.Context, query string, ts time.Time, opts ...v1.Option) (pmodel.Value, v1.Warnings, error)
 }
 
-func (m *metricsApiClientMock) Query(ctx context.Context, query string, ts time.Time, opts ...v1.Option) (model.Value, v1.Warnings, error) {
+func (m *metricsAPIClientMock) Query(ctx context.Context, query string, ts time.Time, opts ...v1.Option) (pmodel.Value, v1.Warnings, error) {
 	return m.QueryFn(ctx, query, ts, opts...)
 }
 
-func (m *metricsApiClientMock) Alerts(ctx context.Context) (v1.AlertsResult, error) {
+func (m *metricsAPIClientMock) Alerts(ctx context.Context) (v1.AlertsResult, error) {
 	return v1.AlertsResult{}, nil
 }
 
-func (m *metricsApiClientMock) AlertManagers(ctx context.Context) (v1.AlertManagersResult, error) {
+func (m *metricsAPIClientMock) AlertManagers(ctx context.Context) (v1.AlertManagersResult, error) {
 	return v1.AlertManagersResult{}, nil
 }
 
-func (m *metricsApiClientMock) CleanTombstones(ctx context.Context) error {
+func (m *metricsAPIClientMock) CleanTombstones(ctx context.Context) error {
 	return nil
 }
 
-func (m *metricsApiClientMock) Config(ctx context.Context) (v1.ConfigResult, error) {
+func (m *metricsAPIClientMock) Config(ctx context.Context) (v1.ConfigResult, error) {
 	return v1.ConfigResult{}, nil
 }
 
-func (m *metricsApiClientMock) DeleteSeries(ctx context.Context, matches []string, startTime, endTime time.Time) error {
+func (m *metricsAPIClientMock) DeleteSeries(ctx context.Context, matches []string, startTime, endTime time.Time) error {
 	return nil
 }
 
-func (m *metricsApiClientMock) Flags(ctx context.Context) (v1.FlagsResult, error) {
+func (m *metricsAPIClientMock) Flags(ctx context.Context) (v1.FlagsResult, error) {
 	return nil, nil
 }
 
-func (m *metricsApiClientMock) LabelNames(ctx context.Context, matches []string, startTime, endTime time.Time) ([]string, v1.Warnings, error) {
+func (m *metricsAPIClientMock) LabelNames(ctx context.Context, matches []string, startTime, endTime time.Time) ([]string, v1.Warnings, error) {
 	return nil, nil, nil
 }
 
-func (m *metricsApiClientMock) LabelValues(ctx context.Context, label string, matches []string, startTime, endTime time.Time) (model.LabelValues, v1.Warnings, error) {
+func (m *metricsAPIClientMock) LabelValues(ctx context.Context, label string, matches []string, startTime, endTime time.Time) (pmodel.LabelValues, v1.Warnings, error) {
 	return nil, nil, nil
 }
 
-func (m *metricsApiClientMock) QueryRange(ctx context.Context, query string, r v1.Range, opts ...v1.Option) (model.Value, v1.Warnings, error) {
+func (m *metricsAPIClientMock) QueryRange(ctx context.Context, query string, r v1.Range, opts ...v1.Option) (pmodel.Value, v1.Warnings, error) {
 	return nil, nil, nil
 }
 
-func (m *metricsApiClientMock) QueryExemplars(ctx context.Context, query string, startTime, endTime time.Time) ([]v1.ExemplarQueryResult, error) {
+func (m *metricsAPIClientMock) QueryExemplars(ctx context.Context, query string, startTime, endTime time.Time) ([]v1.ExemplarQueryResult, error) {
 	return nil, nil
 }
 
-func (m *metricsApiClientMock) Buildinfo(ctx context.Context) (v1.BuildinfoResult, error) {
+func (m *metricsAPIClientMock) Buildinfo(ctx context.Context) (v1.BuildinfoResult, error) {
 	return v1.BuildinfoResult{}, nil
 }
 
-func (m *metricsApiClientMock) Runtimeinfo(ctx context.Context) (v1.RuntimeinfoResult, error) {
+func (m *metricsAPIClientMock) Runtimeinfo(ctx context.Context) (v1.RuntimeinfoResult, error) {
 	return v1.RuntimeinfoResult{}, nil
 }
 
-func (m *metricsApiClientMock) Series(ctx context.Context, matches []string, startTime, endTime time.Time) ([]model.LabelSet, v1.Warnings, error) {
+func (m *metricsAPIClientMock) Series(ctx context.Context, matches []string, startTime, endTime time.Time) ([]pmodel.LabelSet, v1.Warnings, error) {
 	return nil, nil, nil
 }
 
-func (m *metricsApiClientMock) Snapshot(ctx context.Context, skipHead bool) (v1.SnapshotResult, error) {
+func (m *metricsAPIClientMock) Snapshot(ctx context.Context, skipHead bool) (v1.SnapshotResult, error) {
 	return v1.SnapshotResult{}, nil
 }
 
-func (m *metricsApiClientMock) Rules(ctx context.Context) (v1.RulesResult, error) {
+func (m *metricsAPIClientMock) Rules(ctx context.Context) (v1.RulesResult, error) {
 	return v1.RulesResult{}, nil
 }
 
-func (m *metricsApiClientMock) Targets(ctx context.Context) (v1.TargetsResult, error) {
+func (m *metricsAPIClientMock) Targets(ctx context.Context) (v1.TargetsResult, error) {
 	return v1.TargetsResult{}, nil
 }
 
-func (m *metricsApiClientMock) TargetsMetadata(ctx context.Context, matchTarget, metric, limit string) ([]v1.MetricMetadata, error) {
+func (m *metricsAPIClientMock) TargetsMetadata(ctx context.Context, matchTarget, metric, limit string) ([]v1.MetricMetadata, error) {
 	return nil, nil
 }
 
-func (m *metricsApiClientMock) Metadata(ctx context.Context, metric, limit string) (map[string][]v1.Metadata, error) {
+func (m *metricsAPIClientMock) Metadata(ctx context.Context, metric, limit string) (map[string][]v1.Metadata, error) {
 	return nil, nil
 }
 
-func (m *metricsApiClientMock) TSDB(ctx context.Context) (v1.TSDBResult, error) {
+func (m *metricsAPIClientMock) TSDB(ctx context.Context) (v1.TSDBResult, error) {
 	return v1.TSDBResult{}, nil
 }
 
-func (m *metricsApiClientMock) WalReplay(ctx context.Context) (v1.WalReplayStatus, error) {
+func (m *metricsAPIClientMock) WalReplay(ctx context.Context) (v1.WalReplayStatus, error) {
 	return v1.WalReplayStatus{}, nil
 }
 
@@ -137,8 +136,8 @@ func TestGetMetric(t *testing.T) {
 	metricValue := 22
 	testQuery := "test-query"
 
-	v1ApiMock := &metricsApiClientMock{
-		QueryFn: func(ctx context.Context, query string, ts time.Time, opts ...v1.Option) (model.Value, v1.Warnings, error) {
+	v1ApiMock := &metricsAPIClientMock{
+		QueryFn: func(ctx context.Context, query string, ts time.Time, opts ...v1.Option) (pmodel.Value, v1.Warnings, error) {
 
 			if query != testQuery {
 				t.Errorf("query is %v; want %v", query, testQuery)
@@ -173,8 +172,8 @@ func TestGetMetricsForCluster(t *testing.T) {
 
 	metric2Name := "test-metric2"
 
-	v1ApiMock := &metricsApiClientMock{
-		QueryFn: func(ctx context.Context, query string, ts time.Time, opts ...v1.Option) (model.Value, v1.Warnings, error) {
+	v1ApiMock := &metricsAPIClientMock{
+		QueryFn: func(ctx context.Context, query string, ts time.Time, opts ...v1.Option) (pmodel.Value, v1.Warnings, error) {
 
 			return pmodel.Vector{
 				&pmodel.Sample{
