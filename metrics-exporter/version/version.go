@@ -12,26 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package k8s
+package version
 
-import (
-	"k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
-)
+// Application version is set at build-time in the release process
+var Version = "unknown"
 
-type informerFactory struct {
-	factory informers.SharedInformerFactory
-}
-
-func NewInformerFactory(kubeClient kubernetes.Interface) *informerFactory {
-	return &informerFactory{
-		factory: informers.NewSharedInformerFactory(kubeClient, 0),
-	}
-}
-
-func (f *informerFactory) GetPodInformer() *PodInformer {
-	informer := f.factory.Core().V1().Pods().Informer()
-	return &PodInformer{
-		informer: informer,
-	}
-}
+// UserAgent to be set by (http) clients
+var UserAgent = "gke-policy-automation/" + Version

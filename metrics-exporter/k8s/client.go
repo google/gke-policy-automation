@@ -1,3 +1,18 @@
+// Copyright 2022 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package k8s implements kubernetes related functions like clients and informers
 package k8s
 
 import (
@@ -6,9 +21,8 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/container/apiv1/containerpb"
-	"github.com/google/gke-policy-automation/internal/inputs"
-	"github.com/google/gke-policy-automation/internal/inputs/clients"
-	"github.com/google/gke-policy-automation/internal/log"
+	"github.com/google/gke-policy-automation/metrics-exporter/gke"
+	"github.com/google/gke-policy-automation/metrics-exporter/log"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -24,7 +38,7 @@ func NewInClusterClient() (*kubernetes.Clientset, error) {
 }
 
 func NewClientFromGKE(ctx context.Context, clusterID string) (*kubernetes.Clientset, error) {
-	ts, err := clients.NewGoogleTokenSource(ctx)
+	ts, err := gke.NewGoogleTokenSource(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -32,16 +46,15 @@ func NewClientFromGKE(ctx context.Context, clusterID string) (*kubernetes.Client
 	if err != nil {
 		return nil, err
 	}
-	gkeInput, err := inputs.NewGKEApiInput(ctx)
+	gkeClient, err := gke.NewClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer gkeInput.Close()
-	data, err := gkeInput.GetData(clusterID)
+	defer gkeClient.Close()
+	gkeData, err := gkeClient.GetData(clusterID)
 	if err != nil {
 		return nil, err
 	}
-	gkeData := data.(*containerpb.Cluster)
 	kubeConfig, err := createKubeConfig(gkeData, token)
 	if err != nil {
 		return nil, err
