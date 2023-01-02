@@ -20,7 +20,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/google/gke-policy-automation/metrics-exporter/k8s"
 	"github.com/google/gke-policy-automation/metrics-exporter/log"
@@ -54,14 +53,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	podMetric := metrics.NewPodMetric()
+	containerMetric := metrics.NewContainerMetric()
 	informers := k8s.NewInformerFactory(kClient)
-	podInformer := informers.GetPodInformer()
 
 	go k8s.NewClusterWatcher(ctx).
-		WithInformer(podInformer).Start()
-
-	go metrics.NewScheduler(ctx, time.Duration(1*time.Minute)).
-		WithMetric(metrics.NewPodMetric(podInformer)).
+		WithInformer(informers.GetPodInformer().WithMetric(podMetric).WithMetric(containerMetric)).
 		Start()
 
 	http.Handle("/metrics", promhttp.Handler())

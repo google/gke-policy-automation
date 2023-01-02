@@ -23,7 +23,7 @@ default: clean build test
 all: default
 
 build:
-	${GOCMD} build -ldflags "${LDFLAGS}" -o ${BINARY}
+	CGO_ENABLED=0 ${GOCMD} build -ldflags "${LDFLAGS}" -o ${BINARY}
 
 test:
 	echo $(TEST) | \

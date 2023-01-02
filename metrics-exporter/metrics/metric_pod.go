@@ -15,9 +15,14 @@
 package metrics
 
 import (
-	"github.com/google/gke-policy-automation/metrics-exporter/k8s"
+	"fmt"
+	"reflect"
+	"sync"
+
+	"github.com/google/gke-policy-automation/metrics-exporter/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	v1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -26,13 +31,13 @@ const (
 )
 
 type podMetric struct {
-	informer *k8s.PodInformer
-	metric   *prometheus.GaugeVec
+	metric *prometheus.GaugeVec
+	cache  map[string]int
+	mutex  sync.Mutex
 }
 
-func NewPodMetric(i *k8s.PodInformer) *podMetric {
+func NewPodMetric() Metric {
 	return &podMetric{
-		informer: i,
 		metric: promauto.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name: podMetricName,
@@ -40,6 +45,7 @@ func NewPodMetric(i *k8s.PodInformer) *podMetric {
 			},
 			[]string{"node", "namespace"},
 		),
+		cache: map[string]int{},
 	}
 }
 
@@ -47,19 +53,37 @@ func (m *podMetric) GetName() string {
 	return podMetricName
 }
 
-func (m *podMetric) Update() {
-	count := make(map[string]map[string]int)
-	for _, p := range m.informer.GetPods() {
-		nsCount, ok := count[p.Namespace]
-		if !ok {
-			nsCount = make(map[string]int)
-			count[p.Namespace] = nsCount
-		}
-		nsCount[p.Spec.NodeName] = nsCount[p.Spec.NodeName] + 1
+func (m *podMetric) OnAdd(obj interface{}) {
+	m.updateMetric(obj, opAdd)
+}
+
+func (m *podMetric) OnUpdate(oldObj, newObj interface{}) {
+}
+
+func (m *podMetric) OnDelete(obj interface{}) {
+	m.updateMetric(obj, opDelete)
+}
+
+func (m *podMetric) updateMetric(obj interface{}, op int) {
+	pod, ok := obj.(*v1.Pod)
+	if !ok {
+		log.Warnf("got object of type %s, want *v1.Pod", reflect.TypeOf(obj).Name())
+		return
 	}
-	for ns := range count {
-		for node, val := range count[ns] {
-			m.metric.With(prometheus.Labels{"node": node, "namespace": ns}).Set(float64(val))
-		}
+	key := getPodCacheKey(pod)
+	m.mutex.Lock()
+	var newValue int
+	if op == opAdd {
+		newValue = m.cache[key] + 1
+	} else {
+		newValue = m.cache[key] - 1
 	}
+	log.Debugf("setting pod metric for key %s to %d", key, newValue)
+	m.cache[key] = newValue
+	m.mutex.Unlock()
+	m.metric.With(prometheus.Labels{"node": pod.Spec.NodeName, "namespace": pod.Namespace}).Set(float64(newValue))
+}
+
+func getPodCacheKey(pod *v1.Pod) string {
+	return fmt.Sprintf("%s%c%s", pod.Spec.NodeName, cacheDelimiter, pod.Namespace)
 }

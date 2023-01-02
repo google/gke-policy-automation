@@ -16,10 +16,6 @@ package k8s
 
 import "context"
 
-type Informer interface {
-	Run(stopCh <-chan struct{})
-}
-
 type clusterWatcher struct {
 	ctx       context.Context
 	informers []Informer
