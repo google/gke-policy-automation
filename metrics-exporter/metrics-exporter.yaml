@@ -73,10 +73,10 @@ spec:
       serviceAccountName: gpa-metrics-exporter
       containers:
       - name: metrics-exporter
-        image: image
+        image: europe-central2-docker.pkg.dev/gke-policy-demo/metrics-exporter/metrics-exporter:latest
         env:
         - name: GKE_POLICY_LOG
-          value: "INFO"
+          value: "DEBUG"
         - name: GKE_POLICY_LOG_FORMAT
           value: "JSON"
         ports:
@@ -98,6 +98,7 @@ apiVersion: monitoring.googleapis.com/v1
 kind: PodMonitoring
 metadata:
   name: gpa-metrics-exporter
+  namespace: gpa-metrics-exporter
 spec:
   selector:
     matchLabels:
