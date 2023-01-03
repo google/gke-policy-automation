@@ -55,6 +55,13 @@ func (f *informerFactory) GetNodeInformer() Informer {
 	}
 }
 
+func (f *informerFactory) GetServiceInformer() Informer {
+	informer := f.factory.Core().V1().Services().Informer()
+	return &genericInformer{
+		informer: informer,
+	}
+}
+
 func (i *genericInformer) WithMetric(m metrics.Metric) Informer {
 	_, err := i.informer.AddEventHandler(m)
 	if err != nil {

@@ -56,11 +56,13 @@ func main() {
 	podMetric := metrics.NewPodMetric()
 	containerMetric := metrics.NewContainerMetric()
 	nodeMetric := metrics.NewNodeMetric()
+	serviceMetric := metrics.NewServiceMetric()
 	informers := k8s.NewInformerFactory(kClient)
 
 	go k8s.NewClusterWatcher(ctx).
 		WithInformer(informers.GetPodInformer().WithMetric(podMetric).WithMetric(containerMetric)).
 		WithInformer(informers.GetNodeInformer().WithMetric(nodeMetric)).
+		WithInformer(informers.GetServiceInformer().WithMetric(serviceMetric)).
 		Start()
 
 	http.Handle("/metrics", promhttp.Handler())

@@ -33,6 +33,7 @@ rules:
   resources:
   - pods
   - nodes
+  - services
   verbs:
   - get
   - list
