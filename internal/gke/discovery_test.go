@@ -21,9 +21,9 @@ import (
 	"testing"
 
 	asset "cloud.google.com/go/asset/apiv1"
+	"cloud.google.com/go/asset/apiv1/assetpb"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/iterator"
-	assetpb "google.golang.org/genproto/googleapis/cloud/asset/v1"
 )
 
 type assetInventoryClientMock struct {

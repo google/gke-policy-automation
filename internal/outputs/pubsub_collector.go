@@ -46,7 +46,7 @@ func (p *pubSubResultCollector) RegisterResult(results []*policy.PolicyEvaluatio
 }
 
 func (p *pubSubResultCollector) Close() error {
-	reportData, err := p.reportMapper.GetJsonReport()
+	reportData, err := p.reportMapper.GetJSONReport()
 	if err != nil {
 		return err
 	}

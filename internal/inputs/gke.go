@@ -19,20 +19,20 @@ import (
 	"fmt"
 
 	container "cloud.google.com/go/container/apiv1"
+	"cloud.google.com/go/container/apiv1/containerpb"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/version"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/option"
-	containerpb "google.golang.org/genproto/googleapis/container/v1"
 )
 
 const (
-	gkeApiInputID          = "gkeAPI"
+	gkeAPIInputID          = "gkeAPI"
 	gkeDataSourceName      = "gke"
-	gkeApiInputDescription = "GKE cluster data from GCP API"
+	gkeAPIInputDescription = "GKE cluster data from GCP API"
 )
 
-type gkeApiInput struct {
+type gkeAPIInput struct {
 	ctx    context.Context
 	client clusterManagerClient
 }
@@ -57,25 +57,25 @@ func newGKEApiInput(ctx context.Context, opts []option.ClientOption) (Input, err
 	if err != nil {
 		return nil, err
 	}
-	return &gkeApiInput{
+	return &gkeAPIInput{
 		ctx:    ctx,
 		client: cli,
 	}, nil
 }
 
-func (i *gkeApiInput) GetID() string {
-	return gkeApiInputID
+func (i *gkeAPIInput) GetID() string {
+	return gkeAPIInputID
 }
 
-func (i *gkeApiInput) GetDescription() string {
-	return gkeApiInputDescription
+func (i *gkeAPIInput) GetDescription() string {
+	return gkeAPIInputDescription
 }
 
-func (i *gkeApiInput) GetDataSourceName() string {
+func (i *gkeAPIInput) GetDataSourceName() string {
 	return gkeDataSourceName
 }
 
-func (i *gkeApiInput) GetData(clusterID string) (interface{}, error) {
+func (i *gkeAPIInput) GetData(clusterID string) (interface{}, error) {
 	req := &containerpb.GetClusterRequest{
 		Name: clusterID}
 	log.Debugf("Fetching cluster data with request %v", req)
@@ -86,7 +86,7 @@ func (i *gkeApiInput) GetData(clusterID string) (interface{}, error) {
 	return cluster, nil
 }
 
-func (i *gkeApiInput) Close() error {
+func (i *gkeAPIInput) Close() error {
 	if i.client != nil {
 		return i.client.Close()
 	}

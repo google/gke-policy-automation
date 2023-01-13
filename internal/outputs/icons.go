@@ -15,7 +15,7 @@
 package outputs
 
 const (
-	ICON_MAGNIFIER = "\U0001f50e"
-	ICON_INFO      = "\u2139"
-	ICON_HYPERLINK = "\U0001F517"
+	IconMagnifier = "\U0001f50e"
+	IconInfo      = "\u2139"
+	IconHyperlink = "\U0001F517"
 )

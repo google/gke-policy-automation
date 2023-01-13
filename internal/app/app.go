@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package app implements application management features
 package app
 
 import (
@@ -177,7 +178,7 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 	for _, dumpCollector := range p.clusterDumpCollectors {
 		colType := reflect.TypeOf(dumpCollector).String()
 		log.Debugf("closing cluster dump collector %s", colType)
-		p.out.ColorPrintf("%s [light_gray][bold]closing cluster dump collector ...\n", outputs.ICON_INFO)
+		p.out.ColorPrintf("%s [light_gray][bold]closing cluster dump collector ...\n", outputs.IconInfo)
 		if err := dumpCollector.Close(); err != nil {
 			log.Errorf("failed to close cluster dump collector %s due to %s", colType, err)
 			return err
@@ -205,7 +206,7 @@ func (p *PolicyAutomationApp) PolicyCheck() error {
 		log.Errorf("could not parse policy files: %s", err)
 		return err
 	}
-	p.out.ColorPrintf("%s [bold][green] All policies validated correctly\n", outputs.ICON_INFO)
+	p.out.ColorPrintf("%s [bold][green] All policies validated correctly\n", outputs.IconInfo)
 	log.Info("All policies validated correctly")
 	return nil
 }
@@ -234,7 +235,7 @@ func (p *PolicyAutomationApp) PolicyGenerateDocumentation() error {
 	}
 
 	documentationGenerator := outputs.NewMarkdownPolicyDocumentation(pa.GetPolicies())
-	p.out.ColorPrintf("%s [light_gray][bold]Writing policy documentation ... [%s]\n", outputs.ICON_INFO, p.policyDocsFile)
+	p.out.ColorPrintf("%s [light_gray][bold]Writing policy documentation ... [%s]\n", outputs.IconInfo, p.policyDocsFile)
 	log.Infof("Writing policy documentation to file %s", p.policyDocsFile)
 	if _, err := w.Write([]byte(documentationGenerator.GenerateDocumentation())); err != nil {
 		p.out.ErrorPrint("could not write documentation file", err)
@@ -256,7 +257,7 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 				policyConfig.GitBranch,
 				policyConfig.GitDirectory)
 		}
-		p.out.ColorPrintf("%s [light_gray][bold]Reading policy files... [%s]\n", outputs.ICON_INFO, policySrc)
+		p.out.ColorPrintf("%s [light_gray][bold]Reading policy files... [%s]\n", outputs.IconInfo, policySrc)
 		log.Infof("Reading policy files from %s", policySrc)
 		files, err := policySrc.GetPolicyFiles()
 		if err != nil {

@@ -174,10 +174,10 @@ func mapPolicyToFinding(resourceName string, eventTime time.Time, policy *policy
 
 func mapPolicyEvaluationToFindingState(policy *policy.Policy) string {
 	if policy.Valid {
-		return scc.FINDING_STATE_STRING_INACTIVE
+		return scc.FindingStateStringInactive
 	}
 	if len(policy.Violations) > 0 {
-		return scc.FINDING_STATE_STRING_ACTIVE
+		return scc.FindingStateStringActive
 	}
-	return scc.FINDING_STATE_STRING_UNSPECIFIED
+	return scc.FindingStateStringUnspecified
 }

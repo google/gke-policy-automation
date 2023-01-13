@@ -245,11 +245,11 @@ func TestMapPolicyToFinding(t *testing.T) {
 	if finding.CisVersion != policy.CisVersion {
 		t.Errorf("finding cisVersion = %v; want %v", finding.CisVersion, policy.CisVersion)
 	}
-	if finding.State != scc.FINDING_STATE_STRING_ACTIVE {
-		t.Errorf("finding state = %v; want %v", finding.State, scc.FINDING_STATE_STRING_ACTIVE)
+	if finding.State != scc.FindingStateStringActive {
+		t.Errorf("finding state = %v; want %v", finding.State, scc.FindingStateStringActive)
 	}
-	if finding.Severity != scc.FINDING_SEVERITY_STRING_LOW {
-		t.Errorf("finding severity = %v; want %v", finding.Severity, scc.FINDING_SEVERITY_STRING_LOW)
+	if finding.Severity != scc.FindingSeverityStringLow {
+		t.Errorf("finding severity = %v; want %v", finding.Severity, scc.FindingSeverityStringLow)
 	}
 	if finding.ExternalURI != policy.ExternalURI {
 		t.Errorf("finding externalURI = %v; want %v", finding.ExternalURI, policy.ExternalURI)
@@ -266,9 +266,9 @@ func TestMapPolicyEvaluationToFindingState(t *testing.T) {
 		{},
 	}
 	results := []string{
-		scc.FINDING_STATE_STRING_INACTIVE,
-		scc.FINDING_STATE_STRING_ACTIVE,
-		scc.FINDING_STATE_STRING_UNSPECIFIED,
+		scc.FindingStateStringInactive,
+		scc.FindingStateStringActive,
+		scc.FindingStateStringUnspecified,
 	}
 	for i := range policies {
 		result := mapPolicyEvaluationToFindingState(policies[i])

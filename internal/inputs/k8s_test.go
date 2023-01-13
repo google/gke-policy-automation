@@ -22,8 +22,8 @@ import (
 	"reflect"
 	"testing"
 
+	"cloud.google.com/go/container/apiv1/containerpb"
 	"github.com/google/gke-policy-automation/internal/inputs/clients"
-	containerpb "google.golang.org/genproto/googleapis/container/v1"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
@@ -93,7 +93,7 @@ func TestK8sApiInputBuilder(t *testing.T) {
 	credFile := "test-fixtures/test_credentials.json"
 	apiVersions := []string{"policy/v1", "networking.k8s.io/v1"}
 	maxQPS := 69
-	b := NewK8sApiInputBuilder(context.Background(), apiVersions).
+	b := NewK8sAPIInputBuilder(context.Background(), apiVersions).
 		WithCredentialsFile(credFile).
 		WithMaxQPS(maxQPS)
 
@@ -101,7 +101,7 @@ func TestK8sApiInputBuilder(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err = %v; want nil", err)
 	}
-	k8sInput, ok := input.(*k8sApiInput)
+	k8sInput, ok := input.(*k8sAPIInput)
 	if b.credentialsFile != credFile {
 		t.Errorf("builder credentialsFile = %v; want %v", b.credentialsFile, credFile)
 	}
@@ -123,35 +123,35 @@ func TestK8sApiInputBuilder(t *testing.T) {
 }
 
 func TestK8SApiInputGetID(t *testing.T) {
-	input := k8sApiInput{}
-	if id := input.GetID(); id != k8sApiInputID {
-		t.Fatalf("id = %v; want %v", id, k8sApiInputID)
+	input := k8sAPIInput{}
+	if id := input.GetID(); id != k8sAPIInputID {
+		t.Fatalf("id = %v; want %v", id, k8sAPIInputID)
 	}
 }
 
 func TestK8SApiInputGetDescription(t *testing.T) {
-	input := k8sApiInput{}
-	if id := input.GetDescription(); id != k8sApiInputDescription {
-		t.Fatalf("id = %v; want %v", id, k8sApiInputDescription)
+	input := k8sAPIInput{}
+	if id := input.GetDescription(); id != k8sAPIInputDescription {
+		t.Fatalf("id = %v; want %v", id, k8sAPIInputDescription)
 	}
 }
 
 func TestK8SApiInputClose(t *testing.T) {
-	input := k8sApiInput{
+	input := k8sAPIInput{
 		gkeInput: &inputMock{
 			closeFn: func() error { return errors.New("test error") },
 		},
 	}
 	err := input.Close()
 	if err == nil {
-		t.Errorf("k8sApiInput close() error is nil; want mocked error")
+		t.Errorf("k8sAPIInput close() error is nil; want mocked error")
 	}
 }
 
 func TestK8sApiInputGetData(t *testing.T) {
 	testClusterID := "projects/myproject/locations/europe-central2/clusters/cluster-one"
 	testMaxQPS := 100
-	i := k8sApiInput{
+	i := k8sAPIInput{
 		ctx: context.Background(),
 		tokenSource: &tsMock{
 			getAuthTokenFn: func() (string, error) {

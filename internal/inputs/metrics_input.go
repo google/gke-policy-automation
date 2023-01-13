@@ -37,7 +37,7 @@ type metricsInput struct {
 	tokenSource          clients.TokenSource
 	newMetricsClientFunc newMetricsClientFunc
 	metricsClient        clients.MetricsClient
-	projectId            string
+	projectID            string
 	queries              []clients.MetricQuery
 	maxGoRoutines        int
 	timeoutSeconds       int
@@ -46,7 +46,7 @@ type metricsInput struct {
 type metricsInputBuilder struct {
 	ctx             context.Context
 	credentialsFile string
-	projectId       string
+	projectID       string
 	queries         []clients.MetricQuery
 	maxGoRoutines   int
 	timeoutSeconds  int
@@ -74,8 +74,8 @@ func (b *metricsInputBuilder) WithClientTimeoutSeconds(timeoutSeconds int) *metr
 	return b
 }
 
-func (b *metricsInputBuilder) WithProjectId(projectId string) *metricsInputBuilder {
-	b.projectId = projectId
+func (b *metricsInputBuilder) WithProjectID(projectID string) *metricsInputBuilder {
+	b.projectID = projectID
 	return b
 }
 
@@ -98,7 +98,7 @@ func (b *metricsInputBuilder) Build() (Input, error) {
 	input := &metricsInput{
 		ctx:            b.ctx,
 		tokenSource:    ts,
-		projectId:      b.projectId,
+		projectID:      b.projectID,
 		queries:        b.queries,
 		maxGoRoutines:  b.maxGoRoutines,
 		timeoutSeconds: b.timeoutSeconds,
@@ -122,7 +122,7 @@ func (i *metricsInput) GetDataSourceName() string {
 
 func (i *metricsInput) GetData(clusterID string) (interface{}, error) {
 
-	projectId, _, clusterName, err := sliceAndValidateClusterId(clusterID)
+	projectID, _, clusterName, err := sliceAndValidateClusterID(clusterID)
 
 	if err != nil {
 		log.Error("Error parsing clusterId: " + err.Error())
@@ -131,7 +131,7 @@ func (i *metricsInput) GetData(clusterID string) (interface{}, error) {
 
 	if i.metricsClient == nil {
 		log.Debugf("Empty client - creating one for %v", clusterID)
-		if err := i.createMetricsClient(projectId); err != nil {
+		if err := i.createMetricsClient(projectID); err != nil {
 			return nil, err
 		}
 	}
@@ -150,35 +150,35 @@ func (i *metricsInput) Close() error {
 	return nil
 }
 
-func (i *metricsInput) newMetricsClientFromBuilder(ctx context.Context, projectId string, authToken string) (clients.MetricsClient, error) {
-	client, err := clients.NewMetricsClientBuilder(ctx, projectId, authToken).
+func (i *metricsInput) newMetricsClientFromBuilder(ctx context.Context, projectID string, authToken string) (clients.MetricsClient, error) {
+	client, err := clients.NewMetricsClientBuilder(ctx, projectID, authToken).
 		WithMaxGoroutines(i.maxGoRoutines).
 		WithTimeout(i.timeoutSeconds).
 		Build()
 	return client, err
 }
 
-func (i *metricsInput) createMetricsClient(clusterProjectId string) error {
+func (i *metricsInput) createMetricsClient(clusterProjectID string) error {
 	token, err := i.tokenSource.GetAuthToken()
 	if err != nil {
 		return err
 	}
 
-	var projectId string
-	if i.projectId != "" {
-		projectId = i.projectId
+	var projectID string
+	if i.projectID != "" {
+		projectID = i.projectID
 	} else {
-		projectId = clusterProjectId
+		projectID = clusterProjectID
 	}
 
-	i.metricsClient, err = i.newMetricsClientFunc(i.ctx, projectId, token)
+	i.metricsClient, err = i.newMetricsClientFunc(i.ctx, projectID, token)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func sliceAndValidateClusterId(id string) (string, string, string, error) {
+func sliceAndValidateClusterID(id string) (string, string, string, error) {
 	r := regexp.MustCompile(`projects/(.+)/(locations|zones)/(.+)/clusters/(.+)`)
 	if !r.MatchString(id) {
 		return "", "", "", errors.New("input does not match regexp")

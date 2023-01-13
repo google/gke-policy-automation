@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"os"
 
-	containerpb "google.golang.org/genproto/googleapis/container/v1"
+	"cloud.google.com/go/container/apiv1/containerpb"
 )
 
 const (

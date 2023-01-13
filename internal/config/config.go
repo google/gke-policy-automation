@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package config implements application configuration related features
 package config
 
 import (
@@ -40,7 +41,7 @@ type ReadFileFn func(string) ([]byte, error)
 
 type Config struct {
 	SilentMode       bool                   `yaml:"silent"`
-	JsonOutput       bool                   `yaml:"jsonOutput"`
+	JSONOutput       bool                   `yaml:"jsonOutput"`
 	DumpFile         string                 `yaml:"dumpFile"`
 	CredentialsFile  string                 `yaml:"credentialsFile"`
 	Clusters         []ConfigCluster        `yaml:"clusters"`
@@ -70,8 +71,8 @@ type ConfigCluster struct {
 type ConfigInput struct {
 	GKEApi        *GKEApiInput     `yaml:"gkeAPI"`
 	GKELocalInput *GKELocalInput   `yaml:"gkeLocal"`
-	K8sApi        *K8SApiInput     `yaml:"k8sAPI"`
-	MetricsApi    *MetricsApiInput `yaml:"metricsAPI"`
+	K8sAPI        *K8SAPIInput     `yaml:"k8sAPI"`
+	MetricsAPI    *MetricsAPIInput `yaml:"metricsAPI"`
 	Rest          *RestInput       `yaml:"rest"`
 }
 
@@ -84,15 +85,15 @@ type GKELocalInput struct {
 	DumpFile string `yaml:"file"`
 }
 
-type K8SApiInput struct {
+type K8SAPIInput struct {
 	Enabled     bool     `yaml:"enabled"`
-	ApiVersions []string `yaml:"resourceAPIVersions"`
+	APIVersions []string `yaml:"resourceAPIVersions"`
 	MaxQPS      int      `yaml:"clientMaxQPS"`
 }
 
-type MetricsApiInput struct {
+type MetricsAPIInput struct {
 	Enabled   bool           `yaml:"enabled"`
-	ProjectId string         `yaml:"project"`
+	ProjectID string         `yaml:"project"`
 	Metrics   []ConfigMetric `yaml:"metrics"`
 }
 type RestInput struct {
@@ -142,7 +143,7 @@ type ConfigPolicyExclusions struct {
 
 type K8SApiConfig struct {
 	Enabled        bool     `yaml:"enabled"`
-	ApiVersions    []string `yaml:"resourceAPIVersions"`
+	APIVersions    []string `yaml:"resourceAPIVersions"`
 	MaxQPS         int      `yaml:"clientMaxQPS"`
 	TimeoutSeconds int      `yaml:"clientTimeoutSeconds"`
 }
@@ -230,7 +231,7 @@ func ValidateScalabilityCheckConfig(config Config) error {
 	if err := ValidateClusterCheckConfig(config); err != nil {
 		return nil
 	}
-	if !config.Inputs.MetricsApi.Enabled || !config.Inputs.K8sApi.Enabled {
+	if !config.Inputs.MetricsAPI.Enabled || !config.Inputs.K8sAPI.Enabled {
 		return errors.New("either metricsAPI input or k8sAPI input has to be enabled")
 	}
 	return nil
@@ -340,19 +341,19 @@ func SetCheckConfigDefaults(config *Config) {
 
 func SetScalabilityConfigDefaults(config *Config) {
 	SetPolicyConfigDefaults(config)
-	if config.Inputs.MetricsApi == nil {
+	if config.Inputs.MetricsAPI == nil {
 		log.Debugf("Configuring MetricsApi input defaults")
-		config.Inputs.MetricsApi = &MetricsApiInput{
+		config.Inputs.MetricsAPI = &MetricsAPIInput{
 			Enabled: true,
 		}
 	}
-	if config.Inputs.K8sApi != nil {
+	if config.Inputs.K8sAPI != nil {
 		log.Debugf("Configuring K8SApiConfig input defaults")
-		if config.Inputs.K8sApi.MaxQPS == 0 {
-			config.Inputs.K8sApi.MaxQPS = DefaultK8SClientQPS
+		if config.Inputs.K8sAPI.MaxQPS == 0 {
+			config.Inputs.K8sAPI.MaxQPS = DefaultK8SClientQPS
 		}
-		if len(config.Inputs.K8sApi.ApiVersions) == 0 {
-			config.Inputs.K8sApi.ApiVersions = DefaultK8SApiVersions
+		if len(config.Inputs.K8sAPI.APIVersions) == 0 {
+			config.Inputs.K8sAPI.APIVersions = DefaultK8SApiVersions
 		}
 	}
 }

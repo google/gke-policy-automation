@@ -31,7 +31,7 @@ import (
 type CloneFn func(s storage.Storer, worktree billy.Filesystem, o *git.CloneOptions) (*git.Repository, error)
 
 type GitPolicySource struct {
-	repoUrl       string
+	repoURL       string
 	repoBranch    string
 	policyDir     string
 	policyFileExt string
@@ -63,7 +63,7 @@ type GitPolicyFile struct {
 
 func NewGitPolicySource(repoURL string, repoBrach string, policyDir string) PolicySource {
 	return &GitPolicySource{
-		repoUrl:       repoURL,
+		repoURL:       repoURL,
 		repoBranch:    repoBrach,
 		policyDir:     policyDir,
 		policyFileExt: "rego",
@@ -73,7 +73,7 @@ func NewGitPolicySource(repoURL string, repoBrach string, policyDir string) Poli
 
 func (src GitPolicySource) String() string {
 	return fmt.Sprintf("GIT repository: %s, branch: %s, directory: %s",
-		src.repoUrl,
+		src.repoURL,
 		src.repoBranch,
 		src.policyDir)
 }
@@ -104,7 +104,7 @@ func (src GitPolicySource) GetPolicyFiles() ([]*PolicyFile, error) {
 
 func (src GitPolicySource) clone() (*git.Repository, error) {
 	repo, err := src.cloneFn(memory.NewStorage(), nil, &git.CloneOptions{
-		URL:           src.repoUrl,
+		URL:           src.repoURL,
 		Depth:         1,
 		ReferenceName: plumbing.ReferenceName("refs/heads/" + src.repoBranch),
 		SingleBranch:  true,

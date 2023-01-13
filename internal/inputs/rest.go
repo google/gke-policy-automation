@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"regexp"
 	"time"
@@ -83,7 +82,7 @@ func (i *restInput) Close() error {
 
 func readResponseBody(bodyReader io.ReadCloser) (interface{}, error) {
 	defer bodyReader.Close()
-	body, err := ioutil.ReadAll(bodyReader)
+	body, err := io.ReadAll(bodyReader)
 	if err != nil {
 		return nil, err
 	}
