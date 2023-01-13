@@ -18,26 +18,26 @@ import (
 	"github.com/google/gke-policy-automation/internal/policy"
 )
 
-type consoleJsonResultCollector struct {
+type consoleJSONResultCollector struct {
 	out          *Output
 	reportMapper ValidationReportMapper
 }
 
-func NewConsoleJsonResultCollector(output *Output) ValidationResultCollector {
-	return &consoleJsonResultCollector{
+func NewConsoleJSONResultCollector(output *Output) ValidationResultCollector {
+	return &consoleJSONResultCollector{
 		out:          output,
 		reportMapper: NewValidationReportMapper(),
 	}
 }
 
-func (p *consoleJsonResultCollector) RegisterResult(results []*policy.PolicyEvaluationResult) error {
+func (p *consoleJSONResultCollector) RegisterResult(results []*policy.PolicyEvaluationResult) error {
 	p.reportMapper.AddResults(results)
 	return nil
 }
 
-func (p *consoleJsonResultCollector) Close() error {
+func (p *consoleJSONResultCollector) Close() error {
 
-	jsonResult, err := p.reportMapper.GetJsonReport()
+	jsonResult, err := p.reportMapper.GetJSONReport()
 
 	if err != nil {
 		return err
@@ -47,6 +47,6 @@ func (p *consoleJsonResultCollector) Close() error {
 	return nil
 }
 
-func (p *consoleJsonResultCollector) Name() string {
+func (p *consoleJSONResultCollector) Name() string {
 	return "console json"
 }

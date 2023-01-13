@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package scc implements Security Command Center client
 package scc
 
 import (
@@ -24,12 +25,12 @@ import (
 	"time"
 
 	scc "cloud.google.com/go/securitycenter/apiv1"
+	sccpb "cloud.google.com/go/securitycenter/apiv1/securitycenterpb"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/version"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
-	sccpb "google.golang.org/genproto/googleapis/cloud/securitycenter/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -39,14 +40,14 @@ const (
 	sourceDescription        = "Validates GKE clusters against configuration best practices and scalability limits"
 	defaultSourceSearchLimit = 1000
 
-	FINDING_STATE_STRING_ACTIVE      = "ACTIVE"
-	FINDING_STATE_STRING_INACTIVE    = "INACTIVE"
-	FINDING_STATE_STRING_UNSPECIFIED = "UNSPECIFIED"
+	FindingStateStringActive      = "ACTIVE"
+	FindingStateStringInactive    = "INACTIVE"
+	FindingStateStringUnspecified = "UNSPECIFIED"
 
-	FINDING_SEVERITY_STRING_CRITICAL = "CRITICAL"
-	FINDING_SEVERITY_STRING_HIGH     = "HIGH"
-	FINDING_SEVERITY_STRING_MEDIUM   = "MEDIUM"
-	FINDING_SEVERITY_STRING_LOW      = "LOW"
+	FindingSeverityStringCritical = "CRITICAL"
+	FindingSeverityStringHigh     = "HIGH"
+	FindingSeverityStringMedium   = "MEDIUM"
+	FindingSeverityStringLow      = "LOW"
 )
 
 type SecurityCommandCenterClient interface {
@@ -56,7 +57,7 @@ type SecurityCommandCenterClient interface {
 	Close() error
 }
 
-type sccApiClient interface {
+type sccAPIClient interface {
 	ListSources(ctx context.Context, req *sccpb.ListSourcesRequest, opts ...gax.CallOption) *scc.SourceIterator
 	CreateSource(ctx context.Context, req *sccpb.CreateSourceRequest, opts ...gax.CallOption) (*sccpb.Source, error)
 	ListFindings(ctx context.Context, req *sccpb.ListFindingsRequest, opts ...gax.CallOption) *scc.ListFindingsResponse_ListFindingsResultIterator
@@ -104,7 +105,7 @@ type securityCommandCenterClientImpl struct {
 	ctx                context.Context
 	organizationNumber string
 	sourcesSearchLimit int
-	client             sccApiClient
+	client             sccAPIClient
 }
 
 func NewSecurityCommandCenterClient(ctx context.Context, organizationNumber string) (SecurityCommandCenterClient, error) {
@@ -158,7 +159,7 @@ func (c *securityCommandCenterClientImpl) UpsertFinding(sourceName string, findi
 	if err != nil {
 		return err
 	}
-	if curFinding == nil && finding.State == FINDING_STATE_STRING_INACTIVE {
+	if curFinding == nil && finding.State == FindingStateStringInactive {
 		log.Debugf("Skipping inactive finding that does not exist in SCC")
 		return nil
 	}
@@ -254,13 +255,13 @@ func resourceIteratorToSlice[R sccResource](it sccResourceIterator[R], limit int
 // mapFindingSeverityString maps severity string to SCC severity uint32
 func mapFindingSeverityString(severity string) sccpb.Finding_Severity {
 	switch severity {
-	case FINDING_SEVERITY_STRING_CRITICAL:
+	case FindingSeverityStringCritical:
 		return sccpb.Finding_CRITICAL
-	case FINDING_SEVERITY_STRING_HIGH:
+	case FindingSeverityStringHigh:
 		return sccpb.Finding_HIGH
-	case FINDING_SEVERITY_STRING_MEDIUM:
+	case FindingSeverityStringMedium:
 		return sccpb.Finding_MEDIUM
-	case FINDING_SEVERITY_STRING_LOW:
+	case FindingSeverityStringLow:
 		return sccpb.Finding_LOW
 	default:
 		return sccpb.Finding_SEVERITY_UNSPECIFIED
@@ -333,9 +334,9 @@ func mapFindingToAPI(sourceName string, finding *Finding) *sccpb.Finding {
 // mapFindingStateString maps state string to SCC protobuf state int32
 func mapFindingStateString(state string) sccpb.Finding_State {
 	switch state {
-	case FINDING_STATE_STRING_ACTIVE:
+	case FindingStateStringActive:
 		return sccpb.Finding_ACTIVE
-	case FINDING_STATE_STRING_INACTIVE:
+	case FindingStateStringInactive:
 		return sccpb.Finding_INACTIVE
 	default:
 		return sccpb.Finding_STATE_UNSPECIFIED

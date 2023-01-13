@@ -16,7 +16,7 @@ package clients
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 
 	"github.com/google/gke-policy-automation/internal/log"
 	"golang.org/x/oauth2"
@@ -47,7 +47,7 @@ func NewGoogleTokenSource(ctx context.Context) (TokenSource, error) {
 }
 
 func NewGoogleTokenSourceWithCredentials(ctx context.Context, credentialsFile string) (TokenSource, error) {
-	credsB, err := ioutil.ReadFile(credentialsFile)
+	credsB, err := os.ReadFile(credentialsFile)
 	if err != nil {
 		return nil, err
 	}

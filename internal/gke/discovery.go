@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package gke implements Google Kubernetes Engine specific features like cluster discovery
 package gke
 
 import (
@@ -20,12 +21,12 @@ import (
 	"regexp"
 
 	asset "cloud.google.com/go/asset/apiv1"
+	"cloud.google.com/go/asset/apiv1/assetpb"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/version"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
-	assetpb "google.golang.org/genproto/googleapis/cloud/asset/v1"
 )
 
 const (
@@ -86,7 +87,7 @@ func (c *AssetInventoryDiscoveryClient) GetClustersInFolder(number string) ([]st
 	return c.getClustersForScope(scope)
 }
 
-// GetClustersInFolder finds GKE clusters in a given GCP organization (identified by number)
+// GetClustersInOrg finds GKE clusters in a given GCP organization (identified by number)
 // and returns slice with their identifiers.
 func (c *AssetInventoryDiscoveryClient) GetClustersInOrg(number string) ([]string, error) {
 	scope := fmt.Sprintf("organizations/%s", number)

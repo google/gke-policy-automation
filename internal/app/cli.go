@@ -22,7 +22,7 @@ import (
 type CliConfig struct {
 	ConfigFile          string
 	SilentMode          bool
-	JsonOutput          bool
+	JSONOutput          bool
 	K8SCheck            bool
 	CredentialsFile     string
 	DumpFile            string
@@ -271,7 +271,7 @@ func getOutputFlags(config *CliConfig) []cli.Flag {
 		&cli.BoolFlag{
 			Name:        "json",
 			Usage:       "Outputs results to standard console in JSON format",
-			Destination: &config.JsonOutput,
+			Destination: &config.JSONOutput,
 		},
 	}
 }

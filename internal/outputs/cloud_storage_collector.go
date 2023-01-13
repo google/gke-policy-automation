@@ -29,7 +29,7 @@ type StorageClient interface {
 
 type reportMapper interface {
 	AddResults(results []*policy.PolicyEvaluationResult)
-	GetJsonReport() ([]byte, error)
+	GetJSONReport() ([]byte, error)
 }
 
 type cloudStorageResultCollector struct {
@@ -57,7 +57,7 @@ func (p *cloudStorageResultCollector) RegisterResult(results []*policy.PolicyEva
 }
 
 func (p *cloudStorageResultCollector) Close() error {
-	reportData, err := p.reportMapper.GetJsonReport()
+	reportData, err := p.reportMapper.GetJSONReport()
 	if err != nil {
 		return err
 	}

@@ -61,7 +61,7 @@ func (p *JSONResultCollector) RegisterResult(results []*policy.PolicyEvaluationR
 }
 
 func (p *JSONResultCollector) Close() error {
-	reportData, err := p.reportMapper.GetJsonReport()
+	reportData, err := p.reportMapper.GetJSONReport()
 	if err != nil {
 		return err
 	}

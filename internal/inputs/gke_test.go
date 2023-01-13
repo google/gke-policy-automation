@@ -20,8 +20,8 @@ import (
 	"regexp"
 	"testing"
 
+	"cloud.google.com/go/container/apiv1/containerpb"
 	gax "github.com/googleapis/gax-go/v2"
-	containerpb "google.golang.org/genproto/googleapis/container/v1"
 )
 
 type mockClusterManagerClient struct {
@@ -54,28 +54,28 @@ func TestNewGKEApiInputWithCredentials(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err = %v; want nil", err)
 	}
-	_, ok := input.(*gkeApiInput)
+	_, ok := input.(*gkeAPIInput)
 	if !ok {
-		t.Fatalf("input is not *gkeApiInput")
+		t.Fatalf("input is not *gkeAPIInput")
 	}
 }
 
 func TestGetID(t *testing.T) {
-	input := gkeApiInput{}
-	if id := input.GetID(); id != gkeApiInputID {
-		t.Fatalf("id = %v; want %v", id, gkeApiInputID)
+	input := gkeAPIInput{}
+	if id := input.GetID(); id != gkeAPIInputID {
+		t.Fatalf("id = %v; want %v", id, gkeAPIInputID)
 	}
 }
 
 func TestGetDescription(t *testing.T) {
-	input := gkeApiInput{}
-	if id := input.GetDescription(); id != gkeApiInputDescription {
-		t.Fatalf("id = %v; want %v", id, gkeApiInputDescription)
+	input := gkeAPIInput{}
+	if id := input.GetDescription(); id != gkeAPIInputDescription {
+		t.Fatalf("id = %v; want %v", id, gkeAPIInputDescription)
 	}
 }
 
 func TestGetCluster(t *testing.T) {
-	input := gkeApiInput{
+	input := gkeAPIInput{
 		ctx:    context.Background(),
 		client: &mockClusterManagerClient{},
 	}
@@ -99,12 +99,12 @@ func TestGetCluster(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	input := gkeApiInput{
+	input := gkeAPIInput{
 		ctx:    nil,
 		client: &mockClusterManagerClient{}}
 	err := input.Close()
 	if err == nil {
-		t.Errorf("gkeApiInput close() error is nil; want mocked error")
+		t.Errorf("gkeAPIInput close() error is nil; want mocked error")
 	}
 }
 

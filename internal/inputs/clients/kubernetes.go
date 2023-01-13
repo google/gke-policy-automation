@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package clients implements clients for services consumed by data inputs
 package clients
 
 import (
@@ -230,7 +231,7 @@ func (c *kubernetesClient) GetResources(toBeFetched []*ResourceType, namespaces 
 
 func (c *kubernetesClient) getNamespaceResourcesByResourceTypeAsync(wg *sync.WaitGroup, toBeFetched []*ResourceType, namespaces <-chan string, results chan<- []*Resource, errors chan<- error) {
 	for namespace := range namespaces {
-		var namespaceResources []*Resource = make([]*Resource, 0)
+		namespaceResources := make([]*Resource, 0)
 
 		for rt := range toBeFetched {
 			res, err := c.GetNamespacedResources(*toBeFetched[rt], namespace)

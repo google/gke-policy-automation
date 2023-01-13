@@ -55,8 +55,8 @@ func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, defaultsFn set
 
 func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) error {
 	p.config = config
-	if p.config.JsonOutput {
-		p.collectors = []outputs.ValidationResultCollector{outputs.NewConsoleJsonResultCollector(outputs.NewStdOutOutput())}
+	if p.config.JSONOutput {
+		p.collectors = []outputs.ValidationResultCollector{outputs.NewConsoleJSONResultCollector(outputs.NewStdOutOutput())}
 	} else {
 		if !p.config.SilentMode {
 			p.out = outputs.NewStdOutOutput()
@@ -80,10 +80,10 @@ func (p *PolicyAutomationApp) loadInputsConfig(config *cfg.Config) error {
 	if err := p.loadGKELocalInputConfig(config.Inputs.GKELocalInput); err != nil {
 		return err
 	}
-	if err := p.loadK8SApiInputConfig(config.Inputs.K8sApi, config.CredentialsFile); err != nil {
+	if err := p.loadK8SApiInputConfig(config.Inputs.K8sAPI, config.CredentialsFile); err != nil {
 		return err
 	}
-	if err := p.loadMetricsApiInputConfig(config.Inputs.MetricsApi, config.CredentialsFile); err != nil {
+	if err := p.loadMetricsAPIInputConfig(config.Inputs.MetricsAPI, config.CredentialsFile); err != nil {
 		return err
 	}
 	return nil
@@ -114,11 +114,11 @@ func (p *PolicyAutomationApp) loadGKELocalInputConfig(config *cfg.GKELocalInput)
 	return nil
 }
 
-func (p *PolicyAutomationApp) loadK8SApiInputConfig(config *cfg.K8SApiInput, credentialsFile string) error {
+func (p *PolicyAutomationApp) loadK8SApiInputConfig(config *cfg.K8SAPIInput, credentialsFile string) error {
 	if config == nil || !config.Enabled {
 		return nil
 	}
-	k8InputBuilder := inputs.NewK8sApiInputBuilder(p.ctx, config.ApiVersions).
+	k8InputBuilder := inputs.NewK8sAPIInputBuilder(p.ctx, config.APIVersions).
 		WithCredentialsFile(p.config.CredentialsFile)
 	k8Input, err := k8InputBuilder.Build()
 	if err != nil {
@@ -128,7 +128,7 @@ func (p *PolicyAutomationApp) loadK8SApiInputConfig(config *cfg.K8SApiInput, cre
 	return nil
 }
 
-func (p *PolicyAutomationApp) loadMetricsApiInputConfig(config *cfg.MetricsApiInput, credentialsFile string) error {
+func (p *PolicyAutomationApp) loadMetricsAPIInputConfig(config *cfg.MetricsAPIInput, credentialsFile string) error {
 	if config == nil || !config.Enabled {
 		return nil
 	}
@@ -247,7 +247,7 @@ func addDateTimePrefix(value string, time time.Time) string {
 func newConfigFromCli(cliConfig *CliConfig) *cfg.Config {
 	config := &cfg.Config{}
 	config.SilentMode = cliConfig.SilentMode
-	config.JsonOutput = cliConfig.JsonOutput
+	config.JSONOutput = cliConfig.JSONOutput
 	config.CredentialsFile = cliConfig.CredentialsFile
 	config.DumpFile = cliConfig.DumpFile
 	if cliConfig.DiscoveryEnabled {

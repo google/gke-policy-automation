@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package version implements application version info features
 package version
 
-// Application version is set at build-time in the release process
+// Version is an application version set at build-time in the release process
 var Version = "unknown"
 
 // UserAgent to be set by (http) clients
