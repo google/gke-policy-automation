@@ -120,6 +120,12 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 		log.Errorf("could not identify clusters: %s", err)
 		return err
 	}
+	if len(clusterIds) < 1 {
+		p.out.ColorPrintf("%s [yellow][bold]No clusters to check, finishing...\n", outputs.IconInfo)
+		log.Info("Cluster review finished")
+		p.out.ColorPrintf("%s [light_gray][bold]Cluster review finished\n", outputs.IconInfo)
+		return nil
+	}
 	p.out.ColorPrintf("%s [light_gray][bold]Fetching data from %d input(s) for %d cluster(s)\n",
 		outputs.IconInfo, len(p.inputs), len(clusterIds))
 	clusterData, errors := inputs.GetAllInputsData(p.inputs, clusterIds)
@@ -164,7 +170,7 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 		log.Infof("Collector %s processing closed", c.Name())
 	}
 	log.Info("Cluster review finished")
-	p.out.ColorPrintf("\u2139 [light_gray][bold]Cluster review finished\n")
+	p.out.ColorPrintf("%s [light_gray][bold]Cluster review finished\n", outputs.IconInfo)
 	return nil
 }
 
