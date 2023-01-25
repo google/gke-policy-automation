@@ -25,20 +25,20 @@ import (
 type metricsClientMock struct {
 }
 
-func (metricsClientMock) GetMetric(query clients.MetricQuery, clusterName string) (string, error) {
-	return "123", nil
+func (metricsClientMock) GetMetric(query clients.MetricQuery, clusterName string) (*clients.Metric, error) {
+	return &clients.Metric{Name: "test", ScalarValue: float64(123)}, nil
 }
 
 func (metricsClientMock) GetMetricsForCluster(queries []clients.MetricQuery, clusterName string) (map[string]clients.Metric, error) {
 	m := make(map[string]clients.Metric)
 
 	m["numberOfNodes"] = clients.Metric{
-		Name:  "numberOfNodes",
-		Value: "123",
+		Name:        "numberOfNodes",
+		ScalarValue: float64(123),
 	}
 	m["numberOfPods"] = clients.Metric{
-		Name:  "numberOfPods",
-		Value: "321",
+		Name:        "numberOfPods",
+		ScalarValue: float64(321),
 	}
 
 	return m, nil

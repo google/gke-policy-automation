@@ -16,10 +16,8 @@ package inputs
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"regexp"
 
+	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/inputs/clients"
 	"github.com/google/gke-policy-automation/internal/log"
 )
@@ -121,9 +119,7 @@ func (i *metricsInput) GetDataSourceName() string {
 }
 
 func (i *metricsInput) GetData(clusterID string) (interface{}, error) {
-
-	projectID, _, clusterName, err := sliceAndValidateClusterID(clusterID)
-
+	projectID, _, _, err := gke.SliceAndValidateClusterID(clusterID)
 	if err != nil {
 		log.Error("Error parsing clusterId: " + err.Error())
 		return nil, err
@@ -136,7 +132,7 @@ func (i *metricsInput) GetData(clusterID string) (interface{}, error) {
 		}
 	}
 
-	data, err := i.metricsClient.GetMetricsForCluster(i.queries, clusterName)
+	data, err := i.metricsClient.GetMetricsForCluster(i.queries, clusterID)
 	if err != nil {
 		log.Errorf("Error fetching metric: %s", err)
 		return nil, err
@@ -176,16 +172,4 @@ func (i *metricsInput) createMetricsClient(clusterProjectID string) error {
 		return err
 	}
 	return nil
-}
-
-func sliceAndValidateClusterID(id string) (string, string, string, error) {
-	r := regexp.MustCompile(`projects/(.+)/(locations|zones)/(.+)/clusters/(.+)`)
-	if !r.MatchString(id) {
-		return "", "", "", errors.New("input does not match regexp")
-	}
-	matches := r.FindStringSubmatch(id)
-	if len(matches) != 5 {
-		return "", "", "", fmt.Errorf("wrong number of matches, got %d, expected %d", len(matches), 5)
-	}
-	return matches[1], matches[3], matches[4], nil
 }

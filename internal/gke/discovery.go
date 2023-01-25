@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package gke implements Google Kubernetes Engine specific features like cluster discovery
 package gke
 
 import (
