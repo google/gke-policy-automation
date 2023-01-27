@@ -17,9 +17,11 @@ package gke
 import (
 	"encoding/json"
 	"os"
-
-	"github.com/google/gke-policy-automation/internal/inputs"
 )
+
+type localCluster struct {
+	Name string `json:"name"`
+}
 
 type localDiscoveryClient struct {
 	readFileFunc func(name string) ([]byte, error)
@@ -56,7 +58,7 @@ func (c *localDiscoveryClient) getClusters() ([]string, error) {
 		return nil, err
 	}
 
-	var clusters []*inputs.Cluster
+	var clusters []*localCluster
 	if err = json.Unmarshal(data, &clusters); err != nil {
 		return nil, err
 	}

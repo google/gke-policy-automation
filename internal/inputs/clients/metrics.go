@@ -16,10 +16,14 @@ package clients
 
 import (
 	"context"
+	"fmt"
+	"reflect"
 	"regexp"
+	"sort"
 	"sync"
 	"time"
 
+	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/log"
 
 	"github.com/prometheus/client_golang/api"
@@ -28,19 +32,27 @@ import (
 	pmodel "github.com/prometheus/common/model"
 )
 
+const (
+	MetricQueryWildcardClusterID       = `\$CLUSTER_ID`
+	MetricQueryWildcardClusterName     = `\$CLUSTER_NAME`
+	MetricQueryWildcardClusterLocation = `\$CLUSTER_LOCATION`
+	MetricQueryWildcardClusterProject  = `\$CLUSTER_PROJECT`
+)
+
 type MetricQuery struct {
 	Name  string
 	Query string
 }
 
 type Metric struct {
-	Name  string
-	Value string
+	Name        string                 `json:"name"`
+	ScalarValue float64                `json:"scalar"`
+	VectorValue map[string]interface{} `json:"vector"`
 }
 
 type MetricsClient interface {
-	GetMetric(query MetricQuery, clusterName string) (string, error)
-	GetMetricsForCluster(queries []MetricQuery, clusterName string) (map[string]Metric, error)
+	GetMetric(query MetricQuery, clusterID string) (*Metric, error)
+	GetMetricsForCluster(queries []MetricQuery, clusterID string) (map[string]Metric, error)
 }
 
 type metricsClient struct {
@@ -51,7 +63,6 @@ type metricsClient struct {
 }
 
 func newMetricsClient(ctx context.Context, projectID string, authToken string, maxGoroutines int) (MetricsClient, error) {
-
 	// Creates a client.
 	client, err := api.NewClient(api.Config{
 		Address:      "https://monitoring.googleapis.com/v1/projects/" + projectID + "/location/global/prometheus/",
@@ -109,54 +120,55 @@ func (b *metricsClientBuilder) Build() (MetricsClient, error) {
 	metricsClient, err := newMetricsClient(b.ctx, b.projectID, b.authToken, maxGoRoutines)
 
 	if err != nil {
-		log.Fatalf("Failed to create metrics client: %v", err)
+		log.Fatalf("failed to create metrics client: %v", err)
 		return nil, err
 	}
 	return metricsClient, nil
 }
 
-func (m *metricsClient) GetMetric(metricQuery MetricQuery, clusterName string) (string, error) {
-
-	query := metricQuery.Query
-
-	query = replaceWildcard("CLUSTER_NAME", clusterName, query)
-
-	log.Debugf("Querying metric client with query: " + query)
+func (m *metricsClient) GetMetric(metricQuery MetricQuery, clusterID string) (*Metric, error) {
+	query := replaceAllWildcards(clusterID, metricQuery.Query)
+	log.Debugf("querying metric client with a query: %s", query)
 
 	result, warnings, err := m.api.Query(m.ctx, query, time.Now())
 	if err != nil {
-		log.Fatalf("Failed to query metrics client: %v", err)
-		return "", err
+		log.Fatalf("failed to query metrics client: %v", err)
+		return nil, err
 	}
 	if warnings != nil {
-		log.Warnf("Warning when querying metrics client: %v", warnings)
+		log.Warnf("warning when querying metrics client: %v", warnings)
 	}
-
-	queryResults := make([]string, 0, 1)
 
 	data, ok := result.(pmodel.Vector)
 	if !ok {
-		log.Fatalf("Unsupported result format: %s", result.Type().String())
-		return "", err
-	}
-	for _, v := range data {
-		queryResults = append(queryResults, v.Value.String())
+		badType := reflect.TypeOf(result)
+		log.Fatalf("unsupported result format: %s", badType)
+		return nil, fmt.Errorf("unsupported result format: %s", badType)
 	}
 
-	ret := ""
-	if len(queryResults) > 0 {
-		ret = queryResults[0]
-		if len(queryResults) > 1 {
-			log.Warnf("query %s returned more than one result for cluster %s", query, clusterName)
-		}
-	} else {
-		log.Warnf("query %s returned no value found for cluster %s", query, clusterName)
+	if len(data) < 1 {
+		return nil, fmt.Errorf("empty result vector")
 	}
 
-	return ret, nil
+	if data.Len() == 1 {
+		dataSample := data[0]
+		return &Metric{
+			Name:        metricQuery.Name,
+			ScalarValue: float64(dataSample.Value),
+		}, nil
+	}
+	vectorValue := make(map[string]interface{})
+	for _, dataSample := range data {
+		metricValues := valuesFromMetric(dataSample.Metric)
+		populateVectorMap(vectorValue, metricValues, float64(dataSample.Value))
+	}
+	return &Metric{
+		Name:        metricQuery.Name,
+		VectorValue: vectorValue,
+	}, nil
 }
 
-func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterName string) (map[string]Metric, error) {
+func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterID string) (map[string]Metric, error) {
 
 	metricsResult := make(map[string]Metric)
 
@@ -169,7 +181,7 @@ func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterName 
 		close(queryChannel)
 	}()
 
-	resultsChannel := make(chan Metric, m.maxGoRoutines)
+	resultsChannel := make(chan *Metric, m.maxGoRoutines)
 	errorChannel := make(chan error, m.maxGoRoutines)
 
 	go func() {
@@ -180,18 +192,14 @@ func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterName 
 			log.Debugf("Starting getMetrics goroutine")
 			go func() {
 				for q := range queryChannel {
-					log.Debugf("GetMetric for %s, cluster %s", q, clusterName)
-					r, err := m.GetMetric(q, clusterName)
+					log.Debugf("GetMetric for %s, cluster %s", q, clusterID)
+					metric, err := m.GetMetric(q, clusterID)
 					if err != nil {
 						log.Debugf("unable to get metric: %s", err)
 						errorChannel <- err
 						wg.Done()
 					}
-					metricResult := Metric{
-						Name:  q.Name,
-						Value: r,
-					}
-					resultsChannel <- metricResult
+					resultsChannel <- metric
 				}
 				wg.Done()
 			}()
@@ -208,7 +216,7 @@ func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterName 
 		return nil, err
 	}
 	for result := range resultsChannel {
-		metricsResult[result.Name] = result
+		metricsResult[result.Name] = *result
 	}
 	return metricsResult, nil
 }
@@ -217,4 +225,43 @@ func replaceWildcard(wildcard string, value string, query string) string {
 	clusterNameExp := regexp.MustCompile(wildcard)
 
 	return clusterNameExp.ReplaceAllString(query, "\""+value+"\"")
+}
+
+func replaceAllWildcards(clusterID string, query string) string {
+	result := replaceWildcard(MetricQueryWildcardClusterID, clusterID, query)
+	if clusterProjectID, clusterLocation, clusterName, err := gke.SliceAndValidateClusterID(clusterID); err == nil {
+		result = replaceWildcard(MetricQueryWildcardClusterProject, clusterProjectID, result)
+		result = replaceWildcard(MetricQueryWildcardClusterLocation, clusterLocation, result)
+		result = replaceWildcard(MetricQueryWildcardClusterName, clusterName, result)
+	} else {
+		log.Warnf("failed to replace some wildcards due to project identifier validation: %s", err)
+	}
+	return result
+}
+
+func valuesFromMetric(metric pmodel.Metric) []string {
+	result := make([]string, 0, len(metric))
+	keys := make([]string, 0, len(metric))
+	for key := range metric {
+		keys = append(keys, string(key))
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		result = append(result, string(metric[pmodel.LabelName(key)]))
+	}
+	return result
+}
+
+func populateVectorMap(m map[string]interface{}, labels []string, value float64) {
+	if len(labels) == 1 {
+		m[labels[0]] = value
+		return
+	}
+	label := labels[0]
+	mValue, ok := m[label]
+	if !ok {
+		mValue = make(map[string]interface{})
+		m[label] = mValue
+	}
+	populateVectorMap(mValue.(map[string]interface{}), labels[1:], value)
 }

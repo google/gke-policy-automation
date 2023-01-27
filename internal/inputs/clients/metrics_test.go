@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/gke-policy-automation/internal/gke"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	pmodel "github.com/prometheus/common/model"
 )
@@ -130,19 +131,16 @@ func TestNewMetricClient(t *testing.T) {
 	}
 }
 
-func TestGetMetric(t *testing.T) {
-
+func TestGetMetric_Scalar(t *testing.T) {
 	metricName := "test-metric"
-	metricValue := 22
+	metricValue := float64(22)
 	testQuery := "test-query"
 
 	v1ApiMock := &metricsAPIClientMock{
 		QueryFn: func(ctx context.Context, query string, ts time.Time, opts ...v1.Option) (pmodel.Value, v1.Warnings, error) {
-
 			if query != testQuery {
 				t.Errorf("query is %v; want %v", query, testQuery)
 			}
-
 			return pmodel.Vector{
 				&pmodel.Sample{
 					Metric:    nil,
@@ -154,14 +152,65 @@ func TestGetMetric(t *testing.T) {
 	}
 
 	client := &metricsClient{ctx: context.TODO(), client: nil, api: v1ApiMock, maxGoRoutines: defaultMaxGoroutines}
-
 	result, err := client.GetMetric(MetricQuery{Query: testQuery, Name: metricName}, "sample-cluster")
 
 	if err != nil {
 		t.Fatalf("err is not nil; want nil; err = %s", err)
 	}
-	if result != fmt.Sprint(metricValue) {
-		t.Errorf("result is %v; want %v", result, fmt.Sprint(metricValue))
+	if result.ScalarValue != metricValue {
+		t.Errorf("result's scalar value = %v; want %v", result.ScalarValue, fmt.Sprint(metricValue))
+	}
+}
+
+func TestGetMetric_Vector(t *testing.T) {
+	metricName := "test-metric"
+	testQuery := "test-query"
+	vectorValues := map[string]map[string]float64{
+		"pool1": {
+			"zone1": 34,
+			"zone2": 65,
+		},
+		"pool2": {"zone1": 34},
+	}
+	v1ApiMock := &metricsAPIClientMock{
+		QueryFn: func(ctx context.Context, query string, ts time.Time, opts ...v1.Option) (pmodel.Value, v1.Warnings, error) {
+			if query != testQuery {
+				t.Errorf("query is %v; want %v", query, testQuery)
+			}
+			samples := make([]*pmodel.Sample, 0, len(vectorValues))
+			for k, v := range vectorValues {
+				for i, j := range v {
+					metric := make(map[pmodel.LabelName]pmodel.LabelValue)
+					metric["nodepool"] = pmodel.LabelValue(k)
+					metric["zone"] = pmodel.LabelValue(i)
+					samples = append(samples, &pmodel.Sample{
+						Metric:    pmodel.Metric(metric),
+						Value:     pmodel.SampleValue(j),
+						Timestamp: pmodel.Now(),
+					})
+				}
+			}
+			return pmodel.Vector(samples), nil, nil
+		},
+	}
+
+	client := &metricsClient{ctx: context.TODO(), client: nil, api: v1ApiMock, maxGoRoutines: defaultMaxGoroutines}
+	result, err := client.GetMetric(MetricQuery{Query: testQuery, Name: metricName}, "sample-cluster")
+
+	if err != nil {
+		t.Fatalf("err is not nil; want nil; err = %s", err)
+	}
+	for k, v := range vectorValues {
+		val, ok := result.VectorValue[k]
+		if !ok {
+			t.Fatalf("vector value has no key %s", k)
+		}
+		mapVal := val.(map[string]interface{})
+		for i, j := range v {
+			if mapVal[i] != j {
+				t.Errorf("result[%v][%v] = %v; want %v", k, i, mapVal[i], j)
+			}
+		}
 	}
 }
 
@@ -197,16 +246,17 @@ func TestGetMetricsForCluster(t *testing.T) {
 	}
 }
 
-func TestReplaceWildcard(t *testing.T) {
-	query := "apiserver_storage_objects{resource=\"pods\", cluster=CLUSTER_NAME}"
+func TestReplaceAllWildcards(t *testing.T) {
+	query := "sum by (node) (kube_pod_info{cluster=$CLUSTER_NAME,location=$CLUSTER_LOCATION,project_id=$CLUSTER_PROJECT})"
+	clusterProjectID := "demo-project-123"
+	clusterLocation := "europe-central2"
 	clusterName := "test_cluster"
+	clusterID := gke.GetClusterID(clusterProjectID, clusterLocation, clusterName)
 
-	expected := "apiserver_storage_objects{resource=\"pods\", cluster=\"test_cluster\"}"
-
-	result := replaceWildcard("CLUSTER_NAME", clusterName, query)
+	expected := fmt.Sprintf("sum by (node) (kube_pod_info{cluster=%q,location=%q,project_id=%q})", clusterName, clusterLocation, clusterProjectID)
+	result := replaceAllWildcards(clusterID, query)
 
 	if result != expected {
 		t.Errorf("result query is %v; want %v", result, expected)
 	}
-
 }

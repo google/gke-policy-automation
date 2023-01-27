@@ -16,7 +16,6 @@ package inputs
 
 import (
 	"context"
-	"fmt"
 
 	container "cloud.google.com/go/container/apiv1"
 	"cloud.google.com/go/container/apiv1/containerpb"
@@ -91,8 +90,4 @@ func (i *gkeAPIInput) Close() error {
 		return i.client.Close()
 	}
 	return nil
-}
-
-func GetClusterName(project string, location string, name string) string {
-	return fmt.Sprintf("projects/%s/locations/%s/clusters/%s", project, location, name)
 }
