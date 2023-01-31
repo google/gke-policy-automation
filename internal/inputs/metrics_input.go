@@ -100,7 +100,7 @@ func (b *metricsInputBuilder) Build() (Input, error) {
 	var metricsClient clients.MetricsClient
 	var err error
 	if b.projectID != "" || b.address != "" {
-		log.Debugf("creating global metric client with a project %s", b.projectID)
+		log.Debugf("creating global metric client, project %q, address %q", b.projectID, b.address)
 		if metricsClient, err = newMetricsClientFromBuilder(b.ctx,
 			b.credentialsFile, b.address, b.projectID, b.username, b.password,
 			b.maxGoRoutines, b.timeoutSeconds, b.createTokenSourceFn); err != nil {

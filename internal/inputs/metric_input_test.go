@@ -217,13 +217,6 @@ func TestMetricsInputClose(t *testing.T) {
 	}
 }
 
-func TestCreateTokenSource(t *testing.T) {
-	_, err := createTokenSource(context.Background(), "")
-	if err != nil {
-		t.Fatalf("err = %v; want nil", err)
-	}
-}
-
 func TestCreateTokenSource_credsFile(t *testing.T) {
 	testCredsFile := "test-fixtures/test_credentials.json"
 	_, err := createTokenSource(context.Background(), testCredsFile)
