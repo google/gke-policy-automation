@@ -138,7 +138,10 @@ func (p *PolicyAutomationApp) loadMetricsAPIInputConfig(config *cfg.MetricsAPIIn
 	}
 
 	metricInputBuilder := inputs.NewMetricsInputBuilder(p.ctx, metricQueries).
-		WithCredentialsFile(p.config.CredentialsFile)
+		WithCredentialsFile(p.config.CredentialsFile).
+		WithProjectID(config.ProjectID).
+		WithAddress(config.Address).
+		WithUsernamePassword(config.Username, config.Password)
 
 	metricInput, err := metricInputBuilder.Build()
 	if err != nil {

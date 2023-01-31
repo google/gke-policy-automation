@@ -17,10 +17,14 @@ package clients
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/gke-policy-automation/internal/gke"
+	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	pmodel "github.com/prometheus/common/model"
 )
@@ -113,9 +117,37 @@ func (m *metricsAPIClientMock) WalReplay(ctx context.Context) (v1.WalReplayStatu
 	return v1.WalReplayStatus{}, nil
 }
 
+type tokenSourceMock struct {
+	getAuthTokenFn func() (string, error)
+}
+
+func (m *tokenSourceMock) GetAuthToken() (string, error) {
+	return m.getAuthTokenFn()
+}
+
+func TestMetricsClientBuilder(t *testing.T) {
+	maxGoRoutines := 20
+	b := NewMetricsClientBuilder(context.TODO()).
+		WithMaxGoroutines(maxGoRoutines).
+		WithAddress("https://some.prometheus/api/v1").
+		WithUsernamePassword("john", "doe")
+
+	client, err := b.Build()
+	if err != nil {
+		t.Fatalf("err = %v; want nil", err)
+	}
+	mClient, ok := client.(*metricsClient)
+	if !ok {
+		t.Fatalf("client is not *metricsClient")
+	}
+	if mClient.maxGoRoutines != maxGoRoutines {
+		t.Errorf("maxGoRoutines = %v; want %v", mClient.maxGoRoutines, maxGoRoutines)
+	}
+}
+
 func TestNewMetricClient(t *testing.T) {
 	ctx := context.TODO()
-	cli, err := newMetricsClient(ctx, "test-project", "fake-token", 20)
+	cli, err := newMetricsClient(ctx, "https://some.prometheus/api/v1", http.DefaultTransport, 20)
 	if err != nil {
 		t.Fatalf("err is not nil; want nil; err = %s", err)
 	}
@@ -258,5 +290,40 @@ func TestReplaceAllWildcards(t *testing.T) {
 
 	if result != expected {
 		t.Errorf("result query is %v; want %v", result, expected)
+	}
+}
+
+func TestGetRoundTripper(t *testing.T) {
+	rt, err := getRoundTripper(nil, "username", "password")
+	if err != nil {
+		t.Fatalf("err = %v; want nil", err)
+	}
+	rtType := reflect.TypeOf(rt).String()
+	if !strings.HasSuffix(rtType, "authorizationCredentialsRoundTripper") {
+		t.Errorf("roundTripper type is = %v; want %v suffix", rtType, "authorizationCredentialsRoundTripper")
+	}
+}
+func TestGetRoundTripper_ts(t *testing.T) {
+	rt, err := getRoundTripper(&tokenSourceMock{
+		getAuthTokenFn: func() (string, error) {
+			return "token", nil
+		}}, "", "")
+
+	if err != nil {
+		t.Fatalf("err = %v; want nil", err)
+	}
+	rtType := reflect.TypeOf(rt).String()
+	if !strings.HasSuffix(rtType, "authorizationCredentialsRoundTripper") {
+		t.Errorf("roundTripper type is = %v; want %v suffix", rtType, "authorizationCredentialsRoundTripper")
+	}
+}
+
+func TestGetRoundTripper_default(t *testing.T) {
+	rt, err := getRoundTripper(nil, "", "")
+	if err != nil {
+		t.Fatalf("err = %v; want nil", err)
+	}
+	if !reflect.DeepEqual(rt, api.DefaultRoundTripper) {
+		t.Errorf("roundTripper  is not api.DefaultRoundTripper")
 	}
 }

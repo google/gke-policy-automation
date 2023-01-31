@@ -28,32 +28,40 @@ const (
 	metricsInputDescription = "Cluster metrics data from Prometheus API"
 )
 
-type newMetricsClientFunc func(ctx context.Context, projectId string, authToken string) (clients.MetricsClient, error)
+type createTokenSourceFn func(ctx context.Context, credentialsFile string) (clients.TokenSource, error)
 
 type metricsInput struct {
-	ctx                  context.Context
-	tokenSource          clients.TokenSource
-	newMetricsClientFunc newMetricsClientFunc
-	metricsClient        clients.MetricsClient
-	projectID            string
-	queries              []clients.MetricQuery
-	maxGoRoutines        int
-	timeoutSeconds       int
+	ctx                 context.Context
+	metricsClient       clients.MetricsClient
+	projectID           string
+	credentialsFile     string
+	address             string
+	username            string
+	password            string
+	queries             []clients.MetricQuery
+	maxGoRoutines       int
+	timeoutSeconds      int
+	createTokenSourceFn createTokenSourceFn
 }
 
 type metricsInputBuilder struct {
-	ctx             context.Context
-	credentialsFile string
-	projectID       string
-	queries         []clients.MetricQuery
-	maxGoRoutines   int
-	timeoutSeconds  int
+	ctx                 context.Context
+	credentialsFile     string
+	projectID           string
+	address             string
+	username            string
+	password            string
+	queries             []clients.MetricQuery
+	maxGoRoutines       int
+	timeoutSeconds      int
+	createTokenSourceFn createTokenSourceFn
 }
 
 func NewMetricsInputBuilder(ctx context.Context, queries []clients.MetricQuery) *metricsInputBuilder {
 	return &metricsInputBuilder{
-		ctx:     ctx,
-		queries: queries,
+		ctx:                 ctx,
+		queries:             queries,
+		createTokenSourceFn: createTokenSource,
 	}
 }
 
@@ -77,33 +85,41 @@ func (b *metricsInputBuilder) WithProjectID(projectID string) *metricsInputBuild
 	return b
 }
 
+func (b *metricsInputBuilder) WithAddress(address string) *metricsInputBuilder {
+	b.address = address
+	return b
+}
+
+func (b *metricsInputBuilder) WithUsernamePassword(username, password string) *metricsInputBuilder {
+	b.username = username
+	b.password = password
+	return b
+}
+
 func (b *metricsInputBuilder) Build() (Input, error) {
-	var ts clients.TokenSource
+	var metricsClient clients.MetricsClient
 	var err error
-
-	if b.credentialsFile != "" {
-		ts, err = clients.NewGoogleTokenSourceWithCredentials(b.ctx, b.credentialsFile)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		ts, err = clients.NewGoogleTokenSource(b.ctx)
-		if err != nil {
+	if b.projectID != "" || b.address != "" {
+		log.Debugf("creating global metric client with a project %s", b.projectID)
+		if metricsClient, err = newMetricsClientFromBuilder(b.ctx,
+			b.credentialsFile, b.address, b.projectID, b.username, b.password,
+			b.maxGoRoutines, b.timeoutSeconds, b.createTokenSourceFn); err != nil {
 			return nil, err
 		}
 	}
-
-	input := &metricsInput{
-		ctx:            b.ctx,
-		tokenSource:    ts,
-		projectID:      b.projectID,
-		queries:        b.queries,
-		maxGoRoutines:  b.maxGoRoutines,
-		timeoutSeconds: b.timeoutSeconds,
-	}
-	input.newMetricsClientFunc = input.newMetricsClientFromBuilder
-
-	return input, nil
+	return &metricsInput{
+		ctx:                 b.ctx,
+		metricsClient:       metricsClient,
+		credentialsFile:     b.credentialsFile,
+		projectID:           b.projectID,
+		address:             b.address,
+		username:            b.username,
+		password:            b.password,
+		queries:             b.queries,
+		maxGoRoutines:       b.maxGoRoutines,
+		timeoutSeconds:      b.timeoutSeconds,
+		createTokenSourceFn: b.createTokenSourceFn,
+	}, nil
 }
 
 func (i *metricsInput) GetID() string {
@@ -121,23 +137,25 @@ func (i *metricsInput) GetDataSourceName() string {
 func (i *metricsInput) GetData(clusterID string) (interface{}, error) {
 	projectID, _, _, err := gke.SliceAndValidateClusterID(clusterID)
 	if err != nil {
-		log.Error("Error parsing clusterId: " + err.Error())
+		log.Errorf("error parsing clusterID: %s", err)
 		return nil, err
 	}
 
-	if i.metricsClient == nil {
-		log.Debugf("Empty client - creating one for %v", clusterID)
-		if err := i.createMetricsClient(projectID); err != nil {
+	metricsClient := i.metricsClient
+	if metricsClient == nil {
+		log.Debugf("global metric client is nil, creating scoped client for cluster %s", clusterID)
+		if metricsClient, err = newMetricsClientFromBuilder(
+			i.ctx, i.credentialsFile, i.address, projectID, i.username, i.password,
+			i.maxGoRoutines, i.timeoutSeconds, i.createTokenSourceFn); err != nil {
 			return nil, err
 		}
 	}
 
-	data, err := i.metricsClient.GetMetricsForCluster(i.queries, clusterID)
+	data, err := metricsClient.GetMetricsForCluster(i.queries, clusterID)
 	if err != nil {
-		log.Errorf("Error fetching metric: %s", err)
+		log.Errorf("error fetching metric: %s", err)
 		return nil, err
 	}
-
 	return data, nil
 }
 
@@ -146,30 +164,31 @@ func (i *metricsInput) Close() error {
 	return nil
 }
 
-func (i *metricsInput) newMetricsClientFromBuilder(ctx context.Context, projectID string, authToken string) (clients.MetricsClient, error) {
-	client, err := clients.NewMetricsClientBuilder(ctx, projectID, authToken).
-		WithMaxGoroutines(i.maxGoRoutines).
-		WithTimeout(i.timeoutSeconds).
-		Build()
-	return client, err
+func newMetricsClientFromBuilder(ctx context.Context,
+	credentialsFile, address, projectID, username, password string,
+	maxGoRoutines, timeoutSeconds int,
+	createTokenSourceFn createTokenSourceFn) (clients.MetricsClient, error) {
+
+	builder := clients.NewMetricsClientBuilder(ctx)
+	if address != "" {
+		builder.WithAddress(address)
+		if username != "" && password != "" {
+			builder.WithUsernamePassword(username, password)
+		}
+	} else {
+		if ts, err := createTokenSourceFn(ctx, credentialsFile); err == nil {
+			builder.WithGoogleCloudMonitoring(projectID, ts)
+		} else {
+			return nil, err
+		}
+	}
+	return builder.WithMaxGoroutines(maxGoRoutines).
+		WithTimeout(timeoutSeconds).Build()
 }
 
-func (i *metricsInput) createMetricsClient(clusterProjectID string) error {
-	token, err := i.tokenSource.GetAuthToken()
-	if err != nil {
-		return err
+func createTokenSource(ctx context.Context, credentialsFile string) (clients.TokenSource, error) {
+	if credentialsFile != "" {
+		return clients.NewGoogleTokenSourceWithCredentials(ctx, credentialsFile)
 	}
-
-	var projectID string
-	if i.projectID != "" {
-		projectID = i.projectID
-	} else {
-		projectID = clusterProjectID
-	}
-
-	i.metricsClient, err = i.newMetricsClientFunc(i.ctx, projectID, token)
-	if err != nil {
-		return err
-	}
-	return nil
+	return clients.NewGoogleTokenSource(ctx)
 }
