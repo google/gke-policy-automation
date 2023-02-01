@@ -33,7 +33,7 @@ valid {
 }
 
 violation[msg] {
-	nodes := to_number(input.data.monitoring.number_of_nodes_by_cluster.Value)
+	nodes := input.data.monitoring.nodes.scalar 
 	is_private := input.data.gke.private_cluster_config.enable_private_nodes
 	is_private = true 
 	nodes > private_nodes_limit
@@ -42,7 +42,7 @@ violation[msg] {
 }
 
 violation[msg] {
-	nodes := to_number(input.data.monitoring.number_of_nodes_by_cluster.Value)
+	nodes := input.data.monitoring.nodes.scalar 
 	is_private := input.data.gke.private_cluster_config.enable_private_nodes
 	is_private = false 
 	nodes > public_nodes_limit

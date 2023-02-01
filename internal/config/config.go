@@ -345,7 +345,11 @@ func SetScalabilityConfigDefaults(config *Config) {
 		log.Debugf("Configuring MetricsApi input defaults")
 		config.Inputs.MetricsAPI = &MetricsAPIInput{
 			Enabled: true,
+			Metrics: getScalabilityMetricsDefaults(),
 		}
+	} else {
+		config.Inputs.MetricsAPI.Metrics = append(config.Inputs.MetricsAPI.Metrics, getScalabilityMetricsDefaults()...)
+
 	}
 	if config.Inputs.K8sAPI != nil {
 		log.Debugf("Configuring K8SApiConfig input defaults")

@@ -192,14 +192,14 @@ func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterID st
 			log.Debugf("Starting getMetrics goroutine")
 			go func() {
 				for q := range queryChannel {
-					log.Debugf("GetMetric for %s, cluster %s", q, clusterID)
+					log.Debugf("getMetric for cluster %s, query %q", clusterID, q)
 					metric, err := m.GetMetric(q, clusterID)
 					if err != nil {
-						log.Debugf("unable to get metric: %s", err)
+						log.Debugf("unable to get metric for cluster: %s, query: %s, reason: %s", clusterID, q, err)
 						errorChannel <- err
-						wg.Done()
+					} else {
+						resultsChannel <- metric
 					}
-					resultsChannel <- metric
 				}
 				wg.Done()
 			}()
