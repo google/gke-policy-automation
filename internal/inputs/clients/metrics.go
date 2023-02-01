@@ -218,11 +218,11 @@ func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterID st
 					log.Debugf("GetMetric for %s, cluster %s", q, clusterID)
 					metric, err := m.GetMetric(q, clusterID)
 					if err != nil {
-						log.Debugf("unable to get metric: %s", err)
+						log.Debugf("unable to get metric for cluster: %s, query: %s, reason: %s", clusterID, q, err)
 						errorChannel <- err
-						wg.Done()
+					} else {
+						resultsChannel <- metric
 					}
-					resultsChannel <- metric
 				}
 				wg.Done()
 			}()
