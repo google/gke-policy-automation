@@ -50,7 +50,7 @@ func getScalabilityMetricsDefaults() []ConfigMetric {
 		},
 		{
 			MetricName: "secrets",
-			Query:      "sum (kube_horizontalpodautoscaler_info{cluster=$CLUSTER_NAME,location=$CLUSTER_LOCATION,project_id=$CLUSTER_PROJECT})",
+			Query:      "sum (kube_secret_info{cluster=$CLUSTER_NAME,location=$CLUSTER_LOCATION,project_id=$CLUSTER_PROJECT})",
 		},
 	}
 }
