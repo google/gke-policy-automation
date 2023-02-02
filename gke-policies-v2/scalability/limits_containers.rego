@@ -19,12 +19,13 @@
 #   group: Scalability
 #   severity: High
 #   sccCategory: CONTAINERS_LIMIT
-#   dataSource: monitoring
+#   dataSource: monitoring, gke
 
-package gke.scalability.pods
+package gke.scalability.containers
 
 default valid = false
-default limit = 200000
+default limit_standard = 400000
+default limit_autopilot = 24000
 default threshold = 80
 
 valid {
@@ -32,7 +33,15 @@ valid {
 }
 
 violation[msg] {
-	warn_limit = round(limit * threshold * 0.01)
+	warn_limit = round(limit_standard * threshold * 0.01)
+	not input.data.gke.autopilot.enabled
     input.data.monitoring.containers.scalar > warn_limit
-	msg := sprintf("Total number of containers %d has reached warning level %d (limit is %d)", [input.data.monitoring.pods.scalar, warn_limit, limit])
+	msg := sprintf("Total number of containers %d has reached warning level %d (limit is %d)", [input.data.monitoring.containers.scalar, warn_limit, limit_standard])
+}
+
+violation[msg] {
+	warn_limit = round(limit_autopilot * threshold * 0.01)
+	input.data.gke.autopilot.enabled
+    input.data.monitoring.containers.scalar > warn_limit
+	msg := sprintf("Total number of containers %d has reached warning level %d (limit is %d)", [input.data.monitoring.containers.scalar, warn_limit, limit_autopilot])
 }

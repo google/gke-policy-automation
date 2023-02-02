@@ -19,7 +19,7 @@
 #   group: Scalability
 #   severity: High
 #   sccCategory: NODES_PER_POOL_ZONE_LIMIT
-#   dataSource: monitoring
+#   dataSource: monitoring, gke
 
 package gke.scalability.nodes_per_pool_zone
 
@@ -34,6 +34,7 @@ valid {
 violation[msg] {
 	warn_limit = round(limit * threshold * 0.01)
 	some nodepool, zone
+	not input.data.gke.autopilot.enabled
     nodes_cnt := input.data.monitoring.nodes_per_pool_zone.vector[nodepool][zone]
 	nodes_cnt > warn_limit
 	msg := sprintf("Total number of nodes %d in a nodepool %s in a zone %s has reached warning level %d (limit is %d)", [nodes_cnt, nodepool, zone, warn_limit, limit])

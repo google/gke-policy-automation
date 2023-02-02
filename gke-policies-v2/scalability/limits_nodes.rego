@@ -27,25 +27,35 @@ default valid = false
 
 default private_nodes_limit = 15000
 default public_nodes_limit = 5000
+default autopilot_nodes_limit = 1000
+default threshold = 80
 
 valid {
 	count(violation) == 0
 }
 
 violation[msg] {
+	warn_limit = round(private_nodes_limit * threshold * 0.01)
 	nodes := input.data.monitoring.nodes.scalar 
 	is_private := input.data.gke.private_cluster_config.enable_private_nodes
 	is_private = true 
-	nodes > private_nodes_limit
-	msg := sprintf("nodes found: %d higher than the limit for private clusters: %d", [nodes, private_nodes_limit])
-	print(msg)
+	nodes > warn_limit
+	msg := sprintf("nodes found: %d higher than the limit for private clusters: %d", [nodes, warn_limit])
 }
 
 violation[msg] {
+	warn_limit = round(public_nodes_limit * threshold * 0.01)
 	nodes := input.data.monitoring.nodes.scalar 
 	is_private := input.data.gke.private_cluster_config.enable_private_nodes
 	is_private = false 
-	nodes > public_nodes_limit
-	msg := sprintf("nodes found: %d higher than the limit for non private clusters: %d", [nodes, public_nodes_limit])
-	print(msg)
+	nodes > warn_limit
+	msg := sprintf("nodes found: %d higher than the limit for non private clusters: %d", [nodes, warn_limit])
+}
+
+violation[msg] {
+	warn_limit = round(autopilot_nodes_limit * threshold * 0.01)
+	nodes := input.data.monitoring.nodes.scalar 
+	input.data.gke.autopilot.enabled
+	nodes > warn_limit
+	msg := sprintf("nodes found: %d higher than the warn limit for autopilot clusters: %d", [nodes, warn_limit])
 }

@@ -17,7 +17,6 @@ package config
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -228,11 +227,21 @@ func ValidateGeneratePolicyDocsConfig(config Config) error {
 }
 
 func ValidateScalabilityCheckConfig(config Config) error {
-	if err := ValidateClusterCheckConfig(config); err != nil {
-		return nil
+	var errors = make([]error, 0)
+	errors = append(errors, validateClustersConfig(config)...)
+	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
+	errors = append(errors, validateOutputConfig(config.Outputs)...)
+	if config.Inputs.MetricsAPI == nil || !config.Inputs.MetricsAPI.Enabled {
+		errors = append(errors, fmt.Errorf("metricsAPI input has to be enabled"))
 	}
-	if !config.Inputs.MetricsAPI.Enabled || !config.Inputs.K8sAPI.Enabled {
-		return errors.New("either metricsAPI input or k8sAPI input has to be enabled")
+	if config.Inputs.GKEApi == nil || !config.Inputs.GKEApi.Enabled {
+		errors = append(errors, fmt.Errorf("gkeAPI input has to be enabled"))
+	}
+	if len(errors) > 0 {
+		for _, err := range errors {
+			log.Warnf("configuration validation error: %s", err)
+		}
+		return errors[0]
 	}
 	return nil
 }
@@ -342,14 +351,19 @@ func SetCheckConfigDefaults(config *Config) {
 func SetScalabilityConfigDefaults(config *Config) {
 	SetPolicyConfigDefaults(config)
 	if config.Inputs.MetricsAPI == nil {
-		log.Debugf("Configuring MetricsApi input defaults")
+		log.Debugf("configuring MetricsApi input defaults")
 		config.Inputs.MetricsAPI = &MetricsAPIInput{
 			Enabled: true,
 			Metrics: getScalabilityMetricsDefaults(),
 		}
 	} else {
 		config.Inputs.MetricsAPI.Metrics = append(config.Inputs.MetricsAPI.Metrics, getScalabilityMetricsDefaults()...)
-
+	}
+	if config.Inputs.GKEApi == nil {
+		log.Debugf("configuring GKEApi input defaults")
+		config.Inputs.GKEApi = &GKEApiInput{
+			Enabled: true,
+		}
 	}
 	if config.Inputs.K8sAPI != nil {
 		log.Debugf("Configuring K8SApiConfig input defaults")

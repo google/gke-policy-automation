@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.scalability.hpas
+package gke.scalability.services_per_ns
 
-test_hpas_above_warn_limit {
-	not valid with input as {"data": {"monitoring": {"hpas": { "name": "hpas", "scalar": 254}}}}
+test_services_per_ns_above_warn_limit {
+	not valid with input as {"data": {"monitoring": {"services_per_ns": { "name": "services_per_ns", "vector": {"default": 1, "kube-system": 4, "demo-test":4523}}}}}
 }
 
-test_hpas_within_warn_limit {
-	valid with input as {"data": {"monitoring": {"hpas": { "name": "hpas", "scalar": 180}}}}
+test_services_per_ns_within_warn_limit {
+	valid with input as {"data": {"monitoring": {"services_per_ns": { "name": "services_per_ns", "vector": {"default": 1, "kube-system": 4, "demo-test":453}}}}}
 }

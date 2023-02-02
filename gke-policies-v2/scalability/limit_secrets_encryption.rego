@@ -13,27 +13,28 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE ConfigMaps Limit
-# description: GKE ConfigMaps Limit
+# title: Number of secrets with KMS encryption
+# description: The total number of secrets when KMS secret encryption is enabled
 # custom:
 #   group: Scalability
 #   severity: High
-#   sccCategory: CONFIGMAPS_LIMIT
-#   dataSource: k8s
+#   sccCategory: SECRETS_WITH_ENCRYPTION_LIMIT
+#   dataSource: monitoring, gke
 
-package gke.scalability.configmaps
+package gke.scalability.secrets_with_enc
 
 default valid = false
-
-default configmaps_limit = 2 #value is ONLY for demo purpose, does not reflect a real limit
+default limit = 30000
+default threshold = 80
 
 valid {
 	count(violation) == 0
 }
 
 violation[msg] {
-	configmaps := {object | object := input.data.k8s.Resources[_]; object.data.kind == "ConfigMap"}
-	count(configmaps) > configmaps_limit
-	msg := sprintf("Configmaps found: %d higher than the limit: %d", [count(configmaps), configmaps_limit])
-	print(msg)
+	warn_limit = round(limit * threshold * 0.01)
+    secrets_cnt := input.data.monitoring.secrets.scalar
+	input.data.gke.database_encryption.state == 1
+    secrets_cnt> warn_limit
+	msg := sprintf("Total number of secrets with encryption %d has reached warning level %d (limit is %d)", [secrets_cnt, warn_limit, limit])
 }

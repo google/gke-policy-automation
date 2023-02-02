@@ -44,5 +44,13 @@ func getScalabilityMetricsDefaults() []ConfigMetric {
 			MetricName: "services_per_ns",
 			Query:      "sum by (exported_namespace) (kube_service_info{cluster=$CLUSTER_NAME,location=$CLUSTER_LOCATION,project_id=$CLUSTER_PROJECT})",
 		},
+		{
+			MetricName: "hpas",
+			Query:      "sum (kube_horizontalpodautoscaler_info{cluster=$CLUSTER_NAME,location=$CLUSTER_LOCATION,project_id=$CLUSTER_PROJECT})",
+		},
+		{
+			MetricName: "secrets",
+			Query:      "sum (kube_horizontalpodautoscaler_info{cluster=$CLUSTER_NAME,location=$CLUSTER_LOCATION,project_id=$CLUSTER_PROJECT})",
+		},
 	}
 }

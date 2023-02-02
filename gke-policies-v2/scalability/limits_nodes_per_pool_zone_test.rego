@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.scalability.hpas
+package gke.scalability.nodes_per_pool_zone
 
-test_hpas_above_warn_limit {
-	not valid with input as {"data": {"monitoring": {"hpas": { "name": "hpas", "scalar": 254}}}}
+test_nodes_per_pool_zone_above_warn_limit {
+	not valid with input as {"data": {"monitoring": {"nodes_per_pool_zone": { "name": "nodes_per_pool_zone", "vector": {"default-pool": {"europe-central2-a": 642, "europe-central2-b": 734,"europe-central2-a": 821}}}}}}
 }
 
-test_hpas_within_warn_limit {
-	valid with input as {"data": {"monitoring": {"hpas": { "name": "hpas", "scalar": 180}}}}
+test_nodes_per_pool_zone_within_warn_limit {
+    valid with input as {"data": {"monitoring": {"nodes_per_pool_zone": { "name": "nodes_per_pool_zone", "vector": {"default-pool": {"europe-central2-a": 642, "europe-central2-b": 734,"europe-central2-a": 690}}}}}}
 }
