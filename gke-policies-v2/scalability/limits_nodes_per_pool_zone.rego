@@ -17,7 +17,12 @@
 # description: The total number of nodes running in a single node pool zone
 # custom:
 #   group: Scalability
-#   severity: High
+#   severity: Low
+#   recommendation: >
+#     The limit applies when container-native load balancing with NEGs is not used with GKE Ingress controller.
+#     We recommend using container-native load balancing with NEGs (Network Endpoint Groups) to improve the
+#     load balancing performance and avoid this limit.
+#   externalURI: https://cloud.google.com/kubernetes-engine/quotas
 #   sccCategory: NODES_PER_POOL_ZONE_LIMIT
 #   dataSource: monitoring, gke
 

@@ -17,7 +17,12 @@
 # description: The total number of services running in a cluster
 # custom:
 #   group: Scalability
-#   severity: High
+#   severity: Medium
+#   recommendation: >
+#     The performance of iptables used by kube-proxy degrades if there are too many services or
+#     the number of backends behind a Service is high. We recommend keeping the number of services in the cluster
+#     below the limit.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/planning-large-clusters#limits-best-practices-large-scale-clusters
 #   sccCategory: SERVICES_LIMIT
 #   dataSource: monitoring
 

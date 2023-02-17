@@ -18,6 +18,10 @@
 # custom:
 #   group: Scalability
 #   severity: High
+#   recommendation: >
+#     Please concider distributing workloads among more than one cluster when the total number of required containers
+#     is above the limit of a supported number of containers for a single cluster.
+#   externalURI: https://cloud.google.com/kubernetes-engine/quotas
 #   sccCategory: CONTAINERS_LIMIT
 #   dataSource: monitoring, gke
 

@@ -18,6 +18,12 @@
 # custom:
 #   group: Scalability
 #   severity: High
+#   recommendation: >
+#     For GKE Standard clusters, adjust Compute Engine machine type used for nodes to
+#     accomodate more PODs on a single node. Increase number of PODs per node setting on a nodepools when posssible.
+#     Note that number of PODs per node should be aligned with the size of the POD's IP range.
+#     When the above is not applicable, concider running your workloads on additional cluster(s).
+#   externalURI: https://cloud.google.com/kubernetes-engine/quotas
 #   sccCategory: NODES_LIMIT
 #   dataSource: monitoring, gke
 

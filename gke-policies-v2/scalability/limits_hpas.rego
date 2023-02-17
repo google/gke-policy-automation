@@ -14,11 +14,15 @@
 
 # METADATA
 # title: Number of HPAs in a cluster
-# description: The total number of Horizonal Pod Autoscalers in a cluster
+# description: The optimal number of Horizonal Pod Autoscalers in a cluster
 # custom:
 #   group: Scalability
-#   severity: High
-#   sccCategory: HPAS_LIMIT
+#   severity: Medium
+#   recommendation: >
+#     Horizontal Pod Autoscaler doesn't have a hard limit on the supported number of HPA objects.
+#     However, above a certain number of HPA objects, the period between HPA recalculations may become longer than the standard 15 seconds.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/horizontalpodautoscaler#scalability
+#   sccCategory: HPAS_OPTIMAL_LIMIT
 #   dataSource: monitoring
 
 package gke.scalability.hpas

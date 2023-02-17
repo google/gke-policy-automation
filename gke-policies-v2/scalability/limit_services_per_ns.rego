@@ -17,7 +17,12 @@
 # description: The total number of services running in single namespace
 # custom:
 #   group: Scalability
-#   severity: High
+#   severity: Medium
+#   recommendation: >
+#     The number of environment variables generated for Services might outgrow shell limits.
+#     This might cause Pods to crash on startup. We recommend keeping the number of services por namespace
+#     below the limit.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/planning-large-clusters#limits-best-practices-large-scale-clusters
 #   sccCategory: SERVICES_PER_NS_LIMIT
 #   dataSource: monitoring
 

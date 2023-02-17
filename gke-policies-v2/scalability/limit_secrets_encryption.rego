@@ -18,6 +18,10 @@
 # custom:
 #   group: Scalability
 #   severity: High
+#   recommendation: >
+#     A cluster must decrypt all Secrets during cluster startup when application-layer secrets encryption is enabled.
+#     If the number of secrets you store is above the limit, your cluster might become unstable during startup or upgrades, causing workload outages.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/planning-large-clusters#limits-best-practices-large-scale-clusters
 #   sccCategory: SECRETS_WITH_ENCRYPTION_LIMIT
 #   dataSource: monitoring, gke
 
