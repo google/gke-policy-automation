@@ -24,9 +24,10 @@ import (
 	"time"
 
 	"github.com/google/gke-policy-automation/internal/gke"
-	"github.com/prometheus/client_golang/api"
+	"github.com/google/gke-policy-automation/internal/version"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	pmodel "github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
 )
 
 type metricsAPIClientMock struct {
@@ -323,7 +324,34 @@ func TestGetRoundTripper_default(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err = %v; want nil", err)
 	}
-	if !reflect.DeepEqual(rt, api.DefaultRoundTripper) {
-		t.Errorf("roundTripper  is not api.DefaultRoundTripper")
+	assert.IsType(t, &metricsRoundTripper{}, rt)
+}
+
+func TestGetDefaultRoundTripper(t *testing.T) {
+	rt := getDefaultRoundTripper()
+	assert.IsType(t, &metricsRoundTripper{}, rt)
+}
+
+type roundTripperMock struct {
+	RoundTripFn func(req *http.Request) (*http.Response, error)
+}
+
+func (m roundTripperMock) RoundTrip(req *http.Request) (*http.Response, error) {
+	return m.RoundTripFn(req)
+}
+
+func TestMetricsRoundTripper(t *testing.T) {
+	rt := metricsRoundTripper{
+		rt: roundTripperMock{
+			RoundTripFn: func(req *http.Request) (*http.Response, error) {
+				uaString := req.Header.Get("User-Agent")
+				if uaString != version.UserAgent {
+					t.Fatalf("userAgent in request = %v; want %v", uaString, version.UserAgent)
+				}
+				return &http.Response{}, nil
+			},
+		},
 	}
+	req, _ := http.NewRequest(http.MethodGet, "http://localhost", nil)
+	rt.RoundTrip(req)
 }

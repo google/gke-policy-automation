@@ -26,6 +26,7 @@ import (
 
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/log"
+	"github.com/google/gke-policy-automation/internal/version"
 
 	b64 "encoding/base64"
 
@@ -215,7 +216,7 @@ func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterID st
 			log.Debugf("Starting getMetrics goroutine")
 			go func() {
 				for q := range queryChannel {
-					log.Debugf("GetMetric for %s, cluster %s", q, clusterID)
+					log.Debugf("getMetric for cluster %s, query %q", clusterID, q)
 					metric, err := m.GetMetric(q, clusterID)
 					if err != nil {
 						log.Debugf("unable to get metric for cluster: %s, query: %s, reason: %s", clusterID, q, err)
@@ -295,11 +296,24 @@ func getRoundTripper(ts TokenSource, username, password string) (http.RoundTripp
 		if err != nil {
 			return nil, err
 		}
-		return config.NewAuthorizationCredentialsRoundTripper("Bearer", config.Secret(authToken), api.DefaultRoundTripper), nil
+		return config.NewAuthorizationCredentialsRoundTripper("Bearer", config.Secret(authToken), getDefaultRoundTripper()), nil
 	}
 	if username != "" && password != "" {
 		secret := b64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
-		return config.NewAuthorizationCredentialsRoundTripper("Basic", config.Secret(secret), api.DefaultRoundTripper), nil
+		return config.NewAuthorizationCredentialsRoundTripper("Basic", config.Secret(secret), getDefaultRoundTripper()), nil
 	}
-	return api.DefaultRoundTripper, nil
+	return getDefaultRoundTripper(), nil
+}
+
+type metricsRoundTripper struct {
+	rt http.RoundTripper
+}
+
+func (r metricsRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Set("User-Agent", version.UserAgent)
+	return r.rt.RoundTrip(req)
+}
+
+func getDefaultRoundTripper() http.RoundTripper {
+	return &metricsRoundTripper{rt: api.DefaultRoundTripper}
 }
