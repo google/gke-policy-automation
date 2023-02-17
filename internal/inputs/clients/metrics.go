@@ -17,6 +17,7 @@ package clients
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"reflect"
 	"regexp"
 	"sort"
@@ -25,6 +26,9 @@ import (
 
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/log"
+	"github.com/google/gke-policy-automation/internal/version"
+
+	b64 "encoding/base64"
 
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -62,15 +66,15 @@ type metricsClient struct {
 	maxGoRoutines int
 }
 
-func newMetricsClient(ctx context.Context, projectID string, authToken string, maxGoroutines int) (MetricsClient, error) {
+func newMetricsClient(ctx context.Context, address string, roundTripper http.RoundTripper, maxGoroutines int) (MetricsClient, error) {
 	// Creates a client.
 	client, err := api.NewClient(api.Config{
-		Address:      "https://monitoring.googleapis.com/v1/projects/" + projectID + "/location/global/prometheus/",
-		RoundTripper: config.NewAuthorizationCredentialsRoundTripper("Bearer", config.Secret(authToken), api.DefaultRoundTripper),
+		Address:      address,
+		RoundTripper: roundTripper,
 	})
 
 	if err != nil {
-		log.Fatalf("Failed to create metrics client: %v", err)
+		log.Fatalf("failed to create metrics client: %v", err)
 		return nil, err
 	}
 
@@ -87,17 +91,35 @@ func newMetricsClient(ctx context.Context, projectID string, authToken string, m
 type metricsClientBuilder struct {
 	ctx           context.Context
 	projectID     string
-	authToken     string
+	tokenSource   TokenSource
 	maxGoroutines int
 	timeout       int
+	address       string
+	username      string
+	password      string
 }
 
-func NewMetricsClientBuilder(ctx context.Context, projectID string, authToken string) *metricsClientBuilder {
+func NewMetricsClientBuilder(ctx context.Context) *metricsClientBuilder {
 	return &metricsClientBuilder{
-		ctx:       ctx,
-		projectID: projectID,
-		authToken: authToken,
+		ctx: ctx,
 	}
+}
+
+func (b *metricsClientBuilder) WithGoogleCloudMonitoring(projectID string, tokenSource TokenSource) *metricsClientBuilder {
+	b.projectID = projectID
+	b.tokenSource = tokenSource
+	return b
+}
+
+func (b *metricsClientBuilder) WithAddress(address string) *metricsClientBuilder {
+	b.address = address
+	return b
+}
+
+func (b *metricsClientBuilder) WithUsernamePassword(username string, password string) *metricsClientBuilder {
+	b.username = username
+	b.password = password
+	return b
 }
 
 func (b *metricsClientBuilder) WithMaxGoroutines(maxGoroutines int) *metricsClientBuilder {
@@ -111,19 +133,21 @@ func (b *metricsClientBuilder) WithTimeout(timeout int) *metricsClientBuilder {
 }
 
 func (b *metricsClientBuilder) Build() (MetricsClient, error) {
-
-	var maxGoRoutines = defaultMaxGoroutines
-	if b.maxGoroutines != 0 {
-		maxGoRoutines = b.maxGoroutines
+	maxGoRoutines := b.maxGoroutines
+	if b.maxGoroutines == 0 {
+		maxGoRoutines = defaultMaxGoroutines
 	}
 
-	metricsClient, err := newMetricsClient(b.ctx, b.projectID, b.authToken, maxGoRoutines)
+	address := b.address
+	if address == "" {
+		address = fmt.Sprintf("https://monitoring.googleapis.com/v1/projects/%s/location/global/prometheus/", b.projectID)
+	}
 
+	roundTripper, err := getRoundTripper(b.tokenSource, b.username, b.password)
 	if err != nil {
-		log.Fatalf("failed to create metrics client: %v", err)
 		return nil, err
 	}
-	return metricsClient, nil
+	return newMetricsClient(b.ctx, address, roundTripper, maxGoRoutines)
 }
 
 func (m *metricsClient) GetMetric(metricQuery MetricQuery, clusterID string) (*Metric, error) {
@@ -192,14 +216,14 @@ func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterID st
 			log.Debugf("Starting getMetrics goroutine")
 			go func() {
 				for q := range queryChannel {
-					log.Debugf("GetMetric for %s, cluster %s", q, clusterID)
+					log.Debugf("getMetric for cluster %s, query %q", clusterID, q)
 					metric, err := m.GetMetric(q, clusterID)
 					if err != nil {
-						log.Debugf("unable to get metric: %s", err)
+						log.Debugf("unable to get metric for cluster: %s, query: %s, reason: %s", clusterID, q, err)
 						errorChannel <- err
-						wg.Done()
+					} else {
+						resultsChannel <- metric
 					}
-					resultsChannel <- metric
 				}
 				wg.Done()
 			}()
@@ -264,4 +288,32 @@ func populateVectorMap(m map[string]interface{}, labels []string, value float64)
 		m[label] = mValue
 	}
 	populateVectorMap(mValue.(map[string]interface{}), labels[1:], value)
+}
+
+func getRoundTripper(ts TokenSource, username, password string) (http.RoundTripper, error) {
+	if ts != nil {
+		authToken, err := ts.GetAuthToken()
+		if err != nil {
+			return nil, err
+		}
+		return config.NewAuthorizationCredentialsRoundTripper("Bearer", config.Secret(authToken), getDefaultRoundTripper()), nil
+	}
+	if username != "" && password != "" {
+		secret := b64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
+		return config.NewAuthorizationCredentialsRoundTripper("Basic", config.Secret(secret), getDefaultRoundTripper()), nil
+	}
+	return getDefaultRoundTripper(), nil
+}
+
+type metricsRoundTripper struct {
+	rt http.RoundTripper
+}
+
+func (r metricsRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Set("User-Agent", version.UserAgent)
+	return r.rt.RoundTrip(req)
+}
+
+func getDefaultRoundTripper() http.RoundTripper {
+	return &metricsRoundTripper{rt: api.DefaultRoundTripper}
 }
