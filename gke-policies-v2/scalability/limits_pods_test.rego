@@ -18,7 +18,7 @@ test_pods_above_warn_limit_std {
 	not valid with input as {"data": {"monitoring": {"pods": { "name": "pods", "scalar": 160424}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": false}}}}
 }
 
-test_pods_within_warn_limit_std {
+test_pods_below_warn_limit_std {
 	valid with input as {"data": {"monitoring": {"pods": { "name": "pods", "scalar": 98504}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": false}}}}
 }
 
@@ -26,6 +26,6 @@ test_pods_above_warn_limit_auto {
 	not valid with input as {"data": {"monitoring": {"pods": { "name": "pods", "scalar": 98504}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": true}}}}
 }
 
-test_pods_within_warn_limit_auto {
+test_pods_below_warn_limit_auto {
 	valid with input as {"data": {"monitoring": {"pods": { "name": "pods", "scalar": 5050}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": true}}}}
 }

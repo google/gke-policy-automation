@@ -18,7 +18,7 @@ test_secrets_with_enc_above_warn_limit {
 	not valid with input as {"data": {"monitoring": {"secrets": { "name": "secrets", "scalar": 28000}}, "gke": {"name": "cluster-1", "database_encryption": {"state": 1}}}}
 }
 
-test_secrets_with_enc_within_warn_limit {
+test_secrets_with_enc_below_warn_limit {
 	valid with input as {"data": {"monitoring": {"secrets": { "name": "secrets", "scalar": 307}}, "gke": {"name": "cluster-1", "database_encryption": {"state": 1}}}}
 }
 

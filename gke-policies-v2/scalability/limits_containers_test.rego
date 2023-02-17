@@ -18,7 +18,7 @@ test_containers_above_warn_limit_std {
 	not valid with input as {"data": {"monitoring": {"containers": { "name": "containers", "scalar": 352000}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": false}}}}
 }
 
-test_containers_within_warn_limit_std {
+test_containers_below_warn_limit_std {
 	valid with input as {"data": {"monitoring": {"containers": { "name": "containers", "scalar": 121303}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": false}}}}
 }
 
@@ -26,6 +26,6 @@ test_containers_above_warn_limit_auto {
 	not valid with input as {"data": {"monitoring": {"containers": { "name": "containers", "scalar": 121303}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": true}}}}
 }
 
-test_containers_within_warn_limit_auto {
+test_containers_below_warn_limit_auto {
 	valid with input as {"data": {"monitoring": {"containers": { "name": "containers", "scalar": 18403}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": true}}}}
 }

@@ -18,7 +18,7 @@ test_services_above_warn_limit {
 	not valid with input as {"data": {"monitoring": {"services": { "name": "services", "scalar": 8840}}}}
 }
 
-test_services_within_warn_limit {
+test_services_below_warn_limit {
 	valid with input as {"data": {"monitoring": {"services": { "name": "services", "scalar": 6400}}}}
 }
 

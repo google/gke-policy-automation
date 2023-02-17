@@ -18,6 +18,6 @@ test_hpas_above_warn_limit {
 	not valid with input as {"data": {"monitoring": {"hpas": { "name": "hpas", "scalar": 254}}}}
 }
 
-test_hpas_within_warn_limit {
+test_hpas_below_warn_limit {
 	valid with input as {"data": {"monitoring": {"hpas": { "name": "hpas", "scalar": 180}}}}
 }

@@ -40,12 +40,12 @@ violation[msg] {
 	warn_limit = round(limit_standard * threshold * 0.01)
 	not input.data.gke.autopilot.enabled
     input.data.monitoring.containers.scalar > warn_limit
-	msg := sprintf("Total number of containers %d has reached warning level %d (limit is %d)", [input.data.monitoring.containers.scalar, warn_limit, limit_standard])
+	msg := sprintf("Total number of containers %d has reached warning level %d (limit is %d for standard clusters)", [input.data.monitoring.containers.scalar, warn_limit, limit_standard])
 }
 
 violation[msg] {
 	warn_limit = round(limit_autopilot * threshold * 0.01)
 	input.data.gke.autopilot.enabled
     input.data.monitoring.containers.scalar > warn_limit
-	msg := sprintf("Total number of containers %d has reached warning level %d (limit is %d)", [input.data.monitoring.containers.scalar, warn_limit, limit_autopilot])
+	msg := sprintf("Total number of containers %d has reached warning level %d (limit is %d for autopilot clusters)", [input.data.monitoring.containers.scalar, warn_limit, limit_autopilot])
 }

@@ -249,10 +249,10 @@ func ValidateScalabilityCheckConfig(config Config) error {
 	if config.Inputs.MetricsAPI.Enabled {
 		if (config.Inputs.MetricsAPI.Username != "" && config.Inputs.MetricsAPI.Password == "") ||
 			(config.Inputs.MetricsAPI.Password != "" && config.Inputs.MetricsAPI.Username == "") {
-			return errors.New("can't set username without password or password without the username")
+			return fmt.Errorf("can't set username without password or password without the username")
 		}
 		if config.Inputs.MetricsAPI.ProjectID != "" && config.Inputs.MetricsAPI.Address != "" {
-			return errors.New("projectID should be not set when custom Prometheus address is specified")
+			return fmt.Errorf("projectID should be not set when custom Prometheus address is specified")
 		}
 	}
 	return nil

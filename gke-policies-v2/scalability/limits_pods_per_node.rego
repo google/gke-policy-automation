@@ -20,7 +20,7 @@
 #   severity: Low
 #   recommendation: >
 #     When the limit is reached, the kube-scheduler will assign the new PODs to the other nodes, if available.
-#     If there will be no nodes available to assign the POD, the cluster autoscaler, if configured,  may add new nodes.
+#     If there will be no nodes available to assign the POD, the cluster autoscaler, if configured, may add new nodes.
 #     The maximum number of PODs per node is configurable on a cluster and node-pool levels.
 #   externalURI: https://cloud.google.com/kubernetes-engine/quotas
 #   sccCategory: PODS_PER_NODE_LIMIT

@@ -18,6 +18,6 @@ test_services_per_ns_above_warn_limit {
 	not valid with input as {"data": {"monitoring": {"services_per_ns": { "name": "services_per_ns", "vector": {"default": 1, "kube-system": 4, "demo-test":4523}}}}}
 }
 
-test_services_per_ns_within_warn_limit {
+test_services_per_ns_below_warn_limit {
 	valid with input as {"data": {"monitoring": {"services_per_ns": { "name": "services_per_ns", "vector": {"default": 1, "kube-system": 4, "demo-test":453}}}}}
 }

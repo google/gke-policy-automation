@@ -18,6 +18,6 @@ test_pods_per_node_above_warn_limit {
 	not valid with input as {"data": {"monitoring": {"pods_per_node": { "name": "pods_per_node", "vector": {"default-pool": {"gke-cluster-demo-default-pool-0767d05a-lkkp": 46, "gke-cluster-demo-default-pool-0f74dd4f-3zsv": 97}}}}, "gke":{"node_pools":[{"name": "default-pool", "max_pods_constraint":{"max_pods_per_node":110}}]}}}
 }
 
-test_pods_per_node_within_warn_limit {
+test_pods_per_node_below_warn_limit {
 	valid with input as {"data": {"monitoring": {"pods_per_node": { "name": "pods_per_node", "vector": {"default-pool": {"gke-cluster-demo-default-pool-0767d05a-lkkp": 46, "gke-cluster-demo-default-pool-0f74dd4f-3zsv": 32}}}}, "gke":{"node_pools":[{"name": "default-pool", "max_pods_constraint":{"max_pods_per_node":64}}]}}}
 }

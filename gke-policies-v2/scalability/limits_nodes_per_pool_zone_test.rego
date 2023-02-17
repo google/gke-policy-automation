@@ -18,6 +18,10 @@ test_nodes_per_pool_zone_above_warn_limit {
 	not valid with input as {"data": {"monitoring": {"nodes_per_pool_zone": { "name": "nodes_per_pool_zone", "vector": {"default-pool": {"europe-central2-a": 642, "europe-central2-b": 734,"europe-central2-a": 821}}}}}}
 }
 
-test_nodes_per_pool_zone_within_warn_limit {
+test_nodes_per_pool_zone_below_warn_limit {
     valid with input as {"data": {"monitoring": {"nodes_per_pool_zone": { "name": "nodes_per_pool_zone", "vector": {"default-pool": {"europe-central2-a": 642, "europe-central2-b": 734,"europe-central2-a": 690}}}}}}
+}
+
+test_nodes_per_pool_zone_autopilot {
+	valid with input as {"data": {"monitoring": {"nodes_per_pool_zone": { "name": "nodes_per_pool_zone", "vector": {"default-pool": {"europe-central2-a": 642, "europe-central2-b": 734,"europe-central2-a": 821}}}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": true}}}}
 }
