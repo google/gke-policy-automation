@@ -24,7 +24,7 @@ of our policy files.
 |Scalability|GKE L4 ILB Subsetting|GKE cluster should use GKE L4 ILB Subsetting if nodes > 250|[gke-policies-v2/policy/ilb_subsetting.rego](../gke-policies-v2/policy/ilb_subsetting.rego)|
 |Scalability|GKE Nodes Limit|GKE Nodes Limit|[gke-policies-v2/scalability/limits_nodes.rego](../gke-policies-v2/scalability/limits_nodes.rego)|
 |Scalability|GKE node local DNS cache|GKE cluster should use node local DNS cache|[gke-policies-v2/policy/node_local_dns_cache.rego](../gke-policies-v2/policy/node_local_dns_cache.rego)|
-|Scalability|Number of HPAs in a cluster|The total number of Horizonal Pod Autoscalers in a cluster|[gke-policies-v2/scalability/limits_hpas.rego](../gke-policies-v2/scalability/limits_hpas.rego)|
+|Scalability|Number of HPAs in a cluster|The optimal number of Horizonal Pod Autoscalers in a cluster|[gke-policies-v2/scalability/limits_hpas.rego](../gke-policies-v2/scalability/limits_hpas.rego)|
 |Scalability|Number of PODs in a cluster|The total number of PODs running in a cluster|[gke-policies-v2/scalability/limits_pods.rego](../gke-policies-v2/scalability/limits_pods.rego)|
 |Scalability|Number of PODs per node|The total number of PODs running on a single node|[gke-policies-v2/scalability/limits_pods_per_node.rego](../gke-policies-v2/scalability/limits_pods_per_node.rego)|
 |Scalability|Number of containers in a cluster|The total number of containers running in a cluster|[gke-policies-v2/scalability/limits_containers.rego](../gke-policies-v2/scalability/limits_containers.rego)|
