@@ -18,6 +18,12 @@
 # custom:
 #   group: Scalability
 #   severity: High
+#   recommendation: >
+#     For GKE Standard clusters, adjust Compute Engine machine type used for nodes to
+#     accomodate more PODs on a single node. Increase number of PODs per node setting on a nodepools when posssible.
+#     Note that number of PODs per node should be aligned with the size of the POD's IP range.
+#     When the above is not applicable, concider running your workloads on additional cluster(s).
+#   externalURI: https://cloud.google.com/kubernetes-engine/quotas
 #   sccCategory: NODES_LIMIT
 #   dataSource: monitoring, gke
 
@@ -27,25 +33,35 @@ default valid = false
 
 default private_nodes_limit = 15000
 default public_nodes_limit = 5000
+default autopilot_nodes_limit = 1000
+default threshold = 80
 
 valid {
 	count(violation) == 0
 }
 
 violation[msg] {
-	nodes := to_number(input.data.monitoring.number_of_nodes_by_cluster.Value)
+	warn_limit = round(private_nodes_limit * threshold * 0.01)
+	nodes := input.data.monitoring.nodes.scalar 
 	is_private := input.data.gke.private_cluster_config.enable_private_nodes
 	is_private = true 
-	nodes > private_nodes_limit
-	msg := sprintf("nodes found: %d higher than the limit for private clusters: %d", [nodes, private_nodes_limit])
-	print(msg)
+	nodes > warn_limit
+	msg := sprintf("nodes found: %d higher than the limit for private clusters: %d", [nodes, warn_limit])
 }
 
 violation[msg] {
-	nodes := to_number(input.data.monitoring.number_of_nodes_by_cluster.Value)
+	warn_limit = round(public_nodes_limit * threshold * 0.01)
+	nodes := input.data.monitoring.nodes.scalar 
 	is_private := input.data.gke.private_cluster_config.enable_private_nodes
 	is_private = false 
-	nodes > public_nodes_limit
-	msg := sprintf("nodes found: %d higher than the limit for non private clusters: %d", [nodes, public_nodes_limit])
-	print(msg)
+	nodes > warn_limit
+	msg := sprintf("nodes found: %d higher than the limit for non private clusters: %d", [nodes, warn_limit])
+}
+
+violation[msg] {
+	warn_limit = round(autopilot_nodes_limit * threshold * 0.01)
+	nodes := input.data.monitoring.nodes.scalar 
+	input.data.gke.autopilot.enabled
+	nodes > warn_limit
+	msg := sprintf("nodes found: %d higher than the warn limit for autopilot clusters: %d", [nodes, warn_limit])
 }

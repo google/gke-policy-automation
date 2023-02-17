@@ -13,22 +13,23 @@
 # limitations under the License.
 
 # METADATA
-# title: Number of HPAs in a cluster
-# description: The optimal number of Horizonal Pod Autoscalers in a cluster
+# title: Number of services in a cluster
+# description: The total number of services running in a cluster
 # custom:
 #   group: Scalability
 #   severity: Medium
 #   recommendation: >
-#     Horizontal Pod Autoscaler doesn't have a hard limit on the supported number of HPA objects.
-#     However, above a certain number of HPA objects, the period between HPA recalculations may become longer than the standard 15 seconds.
-#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/horizontalpodautoscaler#scalability
-#   sccCategory: HPAS_OPTIMAL_LIMIT
+#     The performance of iptables used by kube-proxy degrades if there are too many services or
+#     the number of backends behind a Service is high. We recommend keeping the number of services in the cluster
+#     below the limit.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/planning-large-clusters#limits-best-practices-large-scale-clusters
+#   sccCategory: SERVICES_LIMIT
 #   dataSource: monitoring
 
-package gke.scalability.hpas
+package gke.scalability.services
 
 default valid = false
-default limit = 300
+default limit = 10000
 default threshold = 80
 
 valid {
@@ -37,7 +38,6 @@ valid {
 
 violation[msg] {
 	warn_limit = round(limit * threshold * 0.01)
-	hpas := input.data.monitoring.hpas.scalar 
-	hpas > warn_limit
-	msg := sprintf("Total number of HPAs %d has reached warning level %d (limit is %d)", [hpas, warn_limit, limit])
+    input.data.monitoring.services.scalar > warn_limit
+	msg := sprintf("Total number of services %d has reached warning level %d (limit is %d)", [input.data.monitoring.services.scalar, warn_limit, limit])
 }

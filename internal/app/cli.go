@@ -23,7 +23,6 @@ type CliConfig struct {
 	ConfigFile          string
 	SilentMode          bool
 	JSONOutput          bool
-	K8SCheck            bool
 	CredentialsFile     string
 	DumpFile            string
 	ClusterName         string
@@ -88,7 +87,6 @@ func createCheckCommand(p PolicyAutomation) *cli.Command {
 				Flags: getCheckFlags(config),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					config.K8SCheck = true
 					if err := p.LoadCliConfig(config, cfg.SetScalabilityConfigDefaults, cfg.ValidateScalabilityCheckConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
