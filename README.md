@@ -94,6 +94,26 @@ The tool will report violations when the current values will cross the certain t
 limits check. Refer to the [kube-state-metrics installation & configuration guide](./docs/user-guide.md#kube-state-metrics)
 for more details.
 
+The tool assumes that metrics are available in Cloud Monitoring, i.e. in a result of
+[Google Cloud Managed Service for Prometheus](https://cloud.google.com/stackdriver/docs/managed-prometheus)
+based metrics collection. If self managed Prometheus collection is used, be sure to:
+
+* Configure Prometheus scraping for `kube-state-metrics` using corresponding annotations, i.e. `prometheus.io/scrape`
+* Configure custom Prometheus API server address in a tool
+
+  * Prepare `config.yaml`:
+
+     ```yaml
+     inputs:
+       metricsAPI:
+         enabled: true
+         address: http://my-prometheus-svc:8080 # Prometheus server API endpoint
+         username: user   # username for basic authentication (optional)
+         password: secret # password for basic authentication (optional)
+     ```
+
+  * Run `./gke-policy check scalability -c config.yaml`
+
 ### Common check options
 
 The common options apply to all types of check commands.

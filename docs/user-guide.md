@@ -160,8 +160,8 @@ default credentials
 | Storing outputs to Pub/Sub | `roles/pubsub.publisher` | Pub/sub topic |
 | Storing outputs to Security Command Center | `roles/securitycenter.sourcesAdmin`(*), `roles/securitycenter.findingsEditor` | Organization |
 
-*\* The Security CommandCenter source admin role is needed only for registering GKE Policy Automation
-in SCC. Refer to the  for details.*
+*\* The Security Command Center source admin role is needed only for registering GKE Policy Automation
+in SCC. Refer to the [SCC chapter](#security-command-center) for details.*
 
 ## Checking clusters
 
