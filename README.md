@@ -6,7 +6,8 @@ title="GKE Policy Automation" align="left" height="70" />
 # GKE Policy Automation
 
 This repository contains the tool and the [policy library](./gke-policies-v2) for validating [GKE](https://cloud.google.com/kubernetes-engine)
-clusters against configuration best practices.
+clusters against configuration [best practices](#checking-best-practices)
+and [scalability limits](#checking-scalability-limits).
 
 [![Build](https://github.com/google/gke-policy-automation/actions/workflows/build.yml/badge.svg)](https://github.com/google/gke-policy-automation/actions/workflows/build.yml)
 [![Policy tests](https://github.com/google/gke-policy-automation/actions/workflows/policy-test.yml/badge.svg)](https://github.com/google/gke-policy-automation/actions/workflows/policy-test.yml)
@@ -25,6 +26,12 @@ Note: this is not an officially supported Google product.
 
 * [Installation](#installation)
 * [Usage](#usage)
+  * [Checking best practices](#checking-best-practices)
+  * [Checking scalability limits](#checking-scalability-limits) (**New feature!**)
+  * [Common check options](#common-check-options)
+  * [Defining outputs](#defining-outputs)
+  * [Authentication](#authentication)
+  * [Serverless execution](#serverless-execution)
 * [Contributing](#contributing)
 * [License](#license)
 
@@ -48,7 +55,7 @@ Binaries for Linux, Windows and Mac are available as tarballs in the
 
 ### Source code
 
-Go [v1.18](https://go.dev/doc/install) or newer is required. Check the [development guide](./DEVELOPMENT.md)
+Go [v1.19](https://go.dev/doc/install) or newer is required. Check the [development guide](./DEVELOPMENT.md)
 for more details.
 
 ```sh
@@ -63,18 +70,37 @@ make build
 
 **Full user guide**: [GKE Policy Automation User Guide](./docs/user-guide.md).
 
-### Checking the cluster
+### Checking best practices
 
-Check the GKE cluster against the default set of best practices with command line flags.
+The configuration best practices check validates GKE clusters against the set of
+GKE configuration policies.
 
 ```sh
 ./gke-policy check \
 --project my-project --location europe-west2 --name my-cluster
 ```
 
-### Checking multiple clusters
+### Checking scalability limits
 
-Check multiple GKE clusters against the default set of best practices with a config file.
+The scalability limits check validates GKE clusters against the GKE quotas and limits.
+The tool will report violations when the current values will cross the certain thresholds.
+
+```sh
+./gke-policy check scalability \
+--project my-project --location europe-west2 --name my-cluster
+```
+
+**NOTE**: you need to run `kube-state-metrics` to export cluster metrics to use cluster scalability
+limits check. Refer to the [kube-state-metrics installation & configuration guide](./docs/user-guide.md#kube-state-metrics)
+for more details.
+
+### Common check options
+
+The common options apply to all types of check commands.
+
+#### Selecting multiple clusters
+
+Check multiple GKE clusters using the config file.
 
 ```sh
 ./gke-policy check -c config.yaml
@@ -90,11 +116,10 @@ clusters:
   - id: projects/my-project-two/locations/europe-west2/clusters/prod-west
 ```
 
-### Discovering and checking multiple clusters
+#### Using cluster discovery
 
-Discover clusters in a selected GCP projects, folders or in the entire organization using
-[Cloud Asset Inventory](https://cloud.google.com/asset-inventory) and check them against the default
-set of best practices.
+Check multiple clusters by discovering them in a selected GCP projects, folders or in the entire organization
+using [Cloud Asset Inventory](https://cloud.google.com/asset-inventory) and configuration file.
 
 ```sh
 ./gke-policy check -c config.yaml
@@ -149,7 +174,7 @@ Examples:
         organization: "153963171798"
   ```
 
-### Custom Policy repository
+#### Custom Policy repository
 
 Specify custom repository with the GKE cluster best practices and check the cluster against them.
 
