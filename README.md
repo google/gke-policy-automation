@@ -29,6 +29,7 @@ Note: this is not an officially supported Google product.
   * [Checking best practices](#checking-best-practices)
   * [Checking scalability limits](#checking-scalability-limits) (**New feature!**)
   * [Common check options](#common-check-options)
+  * [Defining inputs](#defining-inputs)
   * [Defining outputs](#defining-outputs)
   * [Authentication](#authentication)
   * [Serverless execution](#serverless-execution)
@@ -157,6 +158,32 @@ It is possible to use cluster discovery on a given project using command line fl
 
 ```sh
 ./gke-policy check --discovery -p my-project-id
+```
+
+### Defining inputs
+
+Data for cluster validation can be retrieved from multiple data sources,
+eg. GKE API, Cloud Monitoring API or local JSON file exported from GKE API.
+For best practices checks GKE API is enabled by default,
+and for scalability checks, metrics API is enabled as well.
+Check [Inputs user guide](./docs/user-guide.md#inputs) for more details.
+
+Example:
+
+* Metrics API input from Cloud Monitoring configured in dedicated project
+and other values set with defaults for scalability check
+
+```yaml
+inputs:
+  gkeAPI:
+    enabled: true
+  gkeLocal:
+    enabled: false
+    file:
+  metricsAPI:
+    enabled: true
+    project: sample-project
+    metrics:
 ```
 
 ### Defining outputs
