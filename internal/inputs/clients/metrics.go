@@ -171,7 +171,7 @@ func (m *metricsClient) GetMetric(metricQuery MetricQuery, clusterID string) (*M
 	}
 
 	if len(data) < 1 {
-		return nil, fmt.Errorf("empty result vector")
+		return nil, fmt.Errorf("query returned no results")
 	}
 
 	if data.Len() == 1 {
@@ -234,8 +234,7 @@ func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterID st
 
 	}()
 
-	if len(errorChannel) > 0 {
-		err := <-errorChannel
+	for err := range errorChannel {
 		log.Errorf("unable to get metric: %s", err)
 		return nil, err
 	}
@@ -247,7 +246,6 @@ func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterID st
 
 func replaceWildcard(wildcard string, value string, query string) string {
 	clusterNameExp := regexp.MustCompile(wildcard)
-
 	return clusterNameExp.ReplaceAllString(query, "\""+value+"\"")
 }
 
