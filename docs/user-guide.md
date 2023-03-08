@@ -74,69 +74,8 @@ make build
 The [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics) agent is needed
 **only for cluster scalability limits check**.
 
-The kube-state-metrics is a simple service that listen to Kubernetes API server and generates metrics
-about the state of the objects. The GKE Policy Automation ingests the metrics provided by kube-state-metrics
-via standalone Prometheus server or
-[Google Cloud Managed Service for Prometheus](https://cloud.google.com/stackdriver/docs/managed-prometheus).
-
-1. Install kube-state-metrics on your cluster(s)
-
-   We recommend following the official [kube-state-metrics usage guide](https://github.com/kubernetes/kube-state-metrics#usage).
-
-2. Configure kube-state-metrics to allow GKE specific labels
-
-   Modify kube-state-metrics deployment file to allow additional labels for metrics.
-   This can be done by adding the following command line arguments to kube-state-metric:
-
-   ```yaml
-   containers:
-   - args:
-     - --metric-labels-allowlist=nodes=[cloud.google.com/gke-nodepool,topology.kubernetes.io/zone]
-   ```
-
-   The GKE Policy Automation requires following, additional labels for `kube_node_labels` metric:
-
-   * `cloud.google.com/gke-nodepool` label for node's node pool information
-   * `topology.kubernetes.io/zone` label for node's compute zone information
-
-3. Configure Prometheus metric collection
-
-   * If Google Cloud Managed Service for Prometheus is used, create the `PodMonitoring` object for kube-state-metrics:
-
-     ```yaml
-     apiVersion: monitoring.googleapis.com/v1
-     kind: PodMonitoring
-     metadata:
-       name: kube-state-metrics
-       namespace: kube-system
-     spec:
-       selector:
-         matchLabels:
-           app.kubernetes.io/name: kube-state-metrics
-       endpoints:
-       - port: http-metrics
-         path: /metrics
-         interval: 30s
-      ```
-
-      NOTE: an alternative to the `PodMonitoring` is to use [ClusterPodMonitoring](https://github.com/GoogleCloudPlatform/prometheus-engine/blob/v0.5.0/doc/api.md#clusterpodmonitoring)
-      and label `kube-state-metrics` deployment accordingly.
-
-   * If self managed Prometheus collection is used, be sure configure Prometheus scrapping and / or
-   annotate `kube-state-metrics` deployment in a valid way, like with `prometheus.io/scrape`,
-   `prometheus.io/scheme`, `prometheus.io/path` and `prometheus.io/port` annotations.
-
-#### Used metrics
-
-GKE Policy Automation uses the following metrics from `kube-state-metrics` agent:
-
-* `kube_pod_info`
-* `kube_pod_container_info`
-* `kube_node_info`
-* `kube_node_labels`
-* `kube_service_info`
-* `kube_horizontalpodautoscaler_info`
-* `kube_secret_info`
+Pleaser refer to the [Kube state metrics for GKE Policy Automation guide](./kube-state-metrics.md)
+for details.
 
 ## Authentication
 
@@ -200,18 +139,23 @@ The scalability limits check validates GKE clusters against the GKE quotas and l
 The tool will report violations when the current values will cross the certain thresholds.
 
 **NOTE**: you need to run `kube-state-metrics` to export cluster metrics to use cluster scalability
-limits check. Refer to the [kube-state-metrics installation & configuration guide](#kube-state-metrics)
+limits check. Refer to the [kube-state-metrics installation & configuration guide](./kube-state-metrics.md)
 for more details.
 
 #### Scalability check configuration
 
   1. Ensure that `kube-state-metrics` is installed and configured on your cluster(s). Refer to the
-  [kube-state-metrics installation & configuration guide](#kube-state-metrics) for details
-  2. If Google Manged Service for Prometheus is used to collect metrics from `kube-state-metrics`,
+  [kube-state-metrics installation & configuration guide](#kube-state-metrics) for details.
+
+  2. (Optionally) Verify that metrics from `kube-state-metrics` are ingested to your Prometheus server
+  or to the Cloud Monitoring, i.e. by running the `kube_node_info` query in Prometheus UI
+  or in the [Managed Service for Prometheus web console](https://console.cloud.google.com/monitoring/prometheus).
+
+  3. If Google Manged Service for Prometheus is used to collect metrics from `kube-state-metrics`,
   ensure that IAM `roles/monitoring.viewer` role is in place. No other configuration is needed,
   just run `./gke-policy check scalability` followed by your settings.
 
-  3. If self managed Prometheus collection is used, specify Prometheus server details in the
+  4. If self managed Prometheus collection is used, specify Prometheus server details in the
   tool's configuration file
 
      Prepare `config.yaml`:
