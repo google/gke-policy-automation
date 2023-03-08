@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"reflect"
 
@@ -123,6 +124,9 @@ func (p *PolicyAutomationApp) CheckBestPractices() error {
 }
 
 func (p *PolicyAutomationApp) CheckScalability() error {
+	p.out.ColorPrintf("%s [yellow][bold]Running scalability check requires metrics from kube-state-metrics!\n", outputs.IconInfo)
+	docsTitle := fmt.Sprintf("%s \x1b]8;;%s\x07%s\x1b]8;;\x07", outputs.IconHyperlink, "https://github.com/google/gke-policy-automation/blob/scalability-docs/docs/user-guide.md#checking-scalability-limits", "documentation")
+	p.out.ColorPrintf("%s [yellow][bold]Check the %s for more details.\n", outputs.IconInfo, docsTitle)
 	return p.evaluateClusters([]string{regoPackageBaseScalability})
 }
 
