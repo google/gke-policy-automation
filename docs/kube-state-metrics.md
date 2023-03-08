@@ -26,15 +26,13 @@ via standalone Prometheus server or
 The kube-state-metrics is running inside a Kubernetes pod and uses service account token for
 read-only access to the Kubernetes cluster.
 
-There are many ways for kube-state-metrics installation. The agent is also part of many monitoring
-stacks, like [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus/).
-
-  there is a high chance that it is already running on your cluster.
-For details please refer to the [kube-state-metrics official usage documentation](https://github.com/kubernetes/kube-state-metrics#usage)
+There are many ways of installing the kube-state-metrics agent, like those described in the
+[kube-state-metrics official usage documentation](https://github.com/kubernetes/kube-state-metrics#usage).
+The agent is also part of many monitoring stacks, like [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus/).
 
 ### Existing installations
 
-If you are already using kube-state-metrics as a part of the other monitoring stack, like  [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus/),
+If you are already using kube-state-metrics as a part of the other monitoring stack, like [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus/),
 you can continue using it. You need to customize its configuration though.
 
 For GKE Policy Automation scalability check, modify the kube-state-metrics container arguments to allow
