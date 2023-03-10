@@ -92,14 +92,15 @@ The tool will report violations when the current values will cross the certain t
 ```
 
 **NOTE**: you need to run `kube-state-metrics` to export cluster metrics to use cluster scalability
-limits check. Refer to the [kube-state-metrics installation & configuration guide](./docs/user-guide.md#kube-state-metrics)
+limits check. Refer to the [kube-state-metrics installation & configuration guide](./docs/kube-state-metrics.md)
 for more details.
 
 The tool assumes that metrics are available in Cloud Monitoring, i.e. in a result of
 [Google Cloud Managed Service for Prometheus](https://cloud.google.com/stackdriver/docs/managed-prometheus)
 based metrics collection. If self managed Prometheus collection is used, be sure to:
 
-* Configure Prometheus scraping for `kube-state-metrics` using corresponding annotations, i.e. `prometheus.io/scrape`
+* Configure Prometheus scraping for `kube-state-metrics` using `PodMonitor` / `ServiceMonitor` and
+ corresponding annotations, i.e. `prometheus.io/scrape`
 * Configure custom Prometheus API server address in a tool
 
   * Prepare `config.yaml`:
