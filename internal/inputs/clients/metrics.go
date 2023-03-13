@@ -54,6 +54,14 @@ type Metric struct {
 	VectorValue map[string]interface{} `json:"vector"`
 }
 
+type emptyResultError struct {
+	msg string
+}
+
+func (e emptyResultError) Error() string {
+	return e.msg
+}
+
 type MetricsClient interface {
 	GetMetric(query MetricQuery, clusterID string) (*Metric, error)
 	GetMetricsForCluster(queries []MetricQuery, clusterID string) (map[string]Metric, error)
@@ -171,7 +179,9 @@ func (m *metricsClient) GetMetric(metricQuery MetricQuery, clusterID string) (*M
 	}
 
 	if len(data) < 1 {
-		return nil, fmt.Errorf("empty result vector")
+		return nil, &emptyResultError{
+			msg: fmt.Sprintf("metric query %q returned no results", query),
+		}
 	}
 
 	if data.Len() == 1 {
@@ -184,6 +194,9 @@ func (m *metricsClient) GetMetric(metricQuery MetricQuery, clusterID string) (*M
 	vectorValue := make(map[string]interface{})
 	for _, dataSample := range data {
 		metricValues := valuesFromMetric(dataSample.Metric)
+		if len(metricValues) < 1 {
+			return nil, fmt.Errorf("metric query result has no labels")
+		}
 		populateVectorMap(vectorValue, metricValues, float64(dataSample.Value))
 	}
 	return &Metric{
@@ -234,10 +247,13 @@ func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterID st
 
 	}()
 
-	if len(errorChannel) > 0 {
-		err := <-errorChannel
-		log.Errorf("unable to get metric: %s", err)
-		return nil, err
+	for err := range errorChannel {
+		switch err.(type) {
+		case *emptyResultError:
+			log.Warnf("metric fetch error: %s", err)
+		default:
+			return nil, err
+		}
 	}
 	for result := range resultsChannel {
 		metricsResult[result.Name] = *result
@@ -247,7 +263,6 @@ func (m *metricsClient) GetMetricsForCluster(queries []MetricQuery, clusterID st
 
 func replaceWildcard(wildcard string, value string, query string) string {
 	clusterNameExp := regexp.MustCompile(wildcard)
-
 	return clusterNameExp.ReplaceAllString(query, "\""+value+"\"")
 }
 
@@ -277,6 +292,9 @@ func valuesFromMetric(metric pmodel.Metric) []string {
 }
 
 func populateVectorMap(m map[string]interface{}, labels []string, value float64) {
+	if len(labels) < 1 {
+		return
+	}
 	if len(labels) == 1 {
 		m[labels[0]] = value
 		return

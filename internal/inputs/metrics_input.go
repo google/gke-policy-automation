@@ -16,6 +16,7 @@ package inputs
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/inputs/clients"
@@ -151,6 +152,10 @@ func (i *metricsInput) GetData(clusterID string) (interface{}, error) {
 		}
 	}
 
+	if err := validateKubeStateMetrics(metricsClient, clusterID); err != nil {
+		return nil, fmt.Errorf("failed to get results from kube-state-metrics test query for cluster %q, is kube-state-metrics installed?", clusterID)
+	}
+
 	data, err := metricsClient.GetMetricsForCluster(i.queries, clusterID)
 	if err != nil {
 		log.Errorf("error fetching metric: %s", err)
@@ -191,4 +196,13 @@ func createTokenSource(ctx context.Context, credentialsFile string) (clients.Tok
 		return clients.NewGoogleTokenSourceWithCredentials(ctx, credentialsFile)
 	}
 	return clients.NewGoogleTokenSource(ctx)
+}
+
+func validateKubeStateMetrics(client clients.MetricsClient, clusterID string) error {
+	query := clients.MetricQuery{
+		Name:  "namespaces",
+		Query: "kube_namespace_created{cluster=$CLUSTER_NAME,location=$CLUSTER_LOCATION,project_id=$CLUSTER_PROJECT}",
+	}
+	_, err := client.GetMetric(query, clusterID)
+	return err
 }
