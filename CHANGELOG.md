@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.3.0 (Mar 14, 2023)
+
+FEATURES:
+
+* GKE Scalability checks based on metrics from kube-state-metrics [#179](https://github.com/google/gke-policy-automation/pull/179)
+* Introduced external URI and recommendations to the policy model and outputs [#131](https://github.com/google/gke-policy-automation/pull/111),
+  [#141](https://github.com/google/gke-policy-automation/pull/141)
+
+IMPROVEMENTS:
+
+* Introduced modularized inputs concept [#127](https://github.com/google/gke-policy-automation/issues/127)
+* Added PromQL integration with a Cloud Monitoring and self hosted Prometheus for metrics ingestion [#132](https://github.com/google/gke-policy-automation/pull/132),
+  [#178](https://github.com/google/gke-policy-automation/pull/178)
+* Security Command Center output performance improvements [#151](https://github.com/google/gke-policy-automation/pull/151)
+* Logs from logger can be stored in a files and in JSON format [#155](https://github.com/google/gke-policy-automation/pull/155)
+* Adding -json flag to output results to stdout in JSON format [#147](https://github.com/google/gke-policy-automation/pull/147)
+
+BUG FIXES:
+
+* Fixed variable types in Terraform code [#150](https://github.com/google/gke-policy-automation/pull/150)
+
 ## 1.2.2 (Nov 8, 2022)
 
 IMPROVEMENTS:
