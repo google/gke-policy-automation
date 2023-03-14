@@ -28,6 +28,9 @@ and scalability limits.
   * [Specifying local policy source](#specifying-local-policy-source)
   * [Validating policies](#validating-policies)
   * [Excluding policies](#excluding-policies)
+* [Inputs](#inputs)
+  * [GKE API and GKE Local](#gke-api-and-gke-local)
+  * [Metrics API](#metrics-api)
 * [Outputs](#outputs)
   * [Local JSON file](#local-json-file)
   * [Cloud Storage bucket](#cloud-storage-bucket)
@@ -345,6 +348,56 @@ policyExclusions:
     - gke.policy.cluster_binary_authorization
   policyGroups:
     - Scalability
+```
+
+## Inputs
+
+### GKE API and GKE Local
+
+GKE API input is enabled by default for both - cluster configuration verification
+and for scalability checks.
+Alternatively, for the clusters that cannot be
+accessed online by the tool, dump of cluster data can be provided
+via GKE Local input.
+
+Example input configuration for off-line configuration check:
+
+```yaml
+  gkeAPI:
+    enabled: false
+  gkeLocal:
+    enabled: true
+    file: cluster-dump.json
+```
+
+### Metrics API
+
+Metrics API is intended to use for scalability checks.
+This can connect to specified GCP project Cloud Monitoring API to gather
+metrics collected if managed Prometheus collection is used,
+or to specified Prometheus server if self managed Prometheus collection is used.
+Default project value is the cluster project.
+
+Examples:
+
+* Example with Managed Prometheus collection to specified project:
+
+```yaml
+     inputs:
+       metricsAPI:
+         enabled: true
+         project: sample-project
+```
+
+* Example with self-managed Prometheus details:
+
+```yaml
+     inputs:
+       metricsAPI:
+         enabled: true
+         address: http://my-prometheus-svc:8080 # Prometheus server API endpoint
+         username: user   # username for basic authentication (optional)
+         password: secret # password for basic authentication (optional)
 ```
 
 ## Outputs
