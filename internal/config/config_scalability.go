@@ -52,5 +52,9 @@ func getScalabilityMetricsDefaults() []ConfigMetric {
 			MetricName: "secrets",
 			Query:      "sum (kube_secret_info{cluster=$CLUSTER_NAME,location=$CLUSTER_LOCATION,project_id=$CLUSTER_PROJECT})",
 		},
+		{
+			MetricName: "namespaces",
+			Query:      "count (kube_namespace_status_phase{phase=\"Active\", cluster=$CLUSTER_NAME,location=$CLUSTER_LOCATION,project_id=$CLUSTER_PROJECT})",
+		},
 	}
 }
