@@ -28,6 +28,7 @@ of our policy files.
 |Scalability|Number of PODs in a cluster|The total number of PODs running in a cluster|[gke-policies-v2/scalability/limits_pods.rego](../gke-policies-v2/scalability/limits_pods.rego)|
 |Scalability|Number of PODs per node|The total number of PODs running on a single node|[gke-policies-v2/scalability/limits_pods_per_node.rego](../gke-policies-v2/scalability/limits_pods_per_node.rego)|
 |Scalability|Number of containers in a cluster|The total number of containers running in a cluster|[gke-policies-v2/scalability/limits_containers.rego](../gke-policies-v2/scalability/limits_containers.rego)|
+|Scalability|Number of namespaces in a cluster|The total number of namespaces in a cluster|[gke-policies-v2/scalability/limit_namespaces.rego](../gke-policies-v2/scalability/limit_namespaces.rego)|
 |Scalability|Number of nodes in a nodepool zone|The total number of nodes running in a single node pool zone|[gke-policies-v2/scalability/limits_nodes_per_pool_zone.rego](../gke-policies-v2/scalability/limits_nodes_per_pool_zone.rego)|
 |Scalability|Number of secrets with KMS encryption|The total number of secrets when KMS secret encryption is enabled|[gke-policies-v2/scalability/limit_secrets_encryption.rego](../gke-policies-v2/scalability/limit_secrets_encryption.rego)|
 |Scalability|Number of services in a cluster|The total number of services running in a cluster|[gke-policies-v2/scalability/limit_services.rego](../gke-policies-v2/scalability/limit_services.rego)|
