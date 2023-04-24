@@ -18,6 +18,7 @@
 # custom:
 #   group: Security
 #   severity: Critical
+#   recommendation: >
 #     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
 #     Select "Nodes" tab and click on the name of the target node pool. Within the node pool
 #     details pane, click EDIT. Under the "Management" heading, select the "Enable auto-upagde"
