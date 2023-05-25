@@ -85,7 +85,7 @@ p = 1`
 	policyContentBadMetaTwo := `# METADATA
 # title: TestTitle
 # description: TestDescription
-package gke.policy.badMeta
+package gke.policy.badMetaTwo
 p = 1`
 
 	policyFiles := []*PolicyFile{
