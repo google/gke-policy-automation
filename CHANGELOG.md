@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.3.1 (Jan 1, 2023)
+
+IMPROVEMENTS:
+
+* Upgraded Go to 1.20
+* Upgraded all direct and indirect dependencies
+
+BUG FIXES:
+
+* Upgraded CIRCL indirect dependency to v1.3.3 to fix security issues with error-handling
+on rand readers (CVE-2023-1732)
+
 ## 1.3.0 (Mar 14, 2023)
 
 FEATURES:
