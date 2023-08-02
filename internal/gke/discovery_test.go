@@ -199,6 +199,7 @@ func TestGetIDFromName_negative(t *testing.T) {
 	inputs := []string{
 		"projects/my-project/locations/europe-west2/clusters/my-cluster",
 		"//container.googleapis.com/project/test/locations/europe/my-cluster",
+		"malicious//container.googleapis.com/projects/my-project/locations/europe-west2/clusters/other-cluster/code",
 	}
 	for _, input := range inputs {
 		if _, err := getIDFromName(input); err == nil {
