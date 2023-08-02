@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,22 +13,22 @@
 # limitations under the License.
 
 # METADATA
-# title: Number of HPAs in a cluster
-# description: The optimal number of Horizontal Pod Autoscalers in a cluster
+# title: Number of namespaces in a cluster
+# description: The total number of namespaces in a cluster
 # custom:
 #   group: Scalability
-#   severity: Medium
+#   severity: High
 #   recommendation: >
-#     Horizontal Pod Autoscaler doesn't have a hard limit on the supported number of HPA objects.
-#     However, above a certain number of HPA objects, the period between HPA recalculations may become longer than the standard 15 seconds.
-#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/horizontalpodautoscaler#scalability
-#   sccCategory: HPAS_OPTIMAL_LIMIT
+#     Please concider distributing workloads among more than one cluster when the total number of required namespaces
+#     is above the limit of a supported number of namespaces for a single cluster.
+#   externalURI: https://github.com/kubernetes/community/blob/master/sig-scalability/configs-and-limits/thresholds.md
+#   sccCategory: NAMESPACES_LIMIT
 #   dataSource: monitoring
 
-package gke.scalability.hpas
+package gke.scalability.namespaces
 
 default valid = false
-default limit = 300
+default limit = 10000
 default threshold = 80
 
 valid {
@@ -37,7 +37,6 @@ valid {
 
 violation[msg] {
 	warn_limit = round(limit * threshold * 0.01)
-	hpas := input.data.monitoring.hpas.scalar 
-	hpas > warn_limit
-	msg := sprintf("Total number of HPAs %d has reached warning level %d (limit is %d)", [hpas, warn_limit, limit])
+    input.data.monitoring.namespaces.scalar > warn_limit
+	msg := sprintf("Total number of namespaces %d has reached warning level %d (limit is %d)", [input.data.monitoring.namespaces.scalar, warn_limit, limit])
 }

@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.scalability.hpas
+package gke.scalability.services
 
-test_hpas_above_warn_limit {
-	not valid with input as {"data": {"monitoring": {"hpas": { "name": "hpas", "scalar": 254}}}}
+test_services_above_warn_limit {
+	not valid with input as {"data": {"monitoring": {"services": { "name": "services", "scalar": 8840}}}}
 }
 
-test_hpas_below_warn_limit {
-	valid with input as {"data": {"monitoring": {"hpas": { "name": "hpas", "scalar": 180}}}}
+test_services_below_warn_limit {
+	valid with input as {"data": {"monitoring": {"services": { "name": "services", "scalar": 6400}}}}
 }
+
+

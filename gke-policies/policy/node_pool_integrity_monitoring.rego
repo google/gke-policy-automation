@@ -14,7 +14,7 @@
 
 # METADATA
 # title: Integrity monitoring on the nodes
-# description: GKE node pools should have integrity monitoring feature enabled to detect changes in a VM boot measurments
+# description: GKE node pools should have integrity monitoring feature enabled to detect changes in a VM boot measurements
 # custom:
 #   group: Security
 #   severity: Critical

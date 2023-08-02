@@ -13,22 +13,23 @@
 # limitations under the License.
 
 # METADATA
-# title: Number of HPAs in a cluster
-# description: The optimal number of Horizontal Pod Autoscalers in a cluster
+# title: Number of services per namespace
+# description: The total number of services running in single namespace
 # custom:
 #   group: Scalability
 #   severity: Medium
 #   recommendation: >
-#     Horizontal Pod Autoscaler doesn't have a hard limit on the supported number of HPA objects.
-#     However, above a certain number of HPA objects, the period between HPA recalculations may become longer than the standard 15 seconds.
-#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/horizontalpodautoscaler#scalability
-#   sccCategory: HPAS_OPTIMAL_LIMIT
+#     The number of environment variables generated for Services might outgrow shell limits.
+#     This might cause Pods to crash on startup. We recommend keeping the number of services per namespace
+#     below the limit.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/planning-large-clusters#limits-best-practices-large-scale-clusters
+#   sccCategory: SERVICES_PER_NS_LIMIT
 #   dataSource: monitoring
 
-package gke.scalability.hpas
+package gke.scalability.services_per_ns
 
 default valid = false
-default limit = 300
+default limit = 5000
 default threshold = 80
 
 valid {
@@ -37,7 +38,8 @@ valid {
 
 violation[msg] {
 	warn_limit = round(limit * threshold * 0.01)
-	hpas := input.data.monitoring.hpas.scalar 
-	hpas > warn_limit
-	msg := sprintf("Total number of HPAs %d has reached warning level %d (limit is %d)", [hpas, warn_limit, limit])
+	some namespace
+	srv_cnt := input.data.monitoring.services_per_ns.vector[namespace]
+    srv_cnt > warn_limit
+	msg := sprintf("Total number of services %d in a namespace %s has reached warning level %d (limit is %d)", [srv_cnt, namespace, warn_limit, limit])
 }
