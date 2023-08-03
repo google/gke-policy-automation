@@ -14,7 +14,7 @@
 
 # METADATA
 # title: Number of HPAs in a cluster
-# description: The optimal number of Horizonal Pod Autoscalers in a cluster
+# description: The optimal number of Horizontal Pod Autoscalers in a cluster
 # custom:
 #   group: Scalability
 #   severity: Medium
