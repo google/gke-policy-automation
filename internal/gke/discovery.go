@@ -162,7 +162,7 @@ func filterMapSeachResults(results []*assetpb.ResourceSearchResult) []string {
 
 // getIDFromName returns cluster identifier from full cluster asset name.
 func getIDFromName(name string) (string, error) {
-	r := regexp.MustCompile(`//container\.googleapis\.com/(projects/.+/(locations|zones)/.+/clusters/.+)`)
+	r := regexp.MustCompile(`^//container\.googleapis\.com/(projects/.+/(locations|zones)/.+/clusters/.+$)`)
 	if !r.MatchString(name) {
 		return "", fmt.Errorf("given name %q does not match GKE cluster name pattern", name)
 	}
