@@ -13,26 +13,26 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE HPAs Limit
-# description: GKE HPAs Limit
+# title: GKE ConfigMaps Limit
+# description: GKE ConfigMaps Limit
 # custom:
 #   group: Scalability
 #   severity: High
-#   sccCategory: HPAS_LIMIT
+#   sccCategory: CONFIGMAPS_LIMIT
 
-package gke.scalability.hpas
+package gke.scalability.configmaps
 
 default valid = false
 
-default hpas_limit = 2 #the value is ONLY for demo purpose, does not reflect a real limit
+default configmaps_limit = 2 #value is ONLY for demo purpose, does not reflect a real limit
 
 valid {
 	count(violation) == 0
 }
 
 violation[msg] {
-	hpas := {object | object := input.Resources[_]; object.Data.kind == "HorizontalPodAutoscaler"}
-	count(hpas) > hpas_limit
-	msg := sprintf("HPAs found: %d higher than the limit: %d", [count(hpas), hpas_limit])
+	configmaps := {object | object := input.Resources[_]; object.Data.kind == "ConfigMap"}
+	count(configmaps) > configmaps_limit
+	msg := sprintf("Configmaps found: %d higher than the limit: %d", [count(configmaps), configmaps_limit])
 	print(msg)
 }
