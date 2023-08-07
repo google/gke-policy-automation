@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# METADATA
-# title: GKE HPAs Limit
-# description: GKE HPAs Limit
-# custom:
-#   group: Scalability
 package gke.scalability.hpas
 
 test_hpas_underusage {

@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# METADATA
-# title: Kubernetes secrets encryption
-# description: GKE cluster should use encryption for kubernetes application secrets
-# custom:
-#   group: Security
 package gke.policy.secret_encryption
 
 test_enabled_encryption {

@@ -12,13 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# METADATA
-# title: GKE VPC-native cluster
-# description: GKE cluster nodepool should be VPC-native as per our best-practices
-# custom:
-#   group: Management
 package gke.policy.vpc_native_cluster
-
 
 test_vpc_native_cluster_with_pods_range {
     valid with input as {"name": "cluster-not-repairing", "ip_allocation_policy": {"use_ip_aliases": true}, "node_pools": [{"name": "default", "network_config": { "pod_range": "gke-cluster-1-vpc-pods-273c12cd", "pod_ipv4_cidr_block": "10.48.0.0/14" }, "management": {"auto_repair": true, "auto_upgrade": true }}]}
