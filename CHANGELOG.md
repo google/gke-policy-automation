@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.3.2 (Aug 10, 2023)
+
+IMPROVEMENTS:
+
+* Upgraded direct and indirect dependencies [#192](https://github.com/google/gke-policy-automation/pull/192)
+* New layout of generated policy documentation [#191](https://github.com/google/gke-policy-automation/pull/191)
+
+BUG FIXES:
+
+* Added anchors to cluster asset regex for security [#1](https://github.com/google/gke-policy-automation/security/code-scanning/1)
+[#190](https://github.com/google/gke-policy-automation/pull/190)
+
 ## 1.3.1 (Jan 1, 2023)
 
 IMPROVEMENTS:
