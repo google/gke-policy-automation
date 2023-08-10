@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# METADATA
-# title: Cloud Monitoring and Logging
-# description: GKE cluster should use Cloud Logging and Monitoring
-# custom:
-#   group: Maintenance
 package gke.policy.logging_and_monitoring
 
 test_enabled_logging_and_monitoring {

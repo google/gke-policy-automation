@@ -30,7 +30,6 @@ import (
 	"github.com/google/gke-policy-automation/internal/outputs"
 	"github.com/google/gke-policy-automation/internal/policy"
 	"github.com/google/gke-policy-automation/internal/version"
-	"golang.org/x/exp/maps"
 )
 
 const (
@@ -71,7 +70,11 @@ func (r *evaluationResults) Add(result *policy.PolicyEvaluationResult) *evaluati
 }
 
 func (r *evaluationResults) List() []*policy.PolicyEvaluationResult {
-	return maps.Values(r.m)
+	values := make([]*policy.PolicyEvaluationResult, 0, len(r.m))
+	for _, value := range r.m {
+		values = append(values, value)
+	}
+	return values
 }
 
 type PolicyAutomationApp struct {

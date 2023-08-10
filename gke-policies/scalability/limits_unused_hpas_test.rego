@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# METADATA
-# title: GKE Unused HPAs Limit
-# description: GKE Unused HPAs Limit
-# custom:
-#   group: Scalability
 package gke.scalability.unused_hpas
 
 test_unused_hpas_not_presence {

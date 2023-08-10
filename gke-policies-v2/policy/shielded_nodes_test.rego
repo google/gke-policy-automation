@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# METADATA
-# title: GKE Shielded Nodes
-# description: GKE cluster should use shielded nodes
-# custom:
-#   group: Security
 package gke.policy.shielded_nodes
 
 test_enabled_shielded_nodes {

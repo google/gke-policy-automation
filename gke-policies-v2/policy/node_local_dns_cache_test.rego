@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# METADATA
-# title: GKE node local DNS cache
-# description: GKE cluster should use node local DNS cache
-# custom:
-#   group: Scalability
 package gke.policy.node_local_dns_cache
 
 
