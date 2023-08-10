@@ -9,8 +9,7 @@ IMPROVEMENTS:
 
 BUG FIXES:
 
-* Added anchors to cluster asset regex for security [#1](https://github.com/google/gke-policy-automation/security/code-scanning/1)
-[#190](https://github.com/google/gke-policy-automation/pull/190)
+* Added anchors to cluster asset regex for security [#190](https://github.com/google/gke-policy-automation/pull/190)
 
 ## 1.3.1 (Jan 1, 2023)
 
