@@ -34,13 +34,13 @@
 
 package gke.policy.rbac_security_group_enabled
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0
 }
 
-violation[msg] {  
+violation[msg] {
   not input.data.gke.authenticator_groups_config.enabled
   msg := sprintf("RBAC security group not enabled for cluster %q", [input.data.gke.name])
 }

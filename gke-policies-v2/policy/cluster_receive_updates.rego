@@ -30,16 +30,18 @@
 
 package gke.policy.cluster_receive_updates
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0
 }
 
 violation[msg] {
-  not input.data.gke.notification_config.pubsub.enabled 
+  not input.data.gke.notification_config.pubsub.enabled
   msg := "Pub/Sub notifications are not enabled"
-} {
-  not input.data.gke.notification_config.pubsub.topic 
+}
+
+violation[msg] {
+  not input.data.gke.notification_config.pubsub.topic
   msg := "Pub/Sub topic is not configured"
 }

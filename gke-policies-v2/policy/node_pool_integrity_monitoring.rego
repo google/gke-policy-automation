@@ -31,13 +31,14 @@
 
 package gke.policy.node_pool_integrity_monitoring
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0
 }
 
-violation[msg] {  
+violation[msg] {
+  some pool
   not input.data.gke.node_pools[pool].config.shielded_instance_config.enable_integrity_monitoring
   msg := sprintf("Node pool %q has disabled integrity monitoring feature.", [input.data.gke.node_pools[pool].name])
-} 
+}

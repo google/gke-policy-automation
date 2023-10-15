@@ -28,7 +28,7 @@
 
 package gke.policy.cluster_gce_csi_driver
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0

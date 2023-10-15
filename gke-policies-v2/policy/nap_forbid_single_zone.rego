@@ -31,7 +31,7 @@
 
 package gke.policy.nap_forbid_single_zone
 
-default valid = false
+default valid := false
 
 valid {
 	count(violation) == 0

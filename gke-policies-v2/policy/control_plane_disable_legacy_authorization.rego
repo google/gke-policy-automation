@@ -31,7 +31,7 @@
 
 package gke.policy.disable_legacy_authorization
 
-default valid = false
+default valid := false
 
 valid {
 	count(violation) == 0

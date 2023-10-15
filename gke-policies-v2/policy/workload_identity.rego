@@ -33,7 +33,7 @@
 
 package gke.policy.workload_identity
 
-default valid = false
+default valid := false
 
 valid {
 	count(violation) == 0

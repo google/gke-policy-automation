@@ -30,7 +30,7 @@
 
 package gke.policy.private_cluster
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0

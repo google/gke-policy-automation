@@ -32,7 +32,7 @@
 
 package gke.policy.nap_forbid_default_sa
 
-default valid = false
+default valid := false
 
 valid {
 	count(violation) == 0

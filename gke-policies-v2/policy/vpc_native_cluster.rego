@@ -28,13 +28,14 @@
 
 package gke.policy.vpc_native_cluster
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0
 }
 
 violation[msg] {
+  some pool
   not input.data.gke.node_pools[pool].network_config.pod_ipv4_cidr_block
   msg := sprintf("Nodepool %q of the GKE cluster is not configured to use VPC-native routing", [input.data.gke.node_pools[pool].name])
 }

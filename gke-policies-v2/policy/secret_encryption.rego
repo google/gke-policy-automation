@@ -33,7 +33,7 @@
 
 package gke.policy.secret_encryption
 
-default valid = false
+default valid := false
 
 valid {
 	count(violation) == 0

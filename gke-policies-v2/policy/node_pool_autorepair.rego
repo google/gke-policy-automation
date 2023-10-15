@@ -32,15 +32,14 @@
 
 package gke.policy.node_pool_autorepair
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0
 }
 
-violation[msg] {  
+violation[msg] {
+  some pool
   not input.data.gke.node_pools[pool].management.auto_repair
   msg := sprintf("autorepair not set for GKE node pool %q", [input.data.gke.node_pools[pool].name])
-} 
-
-
+}

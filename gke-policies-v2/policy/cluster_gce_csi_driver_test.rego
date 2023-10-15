@@ -18,7 +18,7 @@ test_gce_csi_driver_addon_empty {
     not valid with input as {"data": {"gke": {"name":"cluster-demo","addons_config":{"gce_persistent_disk_csi_driver_config":{}}}}}
 }
 
-test_gce_csi_driver_addon_empty {
+test_gce_csi_driver_addon_disabled {
     not valid with input as {"data": {"gke": {"name":"cluster-demo","addons_config":{"gce_persistent_disk_csi_driver_config":{"enabled":false}}}}}
 }
 

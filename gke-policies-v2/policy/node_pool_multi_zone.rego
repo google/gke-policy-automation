@@ -29,13 +29,14 @@
 
 package gke.policy.node_pool_multi_zone
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0
 }
 
-violation[msg] {  
+violation[msg] {
+  some pool
   count(input.data.gke.node_pools[pool].locations) < 2
   msg := sprintf("Node pool %q is not on multiple zones.", [input.data.gke.node_pools[pool].name])
-} 
+}

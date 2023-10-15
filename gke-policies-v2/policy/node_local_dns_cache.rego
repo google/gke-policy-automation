@@ -28,7 +28,7 @@
 
 package gke.policy.node_local_dns_cache
 
-default valid = false
+default valid := false
 
 valid {
 	count(violation) == 0

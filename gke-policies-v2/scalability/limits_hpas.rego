@@ -27,17 +27,17 @@
 
 package gke.scalability.hpas
 
-default valid = false
-default limit = 300
-default threshold = 80
+default valid := false
+default limit := 300
+default threshold := 80
 
 valid {
 	count(violation) == 0
 }
 
 violation[msg] {
-	warn_limit = round(limit * threshold * 0.01)
-	hpas := input.data.monitoring.hpas.scalar 
+	warn_limit := round(limit * threshold * 0.01)
+	hpas := input.data.monitoring.hpas.scalar
 	hpas > warn_limit
 	msg := sprintf("Total number of HPAs %d has reached warning level %d (limit is %d)", [hpas, warn_limit, limit])
 }

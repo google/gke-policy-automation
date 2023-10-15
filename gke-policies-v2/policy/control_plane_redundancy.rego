@@ -27,9 +27,9 @@
 
 package gke.policy.control_plane_redundancy
 
-import data.gke.rule.cluster.location.regional
+import data.gke.rule.cluster.location
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0
@@ -41,6 +41,6 @@ violation[msg] {
 }
 
 violation[msg] {
-  not regional(input.data.gke.location)
+  not location.regional(input.data.gke.location)
   msg := sprintf("Invalid GKE Control plane location %q (not regional)", [input.data.gke.location])
 }
