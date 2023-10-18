@@ -27,16 +27,16 @@
 
 package gke.scalability.namespaces
 
-default valid = false
-default limit = 10000
-default threshold = 80
+default valid := false
+default limit := 10000
+default threshold := 80
 
 valid {
 	count(violation) == 0
 }
 
 violation[msg] {
-	warn_limit = round(limit * threshold * 0.01)
+	warn_limit := round(limit * threshold * 0.01)
     input.data.monitoring.namespaces.scalar > warn_limit
 	msg := sprintf("Total number of namespaces %d has reached warning level %d (limit is %d)", [input.data.monitoring.namespaces.scalar, warn_limit, limit])
 }

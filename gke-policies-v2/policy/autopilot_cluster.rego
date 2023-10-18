@@ -19,7 +19,7 @@
 #   group: Management
 #   severity: Medium
 #   recommendation: >
-#     Autopilot mode (recommended): GKE manages the underlying infrastructure such as node configuration, 
+#     Autopilot mode (recommended): GKE manages the underlying infrastructure such as node configuration,
 #     autoscaling, auto-upgrades, baseline security configurations, and baseline networking configuration.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/choose-cluster-mode
 #   sccCategory: AUTOPILOT_DISABLED
@@ -27,7 +27,7 @@
 
 package gke.policy.autopilot
 
-default valid = false
+default valid := false
 
 valid {
 	count(violation) == 0

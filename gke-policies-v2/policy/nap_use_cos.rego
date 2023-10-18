@@ -33,7 +33,7 @@ package gke.policy.nap_use_cos
 
 import future.keywords.in
 
-default valid = false
+default valid := false
 
 valid {
 	count(violation) == 0
@@ -42,6 +42,6 @@ valid {
 violation[msg] {
 	input.data.gke.autoscaling.enable_node_autoprovisioning == true
 	not lower(input.data.gke.autoscaling.autoprovisioning_node_pool_defaults.image_type) in { "cos", "cos_containerd"}
-	
+
 	msg := "GKE cluster Node Auto-Provisioning configuration use Container-Optimized OS"
 }

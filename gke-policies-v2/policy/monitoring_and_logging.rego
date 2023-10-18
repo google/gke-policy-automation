@@ -35,7 +35,7 @@
 
 package gke.policy.logging_and_monitoring
 
-default valid = false
+default valid := false
 
 valid {
 	count(violation) == 0

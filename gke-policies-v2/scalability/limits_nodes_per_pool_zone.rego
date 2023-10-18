@@ -28,16 +28,16 @@
 
 package gke.scalability.nodes_per_pool_zone
 
-default valid = false
-default limit = 1000
-default threshold = 80
+default valid := false
+default limit := 1000
+default threshold := 80
 
 valid {
 	count(violation) == 0
 }
 
 violation[msg] {
-	warn_limit = round(limit * threshold * 0.01)
+	warn_limit := round(limit * threshold * 0.01)
 	some nodepool, zone
 	not input.data.gke.autopilot.enabled
     nodes_cnt := input.data.monitoring.nodes_per_pool_zone.vector[nodepool][zone]

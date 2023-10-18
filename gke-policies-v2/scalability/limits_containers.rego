@@ -27,24 +27,24 @@
 
 package gke.scalability.containers
 
-default valid = false
-default limit_standard = 400000
-default limit_autopilot = 24000
-default threshold = 80
+default valid := false
+default limit_standard := 400000
+default limit_autopilot := 24000
+default threshold := 80
 
 valid {
 	count(violation) == 0
 }
 
 violation[msg] {
-	warn_limit = round(limit_standard * threshold * 0.01)
+	warn_limit := round(limit_standard * threshold * 0.01)
 	not input.data.gke.autopilot.enabled
     input.data.monitoring.containers.scalar > warn_limit
 	msg := sprintf("Total number of containers %d has reached warning level %d (limit is %d for standard clusters)", [input.data.monitoring.containers.scalar, warn_limit, limit_standard])
 }
 
 violation[msg] {
-	warn_limit = round(limit_autopilot * threshold * 0.01)
+	warn_limit := round(limit_autopilot * threshold * 0.01)
 	input.data.gke.autopilot.enabled
     input.data.monitoring.containers.scalar > warn_limit
 	msg := sprintf("Total number of containers %d has reached warning level %d (limit is %d for autopilot clusters)", [input.data.monitoring.containers.scalar, warn_limit, limit_autopilot])

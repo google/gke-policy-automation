@@ -28,8 +28,8 @@
 
 package gke.scalability.pods_per_node
 
-default valid = false
-default threshold = 80
+default valid := false
+default threshold := 80
 
 valid {
 	count(violation) == 0

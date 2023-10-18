@@ -28,16 +28,16 @@
 
 package gke.scalability.services_per_ns
 
-default valid = false
-default limit = 5000
-default threshold = 80
+default valid := false
+default limit := 5000
+default threshold := 80
 
 valid {
 	count(violation) == 0
 }
 
 violation[msg] {
-	warn_limit = round(limit * threshold * 0.01)
+	warn_limit := round(limit * threshold * 0.01)
 	some namespace
 	srv_cnt := input.data.monitoring.services_per_ns.vector[namespace]
     srv_cnt > warn_limit
