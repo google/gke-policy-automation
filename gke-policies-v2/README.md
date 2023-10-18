@@ -12,6 +12,8 @@ of our policy files.
 |-|-|-|-|
 |[Control Plane redundancy](../gke-policies-v2/policy/control_plane_redundancy.rego)|Availability|GKE cluster should be regional for maximum availability of control plane during upgrades and zonal outages||
 |[Multi-zone node pools](../gke-policies-v2/policy/node_pool_multi_zone.rego)|Availability|GKE node pools should be regional (multiple zones) for maximum nodes availability during zonal outages||
+| [Container-Optimized OS](../gke-policies-v2/policy/container_optimized_os.rego)|Management|Ensure Container-Optimized OS (cos_containerd) is used
+for GKE node images|[CIS GKE](https://cloud.google.com/kubernetes-engine/docs/concepts/cis-benchmarks#accessing-gke-benchmark)1.4: 5.5.1|
 |[Use Node Auto-Repair](../gke-policies-v2/policy/node_pool_autorepair.rego)|Availability|GKE node pools should have Node Auto-Repair enabled to configure Kubernetes Engine|[CIS GKE](https://cloud.google.com/kubernetes-engine/docs/concepts/cis-benchmarks#accessing-gke-benchmark) 1.2: 5.5.2|
 |[Cloud Monitoring and Logging](../gke-policies-v2/policy/monitoring_and_logging.rego)|Maintenance|GKE cluster should use Cloud Logging and Monitoring|[CIS GKE](https://cloud.google.com/kubernetes-engine/docs/concepts/cis-benchmarks#accessing-gke-benchmark) 1.2: 5.7.1|
 |[Enable binary authorization in the cluster](../gke-policies-v2/policy/cluster_binary_authorization.rego)|Management|GKE cluster should enable for deploy-time security control that ensures only trusted container images are deployed to gain tighter control over your container environment.|[CIS GKE](https://cloud.google.com/kubernetes-engine/docs/concepts/cis-benchmarks#accessing-gke-benchmark) 1.2: 5.10.5|
