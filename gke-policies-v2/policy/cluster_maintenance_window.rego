@@ -30,7 +30,7 @@
 
 package gke.policy.cluster_maintenance_window
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0

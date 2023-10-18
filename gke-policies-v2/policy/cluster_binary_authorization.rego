@@ -31,7 +31,7 @@
 
 package gke.policy.cluster_binary_authorization
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0

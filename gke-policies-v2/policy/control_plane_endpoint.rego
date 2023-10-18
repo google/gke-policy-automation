@@ -31,7 +31,7 @@
 
 package gke.policy.control_plane_endpoint
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0
@@ -39,5 +39,5 @@ valid {
 
 violation[msg] {
   not input.data.gke.private_cluster_config.enable_private_endpoint
-  msg := "GKE cluster has not enabled private endpoint" 
+  msg := "GKE cluster has not enabled private endpoint"
 }

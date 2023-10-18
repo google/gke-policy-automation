@@ -27,16 +27,16 @@
 
 package gke.scalability.secrets_with_enc
 
-default valid = false
-default limit = 30000
-default threshold = 80
+default valid := false
+default limit := 30000
+default threshold := 80
 
 valid {
 	count(violation) == 0
 }
 
 violation[msg] {
-	warn_limit = round(limit * threshold * 0.01)
+	warn_limit := round(limit * threshold * 0.01)
     secrets_cnt := input.data.monitoring.secrets.scalar
 	input.data.gke.database_encryption.state == 1
     secrets_cnt> warn_limit

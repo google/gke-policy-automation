@@ -30,13 +30,14 @@
 
 package gke.policy.node_pool_autoscaling
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0
 }
 
 violation[msg] {
+  some pool
   not input.data.gke.node_pools[pool].autoscaling.enabled
   msg := sprintf("Node pool %q does not have autoscaling configured.", [input.data.gke.node_pools[pool].name])
 }

@@ -31,7 +31,7 @@
 
 package gke.policy.node_pool_version_skew
 
-default valid = false
+default valid := false
 
 expr := `^([0-9]+)\.([0-9]+)\.([0-9]+)(-.+)*$`
 
