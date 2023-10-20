@@ -1,13 +1,3 @@
-# GKE Policy Automation library
-
-## Policy structure
-
-Please refer to the [Policy Authoring Guide](./AUTHORING.md) for details about structure
-of our policy files.
-
-## Available Policies
-
-<!-- BEGIN POLICY-DOC -->
 |Name|Group|Description|CIS Benchmark|
 |-|-|-|-|
 |[Control Plane redundancy](../gke-policies-v2/policy/control_plane_redundancy.rego)|Availability|GKE cluster should be regional for maximum availability of control plane during upgrades and zonal outages||
@@ -46,6 +36,7 @@ of our policy files.
 |[GKE RBAC authorization](../gke-policies-v2/policy/control_plane_disable_legacy_authorization.rego)|Security|GKE cluster should use RBAC instead of legacy ABAC authorization|[CIS GKE](https://cloud.google.com/kubernetes-engine/docs/concepts/cis-benchmarks#accessing-gke-benchmark) 1.2: 5.8.4|
 |[GKE Shielded Nodes](../gke-policies-v2/policy/shielded_nodes.rego)|Security|GKE cluster should use shielded nodes|[CIS GKE](https://cloud.google.com/kubernetes-engine/docs/concepts/cis-benchmarks#accessing-gke-benchmark) 1.2: 5.5.5|
 |[GKE Workload Identity](../gke-policies-v2/policy/workload_identity.rego)|Security|GKE cluster should have Workload Identity enabled|[CIS GKE](https://cloud.google.com/kubernetes-engine/docs/concepts/cis-benchmarks#accessing-gke-benchmark) 1.2: 5.2.2|
+|[GKE intranode visibility](../gke-policies-v2/policy/intranode_visibility.rego)|Security|GKE cluster should have intranode visibility enabled|[CIS GKE](https://cloud.google.com/kubernetes-engine/docs/concepts/cis-benchmarks#accessing-gke-benchmark) 1.4: 5.6.1|
 |[GKE private cluster](../gke-policies-v2/policy/private_cluster.rego)|Security|GKE cluster should be private to ensure network isolation|[CIS GKE](https://cloud.google.com/kubernetes-engine/docs/concepts/cis-benchmarks#accessing-gke-benchmark) 1.2: 5.6.5|
 |[Integrity monitoring on the nodes](../gke-policies-v2/policy/node_pool_integrity_monitoring.rego)|Security|GKE node pools should have integrity monitoring feature enabled to detect changes in a VM boot measurements|[CIS GKE](https://cloud.google.com/kubernetes-engine/docs/concepts/cis-benchmarks#accessing-gke-benchmark) 1.2: 5.5.6|
 |[Kubernetes secrets encryption](../gke-policies-v2/policy/secret_encryption.rego)|Security|GKE cluster should use encryption for kubernetes application secrets|[CIS GKE](https://cloud.google.com/kubernetes-engine/docs/concepts/cis-benchmarks#accessing-gke-benchmark) 1.2: 5.3.1|
