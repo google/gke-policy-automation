@@ -1,3 +1,13 @@
+# GKE Policy Automation library
+
+## Policy structure
+
+Please refer to the [Policy Authoring Guide](./AUTHORING.md) for details about structure
+of our policy files.
+
+## Available Policies
+
+<!-- BEGIN POLICY-DOC -->
 |Name|Group|Description|CIS Benchmark|
 |-|-|-|-|
 |[Control Plane redundancy](../gke-policies-v2/policy/control_plane_redundancy.rego)|Availability|GKE cluster should be regional for maximum availability of control plane during upgrades and zonal outages||
