@@ -56,7 +56,7 @@ Binaries for Linux, Windows and Mac are available as tarballs in the
 
 ### Source code
 
-Go [v1.20](https://go.dev/doc/install) or newer is required. Check the [development guide](./DEVELOPMENT.md)
+Go [v1.21](https://go.dev/doc/install) or newer is required. Check the [development guide](./DEVELOPMENT.md)
 for more details.
 
 ```sh
