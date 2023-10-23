@@ -30,8 +30,8 @@
 #     Refer to the official documentation for more details.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning#node_integrity
 #   cis:
-#     version: "1.2"
-#     id: "5.2.1"
+#     version: "1.4"
+#     id: "5.5.6"
 
 package gke.policy.nap_integrity_monitoring
 

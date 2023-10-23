@@ -24,6 +24,9 @@
 #     (with an alias IP ranges) is configured.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/alias-ips
 #   sccCategory: VPC_NATIVE_ROUTING_DISABLED
+#   cis:
+#     version: "1.4"
+#     id: "5.6.2"
 
 package gke.policy.vpc_native_cluster
 

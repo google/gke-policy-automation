@@ -27,7 +27,7 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity
 #   sccCategory: WORKLOAD_IDENTITY_DISABLED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.2.2"
 #   dataSource: gke
 

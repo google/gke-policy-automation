@@ -25,7 +25,7 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/shielded-gke-nodes#secure_boot
 #   sccCategory: SECURE_BOOT_DISABLED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.5.7"
 
 package gke.policy.node_pool_secure_boot

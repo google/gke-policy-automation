@@ -25,7 +25,7 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/private-cluster-concept#endpoints_in_private_clusters
 #   sccCategory: CONTROL_PLANE_ENDPOINT_PUBLIC
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.6.4"
 #   dataSource: gke
 
