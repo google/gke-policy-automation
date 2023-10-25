@@ -18,12 +18,6 @@ spec:
       selector:
         matchLabels:
           os: linux
-          arch: 386
-      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_linux_386.zip" .TagName }}
-    - bin: gke-policy
-      selector:
-        matchLabels:
-          os: linux
           arch: arm
       {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_linux_arm.zip" .TagName }}
     - bin: gke-policy
@@ -38,54 +32,18 @@ spec:
           os: linux
           arch: arm64
       {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_linux_arm64.zip" .TagName }}
-    - bin: gke-policy
+    - bin: gke-policy.exe
       selector:
         matchLabels:
           os: windows
           arch: 386
       {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_windows_386.zip" .TagName }}
-    - bin: gke-policy
-      selector:
-        matchLabels:
-          os: windows
-          arch: arm
-      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_windows_arm.zip" .TagName }}
-    - bin: gke-policy
+    - bin: gke-policy.exe
       selector:
         matchLabels:
           os: windows
           arch: amd64
       {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_windows_amd64.zip" .TagName }}
-    - bin: gke-policy
-      selector:
-        matchLabels:
-          os: windows
-          arch: arm64
-      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_windows_arm64.zip" .TagName }}
-    - bin: gke-policy
-      selector:
-        matchLabels:
-          os: freebsd
-          arch: 386
-      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_freebsd_386.zip" .TagName }}
-    - bin: gke-policy
-      selector:
-        matchLabels:
-          os: freebsd
-          arch: arm
-      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_freebsd_arm.zip" .TagName }}
-    - bin: gke-policy
-      selector:
-        matchLabels:
-          os: freebsd
-          arch: amd64
-      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_freebsd_amd64.zip" .TagName }}
-    - bin: gke-policy
-      selector:
-        matchLabels:
-          os: freebsd
-          arch: arm64
-      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_freebsd_arm64.zip" .TagName }}
     - bin: gke-policy
       selector:
         matchLabels:
