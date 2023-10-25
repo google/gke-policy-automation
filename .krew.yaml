@@ -1,0 +1,100 @@
+apiVersion: krew.googlecontainertools.github.com/v1alpha2
+kind: Plugin
+metadata:
+  name: gke-policy
+spec:
+  shortDescription: Validates GKE clusters configuration
+  homepage: https://github.com/google/gke-policy-automation
+  description: |
+    Tool and policy library for validating Google Kubernetes Engine clusters
+    against the configuration best practices and scalability limits.
+  caveats: |
+    The plugin requires Google Cloud credentials to work.
+    Use "gcloud auth application-default login" command to authenticate or
+    specify credentials file as an argument.
+  version: {{ .TagName }}
+  platforms:
+    - bin: gke-policy
+      selector:
+        matchLabels:
+          os: linux
+          arch: 386
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_linux_386.zip" .TagName }}
+    - bin: gke-policy
+      selector:
+        matchLabels:
+          os: linux
+          arch: arm
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_linux_arm.zip" .TagName }}
+    - bin: gke-policy
+      selector:
+        matchLabels:
+          os: linux
+          arch: amd64
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_linux_amd64.zip" .TagName }}
+    - bin: gke-policy
+      selector:
+        matchLabels:
+          os: linux
+          arch: arm64
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_linux_arm64.zip" .TagName }}
+    - bin: gke-policy
+      selector:
+        matchLabels:
+          os: windows
+          arch: 386
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_windows_386.zip" .TagName }}
+    - bin: gke-policy
+      selector:
+        matchLabels:
+          os: windows
+          arch: arm
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_windows_arm.zip" .TagName }}
+    - bin: gke-policy
+      selector:
+        matchLabels:
+          os: windows
+          arch: amd64
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_windows_amd64.zip" .TagName }}
+    - bin: gke-policy
+      selector:
+        matchLabels:
+          os: windows
+          arch: arm64
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_windows_arm64.zip" .TagName }}
+    - bin: gke-policy
+      selector:
+        matchLabels:
+          os: freebsd
+          arch: 386
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_freebsd_386.zip" .TagName }}
+    - bin: gke-policy
+      selector:
+        matchLabels:
+          os: freebsd
+          arch: arm
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_freebsd_arm.zip" .TagName }}
+    - bin: gke-policy
+      selector:
+        matchLabels:
+          os: freebsd
+          arch: amd64
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_freebsd_amd64.zip" .TagName }}
+    - bin: gke-policy
+      selector:
+        matchLabels:
+          os: freebsd
+          arch: arm64
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_freebsd_arm64.zip" .TagName }}
+    - bin: gke-policy
+      selector:
+        matchLabels:
+          os: darwin
+          arch: amd64
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_darwin_amd64.zip" .TagName }}
+    - bin: gke-policy
+      selector:
+        matchLabels:
+          os: darwin
+          arch: arm64
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_darwin_arm64.zip" .TagName }}

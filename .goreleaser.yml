@@ -48,7 +48,7 @@ dockers:
       - "ghcr.io/google/{{ .ProjectName }}:{{ .ShortCommit }}" 
 archives:
   - format: zip
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "{{ .ProjectName }}_{{ .Tag }}_{{ .Os }}_{{ .Arch }}"
     builds:
       - gke-policy
     files:
@@ -56,7 +56,7 @@ archives:
       - README*
       - CHANGELOG*
 checksum:
-  name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
+  name_template: "{{ .ProjectName }}_{{ .Tag }}_SHA256SUMS"
   algorithm: sha256
 signs:
   - artifacts: checksum
