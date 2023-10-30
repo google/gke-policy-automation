@@ -39,6 +39,5 @@ valid {
 
 violation[msg] {
 	not input.networkConfig.enableIntraNodeVisibility = true
-
-	msg := "The GKE cluster does not Intranode Visibility enabled"
+	msg := "The GKE cluster does not have Intranode Visibility enabled"
 }

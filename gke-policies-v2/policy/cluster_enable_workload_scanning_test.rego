@@ -29,7 +29,7 @@ test_cluster_disabled_workload_scanning {
         "name": "cluster-test", 
         "security_posture_config": {
            "mode": 1,
-           "vulnerability_mode": 0
+           "vulnerability_mode": 1
         }
     }}}
 }

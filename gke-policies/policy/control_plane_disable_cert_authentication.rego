@@ -22,7 +22,7 @@
 #   severity: High
 #   recommendation: >
 #     Client certificate authentication cannot be disabled on the existing cluster.
-#     The new cluster has to be created with a "Clinet certificate" option disabled.
+#     The new cluster has to be created with a "Client certificate" option disabled.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/api-server-authentication#disabling_authentication_with_a_client_certificate
 #   sccCategory: CONTROL_PLANE_CERTIFICATE_AUTH
 #   cis:
@@ -40,10 +40,10 @@ valid {
 
 violation[msg] {
 	input.master_auth.client_certificate
-	msg := "The GKE cluster authentication is configured with a client certificate"
+	msg := "The GKE cluster authentication should not be configured with a client certificate"
 }
 
 violation[msg] {
 	input.master_auth.client_key
-	msg := "The GKE cluster authentication is configured with a client key"
+	msg := "The GKE cluster authentication should not be configured with a client key"
 }
