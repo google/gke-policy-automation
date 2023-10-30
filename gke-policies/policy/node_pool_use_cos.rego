@@ -42,5 +42,6 @@ valid {
 
 violation[msg] {  
   not lower(input.node_pools[pool].config.image_type) in {"cos", "cos_containerd"}
+  not startswith(lower(input.node_pools[pool].config.image_type), "windows")
   msg := sprintf("Node pool %q does not use Container-Optimized OS.", [input.node_pools[pool].name])
 } 
