@@ -24,9 +24,6 @@
 #     Under the "Node pool location", select multiple zone checkboxes. Click "Save changes" once done.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning#auto-provisioning_locations
 #   sccCategory: NAP_ZONAL
-#   cis:
-#     version: "1.2"
-#     id: "5.2.1"
 #   dataSource: gke
 
 package gke.policy.nap_forbid_single_zone

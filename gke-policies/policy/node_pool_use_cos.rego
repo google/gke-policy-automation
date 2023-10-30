@@ -27,7 +27,7 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/node-images
 #   sccCategory: NODEPOOL_COS_UNUSED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.5.1"
 
 package gke.policy.node_pool_use_cos
@@ -42,5 +42,6 @@ valid {
 
 violation[msg] {  
   not lower(input.node_pools[pool].config.image_type) in {"cos", "cos_containerd"}
+  not startswith(lower(input.node_pools[pool].config.image_type), "windows")
   msg := sprintf("Node pool %q does not use Container-Optimized OS.", [input.node_pools[pool].name])
 } 

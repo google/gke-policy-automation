@@ -24,7 +24,7 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/private-clusters
 #   sccCategory: NODES_PUBLIC
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.6.5"
 #   dataSource: gke
 
