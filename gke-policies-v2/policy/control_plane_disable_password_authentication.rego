@@ -41,10 +41,10 @@ valid {
 
 violation[msg] {
 	input.data.gke.master_auth.password
-	msg := "The GKE cluster authentication is configured with a client password"
+	msg := "The GKE cluster authentication should not be configured with a client password"
 }
 
 violation[msg] {
 	input.data.gke.master_auth.username
-	msg := "The GKE cluster authentication is configured with a client username"
+	msg := "The GKE cluster authentication should not be configured with a client username"
 }
