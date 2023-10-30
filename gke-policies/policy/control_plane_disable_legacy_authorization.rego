@@ -25,7 +25,7 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/api-server-authentication#legacy-auth
 #   sccCategory: RBAC_DISABLED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.8.4"
 
 package gke.policy.disable_legacy_authorization

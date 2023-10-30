@@ -26,7 +26,7 @@
 #     Click "Save changes" once done.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/release-channels
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.5.4"
 #   dataSource: gke
 

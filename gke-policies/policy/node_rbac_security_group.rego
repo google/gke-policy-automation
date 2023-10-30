@@ -28,7 +28,7 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/google-groups-rbac
 #   sccCategory: RBAC_SECURITY_GROUP_DISABLED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.8.3"
 
 package gke.policy.rbac_security_group_enabled
