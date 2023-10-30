@@ -26,7 +26,7 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-upgrades
 #   sccCategory: NODEPOOL_AUTOUPGRADE_DISABLED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.5.3"
 #   dataSource: gke
 

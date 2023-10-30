@@ -41,3 +41,7 @@ test_multiple_node_pool_using_cos_but_only_one {
 test_multiple_node_pool_using_cos {
     valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos"}},{"name": "custom", "config": {"image_type": "cos_containerd"}}]}
 }
+
+test_windows_node_pool {
+    valid with input as {"name": "cluster-windows", "node_pools": [{"name": "default", "config": {"image_type": "windows-server"}}]}
+}

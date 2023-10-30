@@ -26,7 +26,7 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning#identity
 #   sccCategory: NAP_DEFAULT_SA_CONFIGURED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.2.1"
 
 package gke.policy.nap_forbid_default_sa

@@ -25,7 +25,7 @@
 #   externalURI: https://cloud.google.com/binary-authorization/docs/setting-up
 #   sccCategory: BINARY_AUTHORIZATION_DISABLED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.10.5"
 
 package gke.policy.cluster_binary_authorization
