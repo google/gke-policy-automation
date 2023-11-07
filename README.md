@@ -49,6 +49,15 @@ docker run --rm ghcr.io/google/gke-policy-automation check \
 -project my-project -location europe-west2 -name my-cluster
 ```
 
+### Krew
+
+The GKE Policy Automation is available as a [Krew](https://krew.sigs.k8s.io) plugin.
+
+```sh
+kubectl krew install gke-policy
+kubectl gke-policy check --discovery -p my-project
+```
+
 ### Binary
 
 Binaries for Linux, Windows and Mac are available as tarballs in the

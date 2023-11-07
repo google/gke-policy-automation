@@ -28,12 +28,12 @@ import sys
 
 _EXCLUDE_DIRS = ('.git', '.terraform')
 _EXCLUDE_RE = re.compile(r'# skip boilerplate check')
+_EXCLUDE_FILES = {".krew.yaml"}
 _MATCH_FILES = ('Dockerfile', '.py', '.sh', '.tf', '.yaml', '.yml', '.go', '.rego')
 _MATCH_STRING = (r'^\s*([#\*]|[/]{2})\sCopyright [0-9]{4} Google LLC$\s+([#\*]|[/]{2})\s+'
                  r'([#\*]|[/]{2})\sLicensed under the Apache License, Version 2.0 '
                  r'\(the "License"\);\s+')
 _MATCH_RE = re.compile(_MATCH_STRING, re.M)
-
 
 def main(base_dirs):
   "Cycle through files in base_dirs and check for the Apache 2.0 boilerplate."
@@ -45,6 +45,9 @@ def main(base_dirs):
         if fname in _MATCH_FILES or os.path.splitext(fname)[1] in _MATCH_FILES:
           fpath = os.path.abspath(os.path.join(root, fname))
           content = open(fpath).read()
+          relPath = os.path.relpath(fpath, dir)
+          if relPath in _EXCLUDE_FILES:
+            continue
           if _EXCLUDE_RE.search(content):
             continue
           try:
