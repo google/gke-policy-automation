@@ -19,40 +19,40 @@ spec:
         matchLabels:
           os: linux
           arch: arm
-      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_linux_arm.zip" .TagName }}
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_linux_arm.zip" .TagName | indent 6}}
     - bin: gke-policy
       selector:
         matchLabels:
           os: linux
           arch: amd64
-      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_linux_amd64.zip" .TagName }}
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_linux_amd64.zip" .TagName | indent 6}}
     - bin: gke-policy
       selector:
         matchLabels:
           os: linux
           arch: arm64
-      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_linux_arm64.zip" .TagName }}
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_linux_arm64.zip" .TagName | indent 6}}
     - bin: gke-policy.exe
       selector:
         matchLabels:
           os: windows
           arch: 386
-      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_windows_386.zip" .TagName }}
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_windows_386.zip" .TagName | indent 6}}
     - bin: gke-policy.exe
       selector:
         matchLabels:
           os: windows
           arch: amd64
-      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_windows_amd64.zip" .TagName }}
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_windows_amd64.zip" .TagName | indent 6}}
     - bin: gke-policy
       selector:
         matchLabels:
           os: darwin
           arch: amd64
-      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_darwin_amd64.zip" .TagName }}
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_darwin_amd64.zip" .TagName | indent 6}}
     - bin: gke-policy
       selector:
         matchLabels:
           os: darwin
           arch: arm64
-      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_darwin_arm64.zip" .TagName }}
+      {{addURIAndSha "https://github.com/google/gke-policy-automation/releases/download/{{ .TagName }}/gke-policy-automation_{{ .TagName }}_darwin_arm64.zip" .TagName | indent 6}}
