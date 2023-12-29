@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.4 (Dec 29, 2023)
+
+IMPROVEMENTS:
+
+* Upgraded all direct and transitive dependencies
+
 ## 1.3.3 (Nov 8, 2023)
 
 FEATURES:
