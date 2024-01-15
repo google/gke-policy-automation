@@ -29,13 +29,13 @@
 #   externalURI: https://cloud.google.com/stackdriver/docs/solutions/gke/installing
 #   sccCategory: LOGGING_OR_MONITORING_DISABLED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.7.1"
 #   dataSource: gke
 
 package gke.policy.logging_and_monitoring
 
-default valid = false
+default valid := false
 
 valid {
 	count(violation) == 0

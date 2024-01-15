@@ -25,19 +25,20 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/shielded-gke-nodes#secure_boot
 #   sccCategory: SECURE_BOOT_DISABLED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.5.7"
 #   dataSource: gke
 
 package gke.policy.node_pool_secure_boot
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0
 }
 
-violation[msg] {  
+violation[msg] {
+  some pool
   not input.data.gke.node_pools[pool].config.shielded_instance_config.enable_secure_boot
   msg := sprintf("Node pool %q has disabled secure boot.", [input.data.gke.node_pools[pool].name])
-} 
+}

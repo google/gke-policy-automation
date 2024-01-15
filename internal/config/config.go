@@ -12,15 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package config implements application configuration related features
 package config
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/google/gke-policy-automation/internal/log"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -35,11 +37,10 @@ const (
 )
 
 type ReadFileFn func(string) ([]byte, error)
-type ValidateConfig func(config Config) error
 
 type Config struct {
 	SilentMode       bool                   `yaml:"silent"`
-	JsonOutput       bool                   `yaml:"jsonOutput"`
+	JSONOutput       bool                   `yaml:"jsonOutput"`
 	DumpFile         string                 `yaml:"dumpFile"`
 	CredentialsFile  string                 `yaml:"credentialsFile"`
 	Clusters         []ConfigCluster        `yaml:"clusters"`
@@ -48,6 +49,8 @@ type Config struct {
 	Outputs          []ConfigOutput         `yaml:"outputs"`
 	ClusterDiscovery ClusterDiscovery       `yaml:"clusterDiscovery"`
 	PolicyExclusions ConfigPolicyExclusions `yaml:"policyExclusions"`
+	Metrics          []ConfigMetric         `yaml:"metrics"`
+	K8SApiConfig     K8SApiConfig           `yaml:"kubernetesAPIClient"`
 }
 
 type ConfigPolicy struct {
@@ -65,11 +68,11 @@ type ConfigCluster struct {
 }
 
 type ConfigInput struct {
-	GKEApi        GKEApiInput     `yaml:"gkeAPI"`
-	GKELocalInput GKELocalInput   `yaml:"gkeLocal"`
-	K8sApi        K8SApiInput     `yaml:"k8sAPI"`
-	MetricsApi    MetricsApiInput `yaml:"metricsAPI"`
-	Rest          RestInput       `yaml:"rest"`
+	GKEApi        *GKEApiInput     `yaml:"gkeAPI"`
+	GKELocalInput *GKELocalInput   `yaml:"gkeLocal"`
+	K8sAPI        *K8SAPIInput     `yaml:"k8sAPI"`
+	MetricsAPI    *MetricsAPIInput `yaml:"metricsAPI"`
+	Rest          *RestInput       `yaml:"rest"`
 }
 
 type GKEApiInput struct {
@@ -81,15 +84,18 @@ type GKELocalInput struct {
 	DumpFile string `yaml:"file"`
 }
 
-type K8SApiInput struct {
+type K8SAPIInput struct {
 	Enabled     bool     `yaml:"enabled"`
-	ApiVersions []string `yaml:"resourceAPIVersions"`
+	APIVersions []string `yaml:"resourceAPIVersions"`
 	MaxQPS      int      `yaml:"clientMaxQPS"`
 }
 
-type MetricsApiInput struct {
+type MetricsAPIInput struct {
 	Enabled   bool           `yaml:"enabled"`
-	ProjectId string         `yaml:"project"`
+	ProjectID string         `yaml:"project"`
+	Address   string         `yaml:"address"`
+	Username  string         `yaml:"username"`
+	Password  string         `yaml:"password"`
 	Metrics   []ConfigMetric `yaml:"metrics"`
 }
 type RestInput struct {
@@ -137,43 +143,30 @@ type ConfigPolicyExclusions struct {
 	PolicyGroups []string `yaml:"policyGroups"`
 }
 
+type K8SApiConfig struct {
+	Enabled        bool     `yaml:"enabled"`
+	APIVersions    []string `yaml:"resourceAPIVersions"`
+	MaxQPS         int      `yaml:"clientMaxQPS"`
+	TimeoutSeconds int      `yaml:"clientTimeoutSeconds"`
+}
+
 func ReadConfig(path string, readFn ReadFileFn) (*Config, error) {
 	data, err := readFn(path)
 	if err != nil {
 		return nil, err
 	}
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
 	config := &Config{}
-	if err := yaml.Unmarshal(data, config); err != nil {
+	if err := decoder.Decode(&config); err != nil && err != io.EOF {
 		return nil, err
 	}
 	return config, nil
 }
 
-func ValidateClusterJSONDataConfig(config Config) error {
+func ValidateClusterDumpConfig(config Config) error {
 	var errors = make([]error, 0)
 	errors = append(errors, validateClustersConfig(config)...)
-	if len(errors) > 0 {
-		for _, err := range errors {
-			log.Warnf("configuration validation error: %s", err)
-		}
-		return errors[0]
-	}
-	return nil
-}
-
-func ValidateClusterOfflineReviewConfig(config Config) error {
-	var errors = make([]error, 0)
-	if config.DumpFile == "" {
-		errors = append(errors, fmt.Errorf("cluster dump file is not set"))
-	}
-	for i, cluster := range config.Clusters {
-		if cluster.ID == "" {
-			if cluster.Name == "" {
-				errors = append(errors, fmt.Errorf("cluster [%v]: name is not set", i))
-			}
-		}
-	}
-	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
 	if len(errors) > 0 {
 		for _, err := range errors {
 			log.Warnf("configuration validation error: %s", err)
@@ -188,6 +181,19 @@ func ValidateClusterCheckConfig(config Config) error {
 	errors = append(errors, validateClustersConfig(config)...)
 	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
 	errors = append(errors, validateOutputConfig(config.Outputs)...)
+	if config.Inputs.GKEApi == nil && config.Inputs.GKELocalInput == nil {
+		errors = append(errors, fmt.Errorf("either gkeAPI input or gkeLocalInput has to be declared"))
+	}
+	if config.Inputs.GKEApi != nil && !config.Inputs.GKEApi.Enabled {
+		if config.Inputs.GKELocalInput == nil || !config.Inputs.GKELocalInput.Enabled {
+			errors = append(errors, fmt.Errorf("either gkeAPI input or gkeLocalInput has to be enabled"))
+		}
+	}
+	if config.Inputs.GKELocalInput != nil && !config.Inputs.GKELocalInput.Enabled {
+		if config.Inputs.GKEApi == nil || !config.Inputs.GKEApi.Enabled {
+			errors = append(errors, fmt.Errorf("either gkeAPI input or gkeLocalInput has to be enabled"))
+		}
+	}
 	if len(errors) > 0 {
 		for _, err := range errors {
 			log.Warnf("configuration validation error: %s", err)
@@ -224,11 +230,30 @@ func ValidateGeneratePolicyDocsConfig(config Config) error {
 }
 
 func ValidateScalabilityCheckConfig(config Config) error {
-	if err := ValidateClusterCheckConfig(config); err != nil {
-		return nil
+	var errors = make([]error, 0)
+	errors = append(errors, validateClustersConfig(config)...)
+	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
+	errors = append(errors, validateOutputConfig(config.Outputs)...)
+	if config.Inputs.MetricsAPI == nil || !config.Inputs.MetricsAPI.Enabled {
+		errors = append(errors, fmt.Errorf("metricsAPI input has to be enabled"))
 	}
-	if !config.Inputs.K8sApi.Enabled && !config.Inputs.MetricsApi.Enabled {
-		return errors.New("kubernetes API client and metrics client are disabled")
+	if config.Inputs.GKEApi == nil || !config.Inputs.GKEApi.Enabled {
+		errors = append(errors, fmt.Errorf("gkeAPI input has to be enabled"))
+	}
+	if len(errors) > 0 {
+		for _, err := range errors {
+			log.Warnf("configuration validation error: %s", err)
+		}
+		return errors[0]
+	}
+	if config.Inputs.MetricsAPI.Enabled {
+		if (config.Inputs.MetricsAPI.Username != "" && config.Inputs.MetricsAPI.Password == "") ||
+			(config.Inputs.MetricsAPI.Password != "" && config.Inputs.MetricsAPI.Username == "") {
+			return fmt.Errorf("can't set username without password or password without the username")
+		}
+		if config.Inputs.MetricsAPI.ProjectID != "" && config.Inputs.MetricsAPI.Address != "" {
+			return fmt.Errorf("projectID should be not set when custom Prometheus address is specified")
+		}
 	}
 	return nil
 }
@@ -325,8 +350,45 @@ func validatePubSubConfig(pubsub PubSubOutput) []error {
 	return errors
 }
 
-// setConfigDefaults checks passed config and sets default values if needed
-func SetConfigDefaults(config *Config) {
+func SetCheckConfigDefaults(config *Config) {
+	SetPolicyConfigDefaults(config)
+	if config.Inputs.GKEApi == nil {
+		log.Debugf("Configuring GKEApi input defaults")
+		config.Inputs.GKEApi = &GKEApiInput{
+			Enabled: true,
+		}
+	}
+}
+
+func SetScalabilityConfigDefaults(config *Config) {
+	SetPolicyConfigDefaults(config)
+	if config.Inputs.MetricsAPI == nil {
+		log.Debugf("configuring MetricsApi input defaults")
+		config.Inputs.MetricsAPI = &MetricsAPIInput{
+			Enabled: true,
+			Metrics: getScalabilityMetricsDefaults(),
+		}
+	} else {
+		config.Inputs.MetricsAPI.Metrics = append(config.Inputs.MetricsAPI.Metrics, getScalabilityMetricsDefaults()...)
+	}
+	if config.Inputs.GKEApi == nil {
+		log.Debugf("configuring GKEApi input defaults")
+		config.Inputs.GKEApi = &GKEApiInput{
+			Enabled: true,
+		}
+	}
+	if config.Inputs.K8sAPI != nil {
+		log.Debugf("Configuring K8SApiConfig input defaults")
+		if config.Inputs.K8sAPI.MaxQPS == 0 {
+			config.Inputs.K8sAPI.MaxQPS = DefaultK8SClientQPS
+		}
+		if len(config.Inputs.K8sAPI.APIVersions) == 0 {
+			config.Inputs.K8sAPI.APIVersions = DefaultK8SApiVersions
+		}
+	}
+}
+
+func SetPolicyConfigDefaults(config *Config) {
 	if len(config.Policies) < 1 {
 		log.Debugf("no policies defined, using default GIT policy source: repo %s, branch %s, directory %s",
 			DefaultGitRepository, DefaultGitBranch, DefaultGitPolicyDir)
@@ -334,11 +396,5 @@ func SetConfigDefaults(config *Config) {
 			GitRepository: DefaultGitRepository,
 			GitBranch:     DefaultGitBranch,
 			GitDirectory:  DefaultGitPolicyDir})
-	}
-	if config.Inputs.K8sApi.MaxQPS == 0 {
-		config.Inputs.K8sApi.MaxQPS = DefaultK8SClientQPS
-	}
-	if len(config.Inputs.K8sApi.ApiVersions) == 0 {
-		config.Inputs.K8sApi.ApiVersions = DefaultK8SApiVersions
 	}
 }

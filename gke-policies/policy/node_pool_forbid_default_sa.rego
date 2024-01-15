@@ -25,7 +25,7 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/hardening-your-cluster#use_least_privilege_sa
 #   sccCategory: DEFAULT_SA_CONFIGURED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.2.1"
 
 package gke.policy.node_pool_forbid_default_sa

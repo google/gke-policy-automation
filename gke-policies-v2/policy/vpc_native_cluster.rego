@@ -24,17 +24,21 @@
 #     (with an alias IP ranges) is configured.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/alias-ips
 #   sccCategory: VPC_NATIVE_ROUTING_DISABLED
+#   cis:
+#     version: "1.4"
+#     id: "5.6.2"
 #   dataSource: gke
 
 package gke.policy.vpc_native_cluster
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0
 }
 
 violation[msg] {
+  some pool
   not input.data.gke.node_pools[pool].network_config.pod_ipv4_cidr_block
   msg := sprintf("Nodepool %q of the GKE cluster is not configured to use VPC-native routing", [input.data.gke.node_pools[pool].name])
 }

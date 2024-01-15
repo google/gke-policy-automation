@@ -27,7 +27,7 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/encrypting-secrets
 #   sccCategory: SECRETS_ENCRYPTION_DISABLED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.3.1"
 
 package gke.policy.secret_encryption

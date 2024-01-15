@@ -27,13 +27,13 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/encrypting-secrets
 #   sccCategory: SECRETS_ENCRYPTION_DISABLED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.3.1"
 #   dataSource: gke
 
 package gke.policy.secret_encryption
 
-default valid = false
+default valid := false
 
 valid {
 	count(violation) == 0

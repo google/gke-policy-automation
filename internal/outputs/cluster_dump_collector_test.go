@@ -20,8 +20,8 @@ import (
 	"reflect"
 	"testing"
 
+	"cloud.google.com/go/container/apiv1/containerpb"
 	"github.com/google/gke-policy-automation/internal/inputs"
-	"google.golang.org/genproto/googleapis/container/v1"
 )
 
 func TestFileClusterDumpCollectorNew(t *testing.T) {
@@ -44,7 +44,7 @@ func TestFileClusterDumpCollectorRegisterCluster(t *testing.T) {
 
 	cluster := &inputs.Cluster{Data: make(map[string]interface{})}
 
-	cluster.Data["gkeAPI"] = &container.Cluster{Name: "cluster-one"}
+	cluster.Data["gkeAPI"] = &containerpb.Cluster{Name: "cluster-one"}
 
 	collector := fileClusterDumpCollector{}
 	collector.RegisterCluster(cluster)
@@ -56,7 +56,7 @@ func TestFileClusterDumpCollectorRegisterCluster(t *testing.T) {
 func TestFileClusterDumpCollectorClose(t *testing.T) {
 	fileName := "test.json"
 	cluster := &inputs.Cluster{Data: make(map[string]interface{})}
-	cluster.Data["gkeAPI"] = &container.Cluster{Name: "cluster-one"}
+	cluster.Data["gkeAPI"] = &containerpb.Cluster{Name: "cluster-one"}
 	collector := fileClusterDumpCollector{
 		filename: fileName,
 		clusters: []*inputs.Cluster{cluster},
@@ -90,7 +90,7 @@ func TestOutputClusterDumpCollectorClose(t *testing.T) {
 	var buff bytes.Buffer
 	output := &Output{w: &buff}
 	cluster := &inputs.Cluster{Data: make(map[string]interface{})}
-	cluster.Data["gkeAPI"] = &container.Cluster{Name: "cluster-one"}
+	cluster.Data["gkeAPI"] = &containerpb.Cluster{Name: "cluster-one"}
 	collector := NewOutputClusterDumpCollector(output)
 	collector.RegisterCluster(cluster)
 

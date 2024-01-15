@@ -22,7 +22,10 @@ import (
 	"github.com/google/gke-policy-automation/internal/policy"
 )
 
-const defaultPolicyDocFileURLPrefix = "../"
+const (
+	defaultPolicyDocFileURLPrefix = "../"
+	cisGKEURL                     = "https://cloud.google.com/kubernetes-engine/docs/concepts/cis-benchmarks#accessing-gke-benchmark"
+)
 
 type PolicyDocumentation interface {
 	GenerateDocumentation() string
@@ -50,12 +53,15 @@ func (m *MarkdownPolicyDocumentation) GenerateDocumentation() string {
 		return m.policies[i].Group < m.policies[j].Group
 	})
 	var sb strings.Builder
-
-	sb.WriteString("|Group|Title|Description|File|\n|-|-|-|-|\n")
+	sb.WriteString("|Name|Group|Description|CIS Benchmark|\n|-|-|-|-|\n")
 
 	for _, p := range m.policies {
 		policyFileURL := fmt.Sprintf("%s%s", m.policyDocFileURLPrefix, p.File)
-		sb.WriteString(fmt.Sprintf("|%s|%s|%s|[%s](%s)|\n", p.Group, p.Title, p.Description, p.File, policyFileURL))
+		cis := ""
+		if p.CisVersion != "" && p.CisID != "" {
+			cis = fmt.Sprintf("[CIS GKE](%s) %s: %s", cisGKEURL, p.CisVersion, p.CisID)
+		}
+		sb.WriteString(fmt.Sprintf("|[%s](%s)|%s|%s|%s|\n", p.Title, policyFileURL, p.Group, p.Description, cis))
 	}
 
 	return sb.String()

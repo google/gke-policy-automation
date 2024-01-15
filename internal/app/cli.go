@@ -22,8 +22,7 @@ import (
 type CliConfig struct {
 	ConfigFile          string
 	SilentMode          bool
-	JsonOutput          bool
-	K8SCheck            bool
+	JSONOutput          bool
 	CredentialsFile     string
 	DumpFile            string
 	ClusterName         string
@@ -62,7 +61,7 @@ func createCheckCommand(p PolicyAutomation) *cli.Command {
 		Flags: getCheckFlags(config),
 		Action: func(c *cli.Context) error {
 			defer p.Close()
-			if err := p.LoadCliConfig(config, cfg.ValidateClusterCheckConfig); err != nil {
+			if err := p.LoadCliConfig(config, cfg.SetCheckConfigDefaults, cfg.ValidateClusterCheckConfig); err != nil {
 				cli.ShowSubcommandHelp(c)
 				return err
 			}
@@ -75,7 +74,7 @@ func createCheckCommand(p PolicyAutomation) *cli.Command {
 				Flags: getCheckFlags(config),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config, cfg.ValidateClusterCheckConfig); err != nil {
+					if err := p.LoadCliConfig(config, cfg.SetCheckConfigDefaults, cfg.ValidateClusterCheckConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
@@ -88,8 +87,7 @@ func createCheckCommand(p PolicyAutomation) *cli.Command {
 				Flags: getCheckFlags(config),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					config.K8SCheck = true
-					if err := p.LoadCliConfig(config, cfg.ValidateScalabilityCheckConfig); err != nil {
+					if err := p.LoadCliConfig(config, cfg.SetScalabilityConfigDefaults, cfg.ValidateScalabilityCheckConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
@@ -102,7 +100,7 @@ func createCheckCommand(p PolicyAutomation) *cli.Command {
 				Flags: getCheckFlags(config),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config, cfg.ValidatePolicyCheckConfig); err != nil {
+					if err := p.LoadCliConfig(config, cfg.SetPolicyConfigDefaults, cfg.ValidatePolicyCheckConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
@@ -125,7 +123,7 @@ func createDumpCommand(p PolicyAutomation) *cli.Command {
 				Flags: getDumpFlags(config),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config, cfg.ValidateClusterJSONDataConfig); err != nil {
+					if err := p.LoadCliConfig(config, cfg.SetCheckConfigDefaults, cfg.ValidateClusterDumpConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
@@ -155,7 +153,7 @@ func createConfigureCommand(p PolicyAutomation) *cli.Command {
 				},
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config, nil); err != nil {
+					if err := p.LoadCliConfig(config, nil, nil); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
@@ -178,7 +176,7 @@ func createGenerateCommand(p PolicyAutomation) *cli.Command {
 				Flags: (getPolicyDocumentationFlags(config)),
 				Action: func(c *cli.Context) error {
 					defer p.Close()
-					if err := p.LoadCliConfig(config, cfg.ValidateGeneratePolicyDocsConfig); err != nil {
+					if err := p.LoadCliConfig(config, cfg.SetPolicyConfigDefaults, cfg.ValidateGeneratePolicyDocsConfig); err != nil {
 						cli.ShowSubcommandHelp(c)
 						return err
 					}
@@ -195,7 +193,7 @@ func createVersionCommand(p PolicyAutomation) *cli.Command {
 		Usage: "Shows application version",
 		Action: func(c *cli.Context) error {
 			defer p.Close()
-			if err := p.LoadCliConfig(&CliConfig{}, nil); err != nil {
+			if err := p.LoadCliConfig(&CliConfig{}, nil, nil); err != nil {
 				cli.ShowSubcommandHelp(c)
 				return err
 			}
@@ -271,7 +269,7 @@ func getOutputFlags(config *CliConfig) []cli.Flag {
 		&cli.BoolFlag{
 			Name:        "json",
 			Usage:       "Outputs results to standard console in JSON format",
-			Destination: &config.JsonOutput,
+			Destination: &config.JSONOutput,
 		},
 	}
 }

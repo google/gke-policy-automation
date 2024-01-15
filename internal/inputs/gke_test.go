@@ -20,8 +20,9 @@ import (
 	"regexp"
 	"testing"
 
+	"cloud.google.com/go/container/apiv1/containerpb"
+	"github.com/google/gke-policy-automation/internal/gke"
 	gax "github.com/googleapis/gax-go/v2"
-	containerpb "google.golang.org/genproto/googleapis/container/v1"
 )
 
 type mockClusterManagerClient struct {
@@ -54,35 +55,35 @@ func TestNewGKEApiInputWithCredentials(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err = %v; want nil", err)
 	}
-	_, ok := input.(*gkeApiInput)
+	_, ok := input.(*gkeAPIInput)
 	if !ok {
-		t.Fatalf("input is not *gkeApiInput")
+		t.Fatalf("input is not *gkeAPIInput")
 	}
 }
 
 func TestGetID(t *testing.T) {
-	input := gkeApiInput{}
-	if id := input.GetID(); id != gkeApiInputID {
-		t.Fatalf("id = %v; want %v", id, gkeApiInputID)
+	input := gkeAPIInput{}
+	if id := input.GetID(); id != gkeAPIInputID {
+		t.Fatalf("id = %v; want %v", id, gkeAPIInputID)
 	}
 }
 
 func TestGetDescription(t *testing.T) {
-	input := gkeApiInput{}
-	if id := input.GetDescription(); id != gkeApiInputDescription {
-		t.Fatalf("id = %v; want %v", id, gkeApiInputDescription)
+	input := gkeAPIInput{}
+	if id := input.GetDescription(); id != gkeAPIInputDescription {
+		t.Fatalf("id = %v; want %v", id, gkeAPIInputDescription)
 	}
 }
 
 func TestGetCluster(t *testing.T) {
-	input := gkeApiInput{
+	input := gkeAPIInput{
 		ctx:    context.Background(),
 		client: &mockClusterManagerClient{},
 	}
 	projectID := "test-project"
 	clusterLocation := "europe-central2"
 	clusterName := "warsaw"
-	data, err := input.GetData(GetClusterName(projectID, clusterLocation, clusterName))
+	data, err := input.GetData(gke.GetClusterID(projectID, clusterLocation, clusterName))
 	if err != nil {
 		t.Fatalf("error when fetching cluster: %v", err)
 	}
@@ -99,32 +100,11 @@ func TestGetCluster(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	input := gkeApiInput{
+	input := gkeAPIInput{
 		ctx:    nil,
 		client: &mockClusterManagerClient{}}
 	err := input.Close()
 	if err == nil {
-		t.Errorf("gkeApiInput close() error is nil; want mocked error")
-	}
-}
-
-func TestGetClusterName(t *testing.T) {
-	projectID := "test-project"
-	clusterLocation := "europe-central2"
-	clusterName := "warsaw"
-	name := GetClusterName(projectID, clusterLocation, clusterName)
-	re := regexp.MustCompile(`^projects/([^/]+)/locations/([^/]+)/clusters/([^/]+)$`)
-	if !re.MatchString(name) {
-		t.Fatalf("name: %q, does not match regexp: %q", name, re.String())
-	}
-	matches := re.FindStringSubmatch(name)
-	if matches[1] != projectID {
-		t.Errorf("match[1] = %v; want %v", matches[1], projectID)
-	}
-	if matches[2] != clusterLocation {
-		t.Errorf("match[2] = %v; want %v", matches[2], clusterLocation)
-	}
-	if matches[3] != clusterName {
-		t.Errorf("match[3] = %v; want %v", matches[3], clusterName)
+		t.Errorf("gkeAPIInput close() error is nil; want mocked error")
 	}
 }

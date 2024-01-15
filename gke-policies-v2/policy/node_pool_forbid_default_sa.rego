@@ -18,6 +18,7 @@
 # custom:
 #   group: Security
 #   severity: Critical
+#   recommendation: >
 #     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
 #     Select "Nodes" tab and click on the name of the target node pool. Within the node pool
 #     details pane, click EDIT. Under the "Management" heading, select the "Enable auto-upagde"
@@ -25,13 +26,13 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/hardening-your-cluster#use_least_privilege_sa
 #   sccCategory: DEFAULT_SA_CONFIGURED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.2.1"
 #   dataSource: gke
 
 package gke.policy.node_pool_forbid_default_sa
 
-default valid = false
+default valid := false
 
 valid {
 	count(violation) == 0
@@ -39,6 +40,7 @@ valid {
 
 violation[msg] {
 	not input.data.gke.autopilot.enabled
+	some pool
 	input.data.gke.node_pools[pool].config.service_account == "default"
 	msg := sprintf("GKE cluster node_pool %q should have a dedicated SA", [input.data.gke.node_pools[pool].name])
 }

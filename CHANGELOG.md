@@ -1,5 +1,80 @@
 # Changelog
 
+## 1.3.4 (Dec 29, 2023)
+
+IMPROVEMENTS:
+
+* Upgraded all direct and transitive dependencies
+
+## 1.3.3 (Nov 8, 2023)
+
+FEATURES:
+
+* Krew based installation [#105](https://github.com/google/gke-policy-automation/issues/105)
+
+NEW POLICIES:
+
+* GKE intranode visibility [#196](https://github.com/google/gke-policy-automation/pull/196)
+* Control plane user basic authentication [#197](https://github.com/google/gke-policy-automation/pull/197)
+* Control plane user certificate authentication [#197](https://github.com/google/gke-policy-automation/pull/197)
+* Customer-Managed Encryption Keys for persistent disks [#197](https://github.com/google/gke-policy-automation/pull/197)
+* Enable Security Posture dashboard [#197](https://github.com/google/gke-policy-automation/pull/197)
+* Enable Workload vulnerability scanning [#197](https://github.com/google/gke-policy-automation/pull/197)
+
+IMPROVEMENTS:
+
+* Upgraded direct and indirect dependencies [#195](https://github.com/google/gke-policy-automation/pull/195)
+* Adjusted all policies to GKE CIS version 1.4 benchmark [#197](https://github.com/google/gke-policy-automation/pull/197)
+* Added Regal for linting Rego [#194](https://github.com/google/gke-policy-automation/pull/194)
+
+BUG FIXES:
+
+* Policy `node_pool_use_cos` should not fail on windows node pools [#198](https://github.com/google/gke-policy-automation/pull/198)
+
+## 1.3.2 (Aug 10, 2023)
+
+IMPROVEMENTS:
+
+* Upgraded direct and indirect dependencies [#192](https://github.com/google/gke-policy-automation/pull/192)
+* New layout of generated policy documentation [#191](https://github.com/google/gke-policy-automation/pull/191)
+
+BUG FIXES:
+
+* Added anchors to cluster asset regex for security [#190](https://github.com/google/gke-policy-automation/pull/190)
+
+## 1.3.1 (Jan 1, 2023)
+
+IMPROVEMENTS:
+
+* Upgraded Go to 1.20
+* Upgraded all direct and indirect dependencies
+
+BUG FIXES:
+
+* Upgraded CIRCL indirect dependency to v1.3.3 to fix security issues with error-handling
+on rand readers (CVE-2023-1732)
+
+## 1.3.0 (Mar 14, 2023)
+
+FEATURES:
+
+* GKE Scalability checks based on metrics from kube-state-metrics [#179](https://github.com/google/gke-policy-automation/pull/179)
+* Introduced external URI and recommendations to the policy model and outputs [#131](https://github.com/google/gke-policy-automation/pull/111),
+  [#141](https://github.com/google/gke-policy-automation/pull/141)
+
+IMPROVEMENTS:
+
+* Introduced modularized inputs concept [#127](https://github.com/google/gke-policy-automation/issues/127)
+* Added PromQL integration with a Cloud Monitoring and self hosted Prometheus for metrics ingestion [#132](https://github.com/google/gke-policy-automation/pull/132),
+  [#178](https://github.com/google/gke-policy-automation/pull/178)
+* Security Command Center output performance improvements [#151](https://github.com/google/gke-policy-automation/pull/151)
+* Logs from logger can be stored in a files and in JSON format [#155](https://github.com/google/gke-policy-automation/pull/155)
+* Adding -json flag to output results to stdout in JSON format [#147](https://github.com/google/gke-policy-automation/pull/147)
+
+BUG FIXES:
+
+* Fixed variable types in Terraform code [#150](https://github.com/google/gke-policy-automation/pull/150)
+
 ## 1.2.2 (Nov 8, 2022)
 
 IMPROVEMENTS:

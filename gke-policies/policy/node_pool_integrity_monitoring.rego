@@ -14,7 +14,7 @@
 
 # METADATA
 # title: Integrity monitoring on the nodes
-# description: GKE node pools should have integrity monitoring feature enabled to detect changes in a VM boot measurments
+# description: GKE node pools should have integrity monitoring feature enabled to detect changes in a VM boot measurements
 # custom:
 #   group: Security
 #   severity: Critical
@@ -25,7 +25,7 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/shielded-gke-nodes#node_integrity
 #   sccCategory: NODEPOOL_INTEGRITY_MONITORING_DISABLED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.5.6"
 
 package gke.policy.node_pool_integrity_monitoring

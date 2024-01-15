@@ -30,13 +30,13 @@
 #     Refer to the official documentation for more details.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning#node_integrity
 #   cis:
-#     version: "1.2"
-#     id: "5.2.1"
+#     version: "1.4"
+#     id: "5.5.6"
 #   dataSource: gke
 
 package gke.policy.nap_integrity_monitoring
 
-default valid = false
+default valid := false
 
 valid {
 	count(violation) == 0
@@ -45,6 +45,6 @@ valid {
 violation[msg] {
 	input.data.gke.autoscaling.enable_node_autoprovisioning == true
 	input.data.gke.autoscaling.autoprovisioning_node_pool_defaults.shielded_instance_config.enable_integrity_monitoring == false
-	
+
 	msg := "GKE cluster Node Auto-Provisioning configuration use integrity monitoring"
 }

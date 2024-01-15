@@ -13,27 +13,31 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE HPAs Limit
-# description: GKE HPAs Limit
+# title: Number of HPAs in a cluster
+# description: The optimal number of Horizontal Pod Autoscalers in a cluster
 # custom:
 #   group: Scalability
-#   severity: High
-#   sccCategory: HPAS_LIMIT
-#   dataSource: k8s
+#   severity: Medium
+#   recommendation: >
+#     Horizontal Pod Autoscaler doesn't have a hard limit on the supported number of HPA objects.
+#     However, above a certain number of HPA objects, the period between HPA recalculations may become longer than the standard 15 seconds.
+#   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/horizontalpodautoscaler#scalability
+#   sccCategory: HPAS_OPTIMAL_LIMIT
+#   dataSource: monitoring
 
 package gke.scalability.hpas
 
-default valid = false
-
-default hpas_limit = 2 #the value is ONLY for demo purpose, does not reflect a real limit
+default valid := false
+default limit := 300
+default threshold := 80
 
 valid {
 	count(violation) == 0
 }
 
 violation[msg] {
-	hpas := {object | object := input.data.k8s.Resources[_]; object.data.kind == "HorizontalPodAutoscaler"}
-	count(hpas) > hpas_limit
-	msg := sprintf("HPAs found: %d higher than the limit: %d", [count(hpas), hpas_limit])
-	print(msg)
+	warn_limit := round(limit * threshold * 0.01)
+	hpas := input.data.monitoring.hpas.scalar
+	hpas > warn_limit
+	msg := sprintf("Total number of HPAs %d has reached warning level %d (limit is %d)", [hpas, warn_limit, limit])
 }

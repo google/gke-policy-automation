@@ -26,19 +26,19 @@
 #     Click "Save changes" once done.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/release-channels
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.5.4"
 #   dataSource: gke
 
 package gke.policy.cluster_release_channels
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0
 }
 
 violation[msg] {
-  not input.data.gke.release_channel.channel  
+  not input.data.gke.release_channel.channel
   msg := "GKE cluster is not enrolled in release channel"
 }

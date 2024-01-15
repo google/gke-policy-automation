@@ -21,9 +21,9 @@ import (
 	"testing"
 
 	asset "cloud.google.com/go/asset/apiv1"
+	"cloud.google.com/go/asset/apiv1/assetpb"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/iterator"
-	assetpb "google.golang.org/genproto/googleapis/cloud/asset/v1"
 )
 
 type assetInventoryClientMock struct {
@@ -199,6 +199,7 @@ func TestGetIDFromName_negative(t *testing.T) {
 	inputs := []string{
 		"projects/my-project/locations/europe-west2/clusters/my-cluster",
 		"//container.googleapis.com/project/test/locations/europe/my-cluster",
+		"malicious//container.googleapis.com/projects/my-project/locations/europe-west2/clusters/other-cluster/code",
 	}
 	for _, input := range inputs {
 		if _, err := getIDFromName(input); err == nil {

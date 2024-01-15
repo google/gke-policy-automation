@@ -20,12 +20,12 @@ import (
 	"regexp"
 
 	asset "cloud.google.com/go/asset/apiv1"
+	"cloud.google.com/go/asset/apiv1/assetpb"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/version"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
-	assetpb "google.golang.org/genproto/googleapis/cloud/asset/v1"
 )
 
 const (
@@ -86,7 +86,7 @@ func (c *AssetInventoryDiscoveryClient) GetClustersInFolder(number string) ([]st
 	return c.getClustersForScope(scope)
 }
 
-// GetClustersInFolder finds GKE clusters in a given GCP organization (identified by number)
+// GetClustersInOrg finds GKE clusters in a given GCP organization (identified by number)
 // and returns slice with their identifiers.
 func (c *AssetInventoryDiscoveryClient) GetClustersInOrg(number string) ([]string, error) {
 	scope := fmt.Sprintf("organizations/%s", number)
@@ -162,7 +162,7 @@ func filterMapSeachResults(results []*assetpb.ResourceSearchResult) []string {
 
 // getIDFromName returns cluster identifier from full cluster asset name.
 func getIDFromName(name string) (string, error) {
-	r := regexp.MustCompile(`//container\.googleapis\.com/(projects/.+/(locations|zones)/.+/clusters/.+)`)
+	r := regexp.MustCompile(`^//container\.googleapis\.com/(projects/.+/(locations|zones)/.+/clusters/.+$)`)
 	if !r.MatchString(name) {
 		return "", fmt.Errorf("given name %q does not match GKE cluster name pattern", name)
 	}

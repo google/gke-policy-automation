@@ -22,7 +22,8 @@ on:
       - main
 
 env:
-  GKE_POLICY_DIRECTORY: ./gke-policies
+  GKE_POLICY_DIRECTORY_V1: ./gke-policies
+  GKE_POLICY_DIRECTORY_V2: ./gke-policies-v2
 
 jobs:
   build:
@@ -30,10 +31,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Setup OPA
-        uses: open-policy-agent/setup-opa@v1
+        uses: open-policy-agent/setup-opa@v2
         with:
-          version: 0.38
-      - name: Run Policy tests
-        run: opa test ${{ env.GKE_POLICY_DIRECTORY }} -v
+          version: 0.57
+      - name: Run Policy tests - v1 policies
+        run: opa test ${{ env.GKE_POLICY_DIRECTORY_V1 }} -v
+      - name: Run Policy tests - v2 policies
+        run: opa test ${{ env.GKE_POLICY_DIRECTORY_V2 }} -v
+      - name: Setup Regal
+        uses: StyraInc/setup-regal@v0.2.0
+        with:
+          version: v0.10.1
+      - run: regal lint --format github ${{ env.GKE_POLICY_DIRECTORY_V2 }}

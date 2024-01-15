@@ -57,7 +57,7 @@ type ValidationReportMapper interface {
 	AddResult(result *policy.PolicyEvaluationResult)
 	AddResults(results []*policy.PolicyEvaluationResult)
 	GetReport() *ValidationReport
-	GetJsonReport() ([]byte, error)
+	GetJSONReport() ([]byte, error)
 }
 
 type validationReportMapperImpl struct {
@@ -130,7 +130,7 @@ func (m *validationReportMapperImpl) GetReport() *ValidationReport {
 	}
 }
 
-func (m *validationReportMapperImpl) GetJsonReport() ([]byte, error) {
+func (m *validationReportMapperImpl) GetJSONReport() ([]byte, error) {
 	report := m.GetReport()
 	return m.jsonMarshalFunc(report)
 }

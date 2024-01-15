@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# METADATA
-# title: GKE Workload Identity
-# description: GKE cluster should have Workload Identity enabled
-# custom:
-#   group: Security
 package gke.policy.workload_identity
 
 test_enabled_workload_identity {

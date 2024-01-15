@@ -28,7 +28,7 @@
 
 package gke.policy.enable_ilb_subsetting
 
-default valid = false
+default valid := false
 
 valid {
 	count(violation) == 0

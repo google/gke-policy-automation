@@ -25,7 +25,7 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/tutorials/network-policy
 #   sccCategory: NETWORK_POLICIES_DISABLED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.6.7"
 
 package gke.policy.network_policies_engine

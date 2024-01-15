@@ -14,7 +14,7 @@
 
 # METADATA
 # title: Use Compute Engine persistent disk CSI driver
-# description: Automatic deployment and management of the Compute Engine persisten disk CSI driver. The driver provides support for features like customer managed encryption keys or volume snapshots.
+# description: Automatic deployment and management of the Compute Engine persistent disk CSI driver. The driver provides support for features like customer managed encryption keys or volume snapshots.
 # custom:
 #   group: Management
 #   severity: Medium
@@ -28,7 +28,7 @@
 
 package gke.policy.cluster_gce_csi_driver
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0

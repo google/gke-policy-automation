@@ -45,9 +45,9 @@ func (p *consoleResultCollector) Close() error {
 	for _, policy := range report.Policies {
 		policyTitle := policy.PolicyTitle
 		if policy.ExternalURI != "" {
-			policyTitle = fmt.Sprintf("%s \x1b]8;;%s\x07%s\x1b]8;;\x07", ICON_HYPERLINK, policy.ExternalURI, policy.PolicyTitle)
+			policyTitle = fmt.Sprintf("%s \x1b]8;;%s\x07%s\x1b]8;;\x07", IconHyperlink, policy.ExternalURI, policy.PolicyTitle)
 		}
-		p.out.ColorPrintf("%s [bold][light_gray][%s][yellow] %s[reset]: %s\n", ICON_MAGNIFIER, policy.PolicyGroup, policy.PolicyName, policyTitle)
+		p.out.ColorPrintf("%s [bold][light_gray][%s][yellow] %s[reset]: %s\n", IconMagnifier, policy.PolicyGroup, policy.PolicyName, policyTitle)
 
 		for _, evaluation := range policy.ClusterEvaluations {
 			statusString := "[ \033[1m\033[32mVALID\033[0m ]"
@@ -65,7 +65,7 @@ func (p *consoleResultCollector) Close() error {
 		p.out.TabFlush()
 		p.out.Printf("\n")
 	}
-	p.out.ColorPrintf("%s [light_gray][bold]Evaluated %d policies on %d clusters\n", ICON_INFO, len(report.Policies), len(report.ClusterStats))
+	p.out.ColorPrintf("%s [light_gray][bold]Evaluated %d policies on %d clusters\n", IconInfo, len(report.Policies), len(report.ClusterStats))
 	p.out.InitTabs(0)
 	for _, stat := range report.ClusterStats {
 		p.out.TabPrintf("  - %s:\t\033[32m%d valid, \033[31m%d violated, \033[33m%d errored\033[0m\n", stat.ClusterID, stat.ValidPoliciesCount, stat.ViolatedPoliciesCount, stat.ErroredPoliciesCount)

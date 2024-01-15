@@ -22,22 +22,7 @@ import (
 	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/outputs"
-	"google.golang.org/grpc/status"
 )
-
-type mockAPIError struct {
-	gRPCStatusFn func() *status.Status
-	errorFn      func() string
-}
-
-func (m mockAPIError) GRPCStatus() *status.Status {
-	return m.gRPCStatusFn()
-}
-
-func (m mockAPIError) Error() string {
-	return m.errorFn()
-
-}
 
 func TestGetClusters_config(t *testing.T) {
 	clusters := []string{"cluster1", "cluster2"}

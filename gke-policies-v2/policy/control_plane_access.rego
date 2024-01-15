@@ -27,13 +27,13 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/authorized-networks
 #   sccCategory: CONTROL_PLANE_ACCESS_UNRESTRICTED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.6.3"
 #   dataSource: gke
 
 package gke.policy.control_plane_access
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0
@@ -41,15 +41,15 @@ valid {
 
 violation[msg] {
   not input.data.gke.master_authorized_networks_config.enabled
-  msg := "GKE cluster has not enabled master authorized networks configuration" 
+  msg := "GKE cluster has not enabled master authorized networks configuration"
 }
 
 violation[msg] {
   not input.data.gke.master_authorized_networks_config.cidr_blocks
-  msg := "GKE cluster's master authorized networks has no CIDR blocks element" 
+  msg := "GKE cluster's master authorized networks has no CIDR blocks element"
 }
 
 violation[msg] {
   count(input.data.gke.master_authorized_networks_config.cidr_blocks) < 1
-  msg := "GKE cluster's master authorized networks has no CIDR blocks defined" 
+  msg := "GKE cluster's master authorized networks has no CIDR blocks defined"
 }

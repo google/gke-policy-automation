@@ -76,7 +76,7 @@ Below is an example of a valid GKE Policy file.
 #   group: Security
 package gke.policy.control_plane_access
 
-default valid = false
+default valid := false
 
 valid {
   count(violation) == 0
@@ -91,7 +91,7 @@ violation[msg] {
 
 ## GKE Policy metadata
 
-GKE Policies use [OPA Annotations](https://www.openpolicyagent.org/docs/latest/annotations/#annotations)
+GKE Policies use [OPA Annotations](https://www.openpolicyagent.org/docs/latest/policy-language/#annotations)
 to specify policy metadata. The required metadata annotations for GKE policy:
 
 * `title` - human readable name of a policy

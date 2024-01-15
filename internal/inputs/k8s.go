@@ -19,22 +19,22 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"cloud.google.com/go/container/apiv1/containerpb"
 	"github.com/google/gke-policy-automation/internal/inputs/clients"
 	"github.com/google/gke-policy-automation/internal/log"
-	containerpb "google.golang.org/genproto/googleapis/container/v1"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 const (
-	k8sApiInputID            = "k8sAPI"
-	k8sApiInputDescription   = "Cluster resource data from Kubernetes API"
+	k8sAPIInputID            = "k8sAPI"
+	k8sAPIInputDescription   = "Cluster resource data from Kubernetes API"
 	k8sDataSourceName        = "k8s"
 	k8sKubeConfigContextName = "gke"
 )
 
 type newK8SClientFunc func(ctx context.Context, kubeConfig *clientcmdapi.Config) (clients.KubernetesClient, error)
 
-type k8sApiInput struct {
+type k8sAPIInput struct {
 	ctx              context.Context
 	tokenSource      clients.TokenSource
 	gkeInput         Input
@@ -55,7 +55,7 @@ type k8sInputBuilder struct {
 	timeoutSeconds  int
 }
 
-func NewK8sApiInputBuilder(ctx context.Context, apiVersions []string) *k8sInputBuilder {
+func NewK8sAPIInputBuilder(ctx context.Context, apiVersions []string) *k8sInputBuilder {
 	return &k8sInputBuilder{
 		ctx:         ctx,
 		apiVersions: apiVersions,
@@ -107,7 +107,7 @@ func (b *k8sInputBuilder) Build() (Input, error) {
 		}
 	}
 
-	input := &k8sApiInput{
+	input := &k8sAPIInput{
 		ctx:            b.ctx,
 		tokenSource:    ts,
 		gkeInput:       gkeInput,
@@ -120,19 +120,19 @@ func (b *k8sInputBuilder) Build() (Input, error) {
 	return input, nil
 }
 
-func (i *k8sApiInput) GetID() string {
-	return k8sApiInputID
+func (i *k8sAPIInput) GetID() string {
+	return k8sAPIInputID
 }
 
-func (i *k8sApiInput) GetDescription() string {
-	return k8sApiInputDescription
+func (i *k8sAPIInput) GetDescription() string {
+	return k8sAPIInputDescription
 }
 
-func (i *k8sApiInput) GetDataSourceName() string {
+func (i *k8sAPIInput) GetDataSourceName() string {
 	return k8sDataSourceName
 }
 
-func (i *k8sApiInput) GetData(clusterID string) (interface{}, error) {
+func (i *k8sAPIInput) GetData(clusterID string) (interface{}, error) {
 	if i.k8sClient == nil {
 		if err := i.createK8SClient(clusterID); err != nil {
 			return nil, err
@@ -150,21 +150,21 @@ func (i *k8sApiInput) GetData(clusterID string) (interface{}, error) {
 
 	toBeFetched := []*clients.ResourceType{}
 	for _, t := range resourceTypes {
-		if clients.StringSliceContains(i.apiVersions, buildApiVersionString(t.Version, t.Group)) && t.Namespaced {
+		if clients.StringSliceContains(i.apiVersions, buildAPIVersionString(t.Version, t.Group)) && t.Namespaced {
 			toBeFetched = append(toBeFetched, t)
 		}
 	}
 	return i.k8sClient.GetResources(toBeFetched, namespaces)
 }
 
-func (i *k8sApiInput) Close() error {
+func (i *k8sAPIInput) Close() error {
 	if i.gkeInput != nil {
 		return i.gkeInput.Close()
 	}
 	return nil
 }
 
-func (i *k8sApiInput) createK8SClient(clusterID string) error {
+func (i *k8sAPIInput) createK8SClient(clusterID string) error {
 	token, err := i.tokenSource.GetAuthToken()
 	if err != nil {
 		return err
@@ -185,7 +185,7 @@ func (i *k8sApiInput) createK8SClient(clusterID string) error {
 	return nil
 }
 
-func (i *k8sApiInput) newK8sClientFromBuilder(ctx context.Context, kubeConfig *clientcmdapi.Config) (clients.KubernetesClient, error) {
+func (i *k8sAPIInput) newK8sClientFromBuilder(ctx context.Context, kubeConfig *clientcmdapi.Config) (clients.KubernetesClient, error) {
 	client, err := clients.NewKubernetesClientBuilder(ctx, kubeConfig).
 		WithMaxQPS(i.maxQPS).
 		WithMaxGoroutines(i.maxGoRoutines).
@@ -226,7 +226,7 @@ func createKubeConfig(clusterData *containerpb.Cluster, clusterToken string) (*c
 	return config, nil
 }
 
-func buildApiVersionString(version string, group string) string {
+func buildAPIVersionString(version string, group string) string {
 	if group != "" {
 		return group + "/" + version
 	}

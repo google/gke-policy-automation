@@ -36,6 +36,8 @@ func buildPoliciesMetadata() []*policy.Policy {
 			Description: "Third description",
 			Group:       "Group 1",
 			File:        "gke-policies/file3.rego",
+			CisVersion:  "1.2",
+			CisID:       "5.3.1",
 		},
 		{
 			Title:       "First policy",
@@ -48,9 +50,9 @@ func buildPoliciesMetadata() []*policy.Policy {
 
 func TestMarkdownDocumention(t *testing.T) {
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "|Group 1|First policy|First description|[gke-policies/file1.rego](%sgke-policies/file1.rego)|\n", defaultPolicyDocFileURLPrefix)
-	fmt.Fprintf(&sb, "|Group 1|Third policy|Third description|[gke-policies/file3.rego](%sgke-policies/file3.rego)|\n", defaultPolicyDocFileURLPrefix)
-	fmt.Fprintf(&sb, "|Group 2|Second policy|Second description|[gke-policies/file2.rego](%sgke-policies/file2.rego)|\n", defaultPolicyDocFileURLPrefix)
+	fmt.Fprintf(&sb, "|[First policy](%sgke-policies/file1.rego)|Group 1|First description||\n", defaultPolicyDocFileURLPrefix)
+	fmt.Fprintf(&sb, "|[Third policy](%sgke-policies/file3.rego)|Group 1|Third description|[CIS GKE](%s) 1.2: 5.3.1|\n", defaultPolicyDocFileURLPrefix, cisGKEURL)
+	fmt.Fprintf(&sb, "|[Second policy](%sgke-policies/file2.rego)|Group 2|Second description||\n", defaultPolicyDocFileURLPrefix)
 	expected := sb.String()
 
 	generator := NewMarkdownPolicyDocumentation(buildPoliciesMetadata())

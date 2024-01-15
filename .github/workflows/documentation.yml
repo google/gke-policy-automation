@@ -27,9 +27,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
       - name: Check license headers
@@ -49,11 +49,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
-          go-version: 1.18
+          go-version: '1.21'
+          check-latest: true
       - name: Get dependencies
         run: go mod download
       - name: Build
@@ -61,7 +62,7 @@ jobs:
       - name: Generate policy documentation 
         run: ./gke-policy generate policy-docs -s --creds internal/app/test-fixtures/test_credentials.json --local-policy-dir ./gke-policies-v2 -f generated-policy-docs.md
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
       - name: Check policy documentation

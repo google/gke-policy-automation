@@ -1,6 +1,7 @@
 # GKE Policy Automation User Guide
 
-The GKE Policy Automation is a command line tool that validates GKE clusters against set of best practices.
+The GKE Policy Automation is a command line tool that validates GKE clusters against set of best practices
+and scalability limits.
 
 ---
 
@@ -10,19 +11,26 @@ The GKE Policy Automation is a command line tool that validates GKE clusters aga
   * [Container image](#container-image)
   * [Binary](#binary)
   * [Source code](#source-code)
+  * [kube-state-metrics](#kube-state-metrics)
 * [Authentication](#authentication)
   * [Required IAM roles](#required-iam-roles)
 * [Checking clusters](#checking-clusters)
-  * [Specifying single cluster](#specifying-single-cluster)
-  * [Specifying multiple clusters](#specifying-multiple-clusters)
-  * [Cluster discovery](#cluster-discovery)
-  * [Specifying cluster file](#specifying-cluster-file)
+  * [Checking best practices](#checking-best-practices)
+  * [Checking scalability limits](#checking-scalability-limits)
+  * [Common check options](#common-check-options)
+    * [Selecting single cluster](#selecting-single-cluster)
+    * [Selecting multiple clusters](#selecting-multiple-clusters)
+    * [Using cluster discovery](#using-cluster-discovery)
+    * [Reading cluster data from file](#reading-cluster-data-from-file)
 * [Dumping cluster data](#dumping-cluster-data)
 * [Configuring policies](#configuring-policies)
   * [Specifying GIT policy source](#specifying-git-policy-source)
   * [Specifying local policy source](#specifying-local-policy-source)
   * [Validating policies](#validating-policies)
   * [Excluding policies](#excluding-policies)
+* [Inputs](#inputs)
+  * [GKE API and GKE Local](#gke-api-and-gke-local)
+  * [Metrics API](#metrics-api)
 * [Outputs](#outputs)
   * [Local JSON file](#local-json-file)
   * [Cloud Storage bucket](#cloud-storage-bucket)
@@ -53,7 +61,7 @@ Binaries for Linux, Windows and Mac are available as tarballs in the
 
 ### Source code
 
-Go [v1.17](https://go.dev/doc/install) or newer is required. Check the [development guide](../DEVELOPMENT.md)
+Go [v1.19](https://go.dev/doc/install) or newer is required. Check the [development guide](../DEVELOPMENT.md)
 for more details.
 
 ```sh
@@ -63,6 +71,14 @@ make build
 ./gke-policy check \
 --project my-project --location europe-west2 --name my-cluster
 ```
+
+### kube-state-metrics
+
+The [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics) agent is needed
+**only for cluster scalability limits check**.
+
+Pleaser refer to the [Kube state metrics for GKE Policy Automation guide](./kube-state-metrics.md)
+for details.
 
 ## Authentication
 
@@ -77,27 +93,24 @@ default credentials
 
 ### Required IAM roles
 
-* The minimum required IAM role is `roles/container.clusterViewer` on a cluster projects
-* For **cluster discovery** the `cloudasset.assets.searchAllResources` permission is needed on a target
-projects, folders or organization. This permission is included, among others, in a `roles/cloudasset.viewer`
-role
-* For [Cloud Storage](https://cloud.google.com/storage) output, the `roles/storage.objectCreator` role
-  is needed on a target bucket
-* For [Pub/Sub](https://cloud.google.com/pubsub) output, the `roles/pubsub.publisher`
-  role is needed on a target topic
-* For [Security Command Center](https://cloud.google.com/security-command-center) output, the following
-  roles are required on the **organization** level:
-  * to create GKE Policy Automation in Security Command Center, `roles/securitycenter.sourcesAdmin`
-    or equivalent is required. This is one time action and can be triggered manually.
-  * once GKE Policy Automation is created, the `roles/securitycenter.findingsEditor` is needed to
-    create SCC findings based on cluster evaluations
+| Use case | Required IAM roles | Level |
+|---|---|---|
+| Checking best practices | `roles/container.clusterViewer` | Project, folder or organization |
+| Checking scalability limits | `roles/container.clusterViewer`, `roles/monitoring.viewer`| Project, folder or organization |
+| Using cluster discovery | `roles/cloudasset.viewer` | Project, folder or organization |
+| Storing outputs to Cloud Storage | `roles/storage.objectCreator` | Cloud Storage Bucket |
+| Storing outputs to Pub/Sub | `roles/pubsub.publisher` | Pub/sub topic |
+| Storing outputs to Security Command Center | `roles/securitycenter.sourcesAdmin`(*), `roles/securitycenter.findingsEditor` | Organization |
+
+*\* The Security Command Center source admin role is needed only for registering GKE Policy Automation
+in SCC. Refer to the [SCC chapter](#security-command-center) for details.*
 
 ## Checking clusters
 
-The check command checks GKE clusters against the best practices.
+The GKE Policy Automation tool supports different types of GKE cluster checks.
+By default, the tool will check clusters against the configuration best practices.
 
-In addition, It is possible to supplement the check command with a subcommands to adjust
-the scope of policies or targets that will be checked:
+The other types of checks can be specified with a subcommand after `./gke-policy check` command.
 
 ```sh
 USAGE:
@@ -110,7 +123,62 @@ COMMANDS:
    help, h         Shows a list of commands or help for one command
 ```
 
-### Specifying single cluster
+### Checking best practices
+
+Use one of the following commands to check clusters against configuration best practices:
+
+* `./gke-policy check` followed by the cluster details or configuration file
+* `./gke-policy check best-practices` followed by the cluster details or configuration file
+
+The configuration best practices check validates GKE clusters against the set of
+GKE configuration policies.
+
+### Checking scalability limits
+
+Use `./gke-policy check scalability` followed by the cluster details or configuration file to check
+clusters against scalability limits.
+
+The scalability limits check validates GKE clusters against the GKE quotas and limits.
+The tool will report violations when the current values will cross the certain thresholds.
+
+**NOTE**: you need to run `kube-state-metrics` to export cluster metrics to use cluster scalability
+limits check. Refer to the [kube-state-metrics installation & configuration guide](./kube-state-metrics.md)
+for more details.
+
+#### Scalability check configuration
+
+  1. Ensure that `kube-state-metrics` is installed and configured on your cluster(s). Refer to the
+  [kube-state-metrics installation & configuration guide](#kube-state-metrics) for details.
+
+  2. (Optionally) Verify that metrics from `kube-state-metrics` are ingested to your Prometheus server
+  or to the Cloud Monitoring, i.e. by running the `kube_node_info` query in Prometheus UI
+  or in the [Managed Service for Prometheus web console](https://console.cloud.google.com/monitoring/prometheus).
+
+  3. If Google Manged Service for Prometheus is used to collect metrics from `kube-state-metrics`,
+  ensure that IAM `roles/monitoring.viewer` role is in place. No other configuration is needed,
+  just run `./gke-policy check scalability` followed by your settings.
+
+  4. If self managed Prometheus collection is used, specify Prometheus server details in the
+  tool's configuration file
+
+     Prepare `config.yaml`:
+
+     ```yaml
+     inputs:
+       metricsAPI:
+         enabled: true
+         address: http://my-prometheus-svc:8080 # Prometheus server API endpoint
+         username: user   # username for basic authentication (optional)
+         password: secret # password for basic authentication (optional)
+     ```
+
+     Next run `./gke-policy check scalability -c config.yaml`
+
+### Common check options
+
+The common options apply to all types of check commands.
+
+#### Selecting single cluster
 
 The cluster details can be set using command line flags or in a [configuration file](#configuration-file).
 
@@ -127,7 +195,7 @@ When using configuration file, it is also possible to reference cluster using `i
 that is combination of the above in a format:
 `projects/<project>/locations/<location>/clusters/<name>`
 
-### Specifying multiple clusters
+#### Selecting multiple clusters
 
 Setting details of a multiple clusters is possible using [configuration file](#configuration-file) only.
 
@@ -148,7 +216,7 @@ clusters:
     location: europe-north1
 ```
 
-### Cluster discovery
+#### Using cluster discovery
 
 The cluster discovery mechanism is leveraging [Cloud Asset Inventory](https://cloud.google.com/asset-inventory)
 API to find GKE clusters in a given GCP projects, folders or in an entire organization. The cluster
@@ -185,7 +253,7 @@ clusterDiscovery:
 
 **NOTE**: it might take some time for a GKE clusters to appear in a Cloud Asset Inventory search results.
 
-### Specifying cluster file
+#### Reading cluster data from file
 
 The GKE Policy Automation tool can read the cluster data from a given JSON dump file.
 This approach can be used for offline reviews and in conjunction with [cluster data dump feature](#dumping-cluster-data).
@@ -207,7 +275,7 @@ to dump GKE cluster data in a JSON format.
 ```
 
 The cluster data dump command works with a configuration file as well. It is possible to dump
-data of a multiple clusters i.e. discovered with a [cluster discovery](#cluster-discovery) mechanism.
+data of a multiple clusters i.e. discovered with a [cluster discovery](#using-cluster-discovery) mechanism.
 
 ```sh
 ./gke-policy dump cluster -c config.yaml
@@ -280,6 +348,56 @@ policyExclusions:
     - gke.policy.cluster_binary_authorization
   policyGroups:
     - Scalability
+```
+
+## Inputs
+
+### GKE API and GKE Local
+
+GKE API input is enabled by default for both - cluster configuration verification
+and for scalability checks.
+Alternatively, for the clusters that cannot be
+accessed online by the tool, dump of cluster data can be provided
+via GKE Local input.
+
+Example input configuration for off-line configuration check:
+
+```yaml
+  gkeAPI:
+    enabled: false
+  gkeLocal:
+    enabled: true
+    file: cluster-dump.json
+```
+
+### Metrics API
+
+Metrics API is intended to use for scalability checks.
+This can connect to specified GCP project Cloud Monitoring API to gather
+metrics collected if managed Prometheus collection is used,
+or to specified Prometheus server if self managed Prometheus collection is used.
+Default project value is the cluster project.
+
+Examples:
+
+* Example with Managed Prometheus collection to specified project:
+
+```yaml
+     inputs:
+       metricsAPI:
+         enabled: true
+         project: sample-project
+```
+
+* Example with self-managed Prometheus details:
+
+```yaml
+     inputs:
+       metricsAPI:
+         enabled: true
+         address: http://my-prometheus-svc:8080 # Prometheus server API endpoint
+         username: user   # username for basic authentication (optional)
+         password: secret # password for basic authentication (optional)
 ```
 
 ## Outputs

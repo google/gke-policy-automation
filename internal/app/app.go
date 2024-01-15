@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package app implements application management features
 package app
 
 import (
@@ -21,19 +22,14 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"time"
 
 	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/inputs"
-	"github.com/google/gke-policy-automation/internal/inputs/clients"
 	"github.com/google/gke-policy-automation/internal/log"
 	"github.com/google/gke-policy-automation/internal/outputs"
-	pbc "github.com/google/gke-policy-automation/internal/outputs/pubsub"
-	"github.com/google/gke-policy-automation/internal/outputs/storage"
 	"github.com/google/gke-policy-automation/internal/policy"
 	"github.com/google/gke-policy-automation/internal/version"
-	"golang.org/x/exp/maps"
 )
 
 const (
@@ -44,7 +40,7 @@ const (
 var errNoPolicies = errors.New("no policies to check against")
 
 type PolicyAutomation interface {
-	LoadCliConfig(cliConfig *CliConfig, validateFn cfg.ValidateConfig) error
+	LoadCliConfig(cliConfig *CliConfig, defaultsFn setConfigDefaults, validateFn validateConfig) error
 	Close() error
 	Check() error
 	CheckBestPractices() error
@@ -74,7 +70,11 @@ func (r *evaluationResults) Add(result *policy.PolicyEvaluationResult) *evaluati
 }
 
 func (r *evaluationResults) List() []*policy.PolicyEvaluationResult {
-	return maps.Values(r.m)
+	values := make([]*policy.PolicyEvaluationResult, 0, len(r.m))
+	for _, value := range r.m {
+		values = append(values, value)
+	}
+	return values
 }
 
 type PolicyAutomationApp struct {
@@ -96,138 +96,6 @@ func NewPolicyAutomationApp() PolicyAutomation {
 		out:        out,
 		collectors: []outputs.ValidationResultCollector{outputs.NewConsoleResultCollector(out)},
 	}
-}
-
-func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, validateFn cfg.ValidateConfig) error {
-	var config *cfg.Config
-	var err error
-	if cliConfig.ConfigFile != "" {
-		if config, err = newConfigFromFile(cliConfig.ConfigFile); err != nil {
-			return err
-		}
-	} else {
-		config = newConfigFromCli(cliConfig)
-	}
-	cfg.SetConfigDefaults(config)
-	if validateFn != nil {
-		if err := validateFn(*config); err != nil {
-			return err
-		}
-	}
-	return p.LoadConfig(config)
-}
-
-func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) (err error) {
-	p.config = config
-	if !p.config.SilentMode {
-		p.out = outputs.NewStdOutOutput()
-		p.collectors = []outputs.ValidationResultCollector{outputs.NewConsoleResultCollector(p.out)}
-
-		if p.config.JsonOutput {
-			p.out = outputs.NewSilentOutput()
-			p.collectors = []outputs.ValidationResultCollector{outputs.NewConsoleJsonResultCollector(outputs.NewStdOutOutput())}
-		}
-
-		p.clusterDumpCollectors = append(p.clusterDumpCollectors, outputs.NewOutputClusterDumpCollector(p.out))
-	}
-
-	inputsFromConfig := p.config.Inputs
-	if inputsFromConfig.GKEApi.Enabled {
-		var gkeInput inputs.Input
-		if p.config.CredentialsFile != "" {
-			gkeInput, err = inputs.NewGKEApiInputWithCredentials(p.ctx, p.config.CredentialsFile)
-			if err != nil {
-				return err
-			}
-		} else {
-			gkeInput, err = inputs.NewGKEApiInput(p.ctx)
-			if err != nil {
-				return err
-			}
-		}
-		p.inputs = append(p.inputs, gkeInput)
-	}
-	if inputsFromConfig.GKELocalInput.Enabled {
-		gkeLocalInput := inputs.NewGKELocalInput(inputsFromConfig.GKELocalInput.DumpFile)
-		p.inputs = append(p.inputs, gkeLocalInput)
-	}
-	if inputsFromConfig.K8sApi.Enabled {
-		k8InputBuilder := inputs.NewK8sApiInputBuilder(p.ctx, inputsFromConfig.K8sApi.ApiVersions)
-
-		if p.config.CredentialsFile != "" {
-			k8InputBuilder.WithCredentialsFile(p.config.CredentialsFile)
-		}
-		k8Input, err := k8InputBuilder.Build()
-		if err != nil {
-			return err
-		}
-		p.inputs = append(p.inputs, k8Input)
-	}
-	if inputsFromConfig.MetricsApi.Enabled {
-		var metricQueries []clients.MetricQuery
-		if len(inputsFromConfig.MetricsApi.Metrics) > 0 {
-
-			for _, m := range inputsFromConfig.MetricsApi.Metrics {
-				metricQueries = append(metricQueries, clients.MetricQuery{Name: m.MetricName, Query: m.Query})
-			}
-		}
-
-		metricInputBuilder := inputs.NewMetricsInputBuilder(p.ctx, metricQueries)
-
-		if p.config.CredentialsFile != "" {
-			metricInputBuilder.WithCredentialsFile(p.config.CredentialsFile)
-		}
-		metricInput, err := metricInputBuilder.Build()
-		if err != nil {
-			return err
-		}
-		p.inputs = append(p.inputs, metricInput)
-	}
-
-	for _, o := range p.config.Outputs {
-		if o.FileName != "" {
-			p.collectors = append(p.collectors, outputs.NewJSONResultToFileCollector(o.FileName))
-			p.clusterDumpCollectors = append(p.clusterDumpCollectors, outputs.NewFileClusterDumpCollector(o.FileName))
-			p.policyDocsFile = o.FileName
-		}
-		if o.CloudStorage.Bucket != "" && o.CloudStorage.Path != "" {
-
-			var storageClient *storage.CloudStorageClient
-			if p.config.CredentialsFile != "" {
-				storageClient, err = storage.NewCloudStorageClientWithCredentialsFile(p.ctx, p.config.CredentialsFile)
-			} else {
-				storageClient, err = storage.NewCloudStorageClient(p.ctx)
-			}
-
-			var storagePath = o.CloudStorage.Path
-
-			if !o.CloudStorage.SkipDatePrefix {
-				storagePath = addDatetimePrefix(storagePath, time.Now())
-			}
-
-			storageCollector, err := outputs.NewCloudStorageResultCollector(storageClient, o.CloudStorage.Bucket, storagePath)
-			if err != nil {
-				return err
-			}
-			p.collectors = append(p.collectors, storageCollector)
-		}
-		if len(o.PubSub.Topic) > 0 {
-			var client outputs.PubSubClient
-			if p.config.CredentialsFile != "" {
-				client, err = pbc.NewPubSubClientWithCredentialsFile(p.ctx, o.PubSub.Project, p.config.CredentialsFile)
-			} else {
-				client, err = pbc.NewPubSubClient(p.ctx, o.PubSub.Project)
-			}
-			if err != nil {
-				return err
-			}
-			p.collectors = append(p.collectors, outputs.NewPubSubResultCollector(client, o.PubSub.Project, o.PubSub.Topic))
-		}
-		if err := p.configureSccOutput(o.SecurityCommandCenter, p.config.CredentialsFile); err != nil {
-			return err
-		}
-	}
-	return
 }
 
 func (p *PolicyAutomationApp) Close() error {
@@ -259,6 +127,9 @@ func (p *PolicyAutomationApp) CheckBestPractices() error {
 }
 
 func (p *PolicyAutomationApp) CheckScalability() error {
+	p.out.ColorPrintf("%s [yellow][bold]Running scalability check requires metrics from kube-state-metrics!\n", outputs.IconInfo)
+	docsTitle := fmt.Sprintf("%s \x1b]8;;%s\x07%s\x1b]8;;\x07", outputs.IconHyperlink, "https://github.com/google/gke-policy-automation/blob/scalability-docs/docs/user-guide.md#checking-scalability-limits", "documentation")
+	p.out.ColorPrintf("%s [yellow][bold]Check the %s for more details.\n", outputs.IconInfo, docsTitle)
 	return p.evaluateClusters([]string{regoPackageBaseScalability})
 }
 
@@ -285,7 +156,7 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 	p.inputs = append(p.inputs, gkeInput)
 
 	clusterData, errors := inputs.GetAllInputsData(p.inputs, clusterIds)
-	if errors != nil && len(errors) > 0 {
+	if len(errors) > 0 {
 		p.out.ErrorPrint("could not fetch the cluster details", errors[0])
 		log.Errorf("could not fetch cluster details: %s", errors[0])
 		return errors[0]
@@ -314,7 +185,7 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 	for _, dumpCollector := range p.clusterDumpCollectors {
 		colType := reflect.TypeOf(dumpCollector).String()
 		log.Debugf("closing cluster dump collector %s", colType)
-		p.out.ColorPrintf("%s [light_gray][bold]closing cluster dump collector ...\n", outputs.ICON_INFO)
+		p.out.ColorPrintf("%s [light_gray][bold]closing cluster dump collector ...\n", outputs.IconInfo)
 		if err := dumpCollector.Close(); err != nil {
 			log.Errorf("failed to close cluster dump collector %s due to %s", colType, err)
 			return err
@@ -342,7 +213,7 @@ func (p *PolicyAutomationApp) PolicyCheck() error {
 		log.Errorf("could not parse policy files: %s", err)
 		return err
 	}
-	p.out.ColorPrintf("%s [bold][green] All policies validated correctly\n", outputs.ICON_INFO)
+	p.out.ColorPrintf("%s [bold][green] All policies validated correctly\n", outputs.IconInfo)
 	log.Info("All policies validated correctly")
 	return nil
 }
@@ -371,7 +242,7 @@ func (p *PolicyAutomationApp) PolicyGenerateDocumentation() error {
 	}
 
 	documentationGenerator := outputs.NewMarkdownPolicyDocumentation(pa.GetPolicies())
-	p.out.ColorPrintf("%s [light_gray][bold]Writing policy documentation ... [%s]\n", outputs.ICON_INFO, p.policyDocsFile)
+	p.out.ColorPrintf("%s [light_gray][bold]Writing policy documentation ... [%s]\n", outputs.IconInfo, p.policyDocsFile)
 	log.Infof("Writing policy documentation to file %s", p.policyDocsFile)
 	if _, err := w.Write([]byte(documentationGenerator.GenerateDocumentation())); err != nil {
 		p.out.ErrorPrint("could not write documentation file", err)
@@ -393,7 +264,7 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 				policyConfig.GitBranch,
 				policyConfig.GitDirectory)
 		}
-		p.out.ColorPrintf("%s [light_gray][bold]Reading policy files... [%s]\n", outputs.ICON_INFO, policySrc)
+		p.out.ColorPrintf("%s [light_gray][bold]Reading policy files... [%s]\n", outputs.IconInfo, policySrc)
 		log.Infof("Reading policy files from %s", policySrc)
 		files, err := policySrc.GetPolicyFiles()
 		if err != nil {
@@ -404,63 +275,4 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 		policyFiles = append(policyFiles, files...)
 	}
 	return policyFiles, nil
-}
-
-func (p *PolicyAutomationApp) configureSccOutput(config cfg.SecurityCommandCenterOutput, credsFile string) error {
-	if config.OrganizationNumber == "" {
-		return nil
-	}
-	log.Infof("Loading Security Command Center output")
-	collector, err := outputs.NewSccCollector(p.ctx, config.OrganizationNumber, config.ProvisionSource, credsFile)
-	if err != nil {
-		return err
-	}
-	p.collectors = append(p.collectors, collector)
-	return nil
-}
-
-func addDatetimePrefix(value string, time time.Time) string {
-	return fmt.Sprintf("%s_%s", time.Format("20060102_1504"), value)
-}
-
-func newConfigFromFile(path string) (*cfg.Config, error) {
-	return cfg.ReadConfig(path, os.ReadFile)
-}
-
-func newConfigFromCli(cliConfig *CliConfig) *cfg.Config {
-	config := &cfg.Config{}
-	config.SilentMode = cliConfig.SilentMode
-	config.JsonOutput = cliConfig.JsonOutput
-	config.CredentialsFile = cliConfig.CredentialsFile
-	config.DumpFile = cliConfig.DumpFile
-	if cliConfig.DiscoveryEnabled {
-		config.ClusterDiscovery.Enabled = true
-		if cliConfig.ProjectName != "" {
-			config.ClusterDiscovery.Projects = []string{cliConfig.ProjectName}
-		}
-	} else {
-		if cliConfig.ClusterName != "" || cliConfig.ClusterLocation != "" || cliConfig.ProjectName != "" {
-			config.Clusters = []cfg.ConfigCluster{
-				{
-					Name:     cliConfig.ClusterName,
-					Location: cliConfig.ClusterLocation,
-					Project:  cliConfig.ProjectName,
-				},
-			}
-		}
-	}
-	if cliConfig.OutputFile != "" {
-		config.Outputs = append(config.Outputs, cfg.ConfigOutput{
-			FileName: cliConfig.OutputFile,
-		})
-	}
-	if cliConfig.LocalDirectory != "" || cliConfig.GitRepository != "" {
-		config.Policies = append(config.Policies, cfg.ConfigPolicy{
-			LocalDirectory: cliConfig.LocalDirectory,
-			GitRepository:  cliConfig.GitRepository,
-			GitBranch:      cliConfig.GitBranch,
-			GitDirectory:   cliConfig.GitDirectory,
-		})
-	}
-	return config
 }

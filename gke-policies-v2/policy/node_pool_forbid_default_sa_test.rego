@@ -12,12 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# METADATA
-# title: Forbid default compute SA on node_pool
-# description: GKE node pools should have a dedicated sa with a restricted set of permissions
-# custom:
-#   group: Security
-
 package gke.policy.node_pool_forbid_default_sa
 
 test_cluster_with_2_np_and_mixed_sas {

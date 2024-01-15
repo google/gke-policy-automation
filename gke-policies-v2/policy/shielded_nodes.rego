@@ -25,13 +25,13 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/shielded-gke-nodes
 #   sccCategory: SHIELDED_NODES_DISABLED
 #   cis:
-#     version: "1.2"
+#     version: "1.4"
 #     id: "5.5.5"
 #   dataSource: gke
 
 package gke.policy.shielded_nodes
 
-default valid = false
+default valid := false
 
 valid {
 	count(violation) == 0
