@@ -328,6 +328,7 @@ func mapFindingToAPI(sourceName string, finding *Finding) *sccpb.Finding {
 		SourceProperties: mapFindingSourceProperties(finding),
 		Compliances:      mapFindingCompliances(finding),
 		ExternalUri:      finding.ExternalURI,
+		NextSteps:        finding.Recommendation,
 	}
 }
 
