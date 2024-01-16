@@ -472,6 +472,9 @@ func TestMapFindingToAPI(t *testing.T) {
 	if apiFinding.ExternalUri != finding.ExternalURI {
 		t.Errorf("finding externalUri = %v; want %v", apiFinding.ExternalUri, finding.ExternalURI)
 	}
+	if apiFinding.NextSteps != finding.Recommendation {
+		t.Errorf("finding nextSteps = %v; want %v", apiFinding.NextSteps, finding.Recommendation)
+	}
 	expectedSrcProperties := mapFindingSourceProperties(finding)
 	if !reflect.DeepEqual(apiFinding.SourceProperties, expectedSrcProperties) {
 		t.Errorf("finding sourceProperties = %v; want %v", apiFinding.SourceProperties, expectedSrcProperties)
