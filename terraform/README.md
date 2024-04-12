@@ -142,7 +142,7 @@ Lastly, the script creates a Cloud Scheduler running once per day to trigger Clo
     ]
   }
 
-  output_cloud_storage = {
+  output_storage = {
     enabled         = true
     bucket_name     = "gke-validations"
     bucket_location = "EU"
