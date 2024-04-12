@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE node local DNS cache
+# title: Enable GKE node local DNS cache
 # description: GKE cluster should use node local DNS cache
 # custom:
 #   group: Scalability
@@ -36,5 +36,5 @@ valid {
 
 violation[msg] {
     not input.data.gke.addons_config.dns_cache_config.enabled = true
-    msg := "The GKE cluster does not have node local DNS cache enabled"
+    msg := "Cluster is not configured with node local DNS cache"
 }

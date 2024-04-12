@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Secure boot on the nodes
+# title: Enable Secure boot for node pools
 # description: Secure Boot helps ensure that the system only runs authentic software by verifying the digital signature of all boot components, and halting the boot process if signature verification fails
 # custom:
 #   group: Security
@@ -40,5 +40,5 @@ valid {
 violation[msg] {
   some pool
   not input.data.gke.node_pools[pool].config.shielded_instance_config.enable_secure_boot
-  msg := sprintf("Node pool %q has disabled secure boot.", [input.data.gke.node_pools[pool].name])
+  msg := sprintf("Node pool %q is not configured with secure boot", [input.data.gke.node_pools[pool].name])
 }

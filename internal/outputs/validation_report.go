@@ -17,9 +17,18 @@ package outputs
 import (
 	"encoding/json"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/gke-policy-automation/internal/policy"
+)
+
+const (
+	SeverityCritical = 4
+	SeverityHigh     = 3
+	SeverityMedium   = 2
+	SeverityLow      = 1
+	SeverityUnknown  = 0
 )
 
 type ValidationReport struct {
@@ -35,6 +44,8 @@ type ValidationReportPolicy struct {
 	PolicyDescription  string                               `json:"description"`
 	Recommendation     string                               `json:"recommendation,omitempty"`
 	ExternalURI        string                               `json:"externalURI,omitempty"`
+	Severity           string                               `json:"severity,omitempty"`
+	SeverityNumber     int                                  `json:"-"`
 	ClusterEvaluations []*ValidationReportClusterEvaluation `json:"clusters"`
 }
 
@@ -51,6 +62,10 @@ type ValidationReportClusterStats struct {
 	ValidPoliciesCount    int    `json:"validPoliciesCount"`
 	ViolatedPoliciesCount int    `json:"violatedPoliciesCount"`
 	ErroredPoliciesCount  int    `json:"erroredPoliciesCount"`
+	ViolatedCriticalCount int    `json:"violatedCriticalCount"`
+	ViolatedHighCount     int    `json:"violatedHighCount"`
+	ViolatedMediumCount   int    `json:"violatedMediumCount"`
+	ViolatedLowCount      int    `json:"violatedLowCount"`
 }
 
 type ValidationReportMapper interface {
@@ -97,6 +112,16 @@ func (m *validationReportMapperImpl) AddResult(result *policy.PolicyEvaluationRe
 				clusterStat.ValidPoliciesCount++
 			} else {
 				clusterStat.ViolatedPoliciesCount++
+				switch strings.ToLower(resultPolicy.Severity) {
+				case "critical":
+					clusterStat.ViolatedCriticalCount++
+				case "high":
+					clusterStat.ViolatedHighCount++
+				case "medium":
+					clusterStat.ViolatedMediumCount++
+				default:
+					clusterStat.ViolatedLowCount++
+				}
 			}
 		}
 	}
@@ -114,10 +139,19 @@ func (m *validationReportMapperImpl) GetReport() *ValidationReport {
 		policies = append(policies, policy)
 	}
 	sort.SliceStable(policies, func(i, j int) bool {
-		if policies[i].PolicyGroup == policies[j].PolicyGroup {
-			return policies[i].PolicyName < policies[j].PolicyName
+		/*
+			if policies[i].PolicyGroup == policies[j].PolicyGroup {
+				return policies[i].PolicyName < policies[j].PolicyName
+			}
+			return policies[i].PolicyGroup < policies[j].PolicyGroup
+		*/
+		if policies[i].SeverityNumber == policies[j].SeverityNumber {
+			if policies[i].PolicyGroup == policies[j].PolicyGroup {
+				return policies[i].PolicyName < policies[j].PolicyName
+			}
+			return policies[i].PolicyGroup < policies[j].PolicyGroup
 		}
-		return policies[i].PolicyGroup < policies[j].PolicyGroup
+		return policies[i].SeverityNumber > policies[j].SeverityNumber
 	})
 	stats := make([]*ValidationReportClusterStats, 0, len(m.clusterStats))
 	for _, stat := range m.clusterStats {
@@ -143,6 +177,8 @@ func mapResultPolicyToReportPolicy(policy *policy.Policy) *ValidationReportPolic
 		PolicyGroup:       policy.Group,
 		Recommendation:    policy.Recommendation,
 		ExternalURI:       policy.ExternalURI,
+		Severity:          policy.Severity,
+		SeverityNumber:    mapSeverityToNumber(policy.Severity),
 	}
 	return reportPolicy
 }
@@ -167,4 +203,19 @@ func mapErrorSliceToStringSlice(errors []error) []string {
 		strings[i] = errors[i].Error()
 	}
 	return strings
+}
+
+func mapSeverityToNumber(severity string) int {
+	switch strings.ToLower(severity) {
+	case "critical":
+		return SeverityCritical
+	case "high":
+		return SeverityHigh
+	case "medium":
+		return SeverityMedium
+	case "low":
+		return SeverityLow
+	default:
+		return SeverityUnknown
+	}
 }

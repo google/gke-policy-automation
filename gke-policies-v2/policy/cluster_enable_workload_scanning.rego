@@ -40,5 +40,5 @@ valid {
 
 violation[msg] {
   not input.data.gke.security_posture_config.vulnerability_mode == 2
-  msg := "GKE cluster has not configured workload vulnerability scanning"
+  msg := "Cluster is not configured with workload vulnerability scanning"
 }

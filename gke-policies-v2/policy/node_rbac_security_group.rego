@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Use RBAC Google group
+# title: Enable Google Groups for RBAC
 # description: GKE cluster should have RBAC security Google group enabled
 # custom:
 #   group: Security
@@ -42,5 +42,5 @@ valid {
 
 violation[msg] {
   not input.data.gke.authenticator_groups_config.enabled
-  msg := sprintf("RBAC security group not enabled for cluster %q", [input.data.gke.name])
+  msg := "Cluster is not configured with Google Groups for RBAC"
 }

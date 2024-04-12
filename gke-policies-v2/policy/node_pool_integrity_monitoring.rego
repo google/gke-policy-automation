@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Integrity monitoring on the nodes
+# title: Enable integrity monitoring for node pools
 # description: GKE node pools should have integrity monitoring feature enabled to detect changes in a VM boot measurements
 # custom:
 #   group: Security
@@ -40,5 +40,5 @@ valid {
 violation[msg] {
   some pool
   not input.data.gke.node_pools[pool].config.shielded_instance_config.enable_integrity_monitoring
-  msg := sprintf("Node pool %q has disabled integrity monitoring feature.", [input.data.gke.node_pools[pool].name])
+  msg := sprintf("Node pool %q is not configured with integrity monitoring", [input.data.gke.node_pools[pool].name])
 }

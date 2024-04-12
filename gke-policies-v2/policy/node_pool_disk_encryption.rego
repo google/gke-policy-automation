@@ -42,5 +42,5 @@ valid {
 violation[msg] {
   some pool
   not input.data.gke.node_pools[pool].config.boot_disk_kms_key
-  msg := sprintf("GKE cluster node_pool %q has no CMEK configured for the boot disks", [input.data.gke.node_pools[pool].name])
+  msg := sprintf("Node pool %q is not configured with CMEK for the boot disk", [input.data.gke.node_pools[pool].name])
 }

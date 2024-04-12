@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE Shielded Nodes
+# title: Enable Shielded Nodes
 # description: GKE cluster should use shielded nodes
 # custom:
 #   group: Security
@@ -39,6 +39,5 @@ valid {
 
 violation[msg] {
 	not input.data.gke.shielded_nodes.enabled = true
-
-	msg := "The GKE cluster does not have shielded nodes enabled"
+	msg := "Cluster is not configured with shielded nodes"
 }

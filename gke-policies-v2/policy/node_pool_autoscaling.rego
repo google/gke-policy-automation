@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Use node pool autoscaling
+# title: Enable node pool auto-scaling
 # description: GKE node pools should have autoscaling configured to proper resize nodes according to traffic
 # custom:
 #   group: Scalability
@@ -39,5 +39,5 @@ valid {
 violation[msg] {
   some pool
   not input.data.gke.node_pools[pool].autoscaling.enabled
-  msg := sprintf("Node pool %q does not have autoscaling configured.", [input.data.gke.node_pools[pool].name])
+  msg := sprintf("Node pool %q is not configured with autoscaling", [input.data.gke.node_pools[pool].name])
 }

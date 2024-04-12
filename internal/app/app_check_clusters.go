@@ -66,13 +66,19 @@ func (p *PolicyAutomationApp) getClusters() ([]string, error) {
 func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 	if p.config.ClusterDiscovery.Organization != "" {
 		log.Infof("Discovering clusters in organization %s", p.config.ClusterDiscovery.Organization)
-		p.out.ColorPrintf("%s [light_gray][bold]Discovering clusters in for organization... [%s]\n", outputs.IconInfo, p.config.ClusterDiscovery.Organization)
+		p.out.Printf("%s %s\n",
+			outputs.IconInfo,
+			consoleInfoColorF("Discovering clusters in for organization... [%s]", p.config.ClusterDiscovery.Organization),
+		)
 		return p.discovery.GetClustersInOrg(p.config.ClusterDiscovery.Organization)
 	}
 	clusters := make([]string, 0)
 	for _, folder := range p.config.ClusterDiscovery.Folders {
 		log.Infof("Discovering clusters in folder %s", folder)
-		p.out.ColorPrintf("%s [light_gray][bold]Discovering clusters in folder... [%s]\n", outputs.IconInfo, folder)
+		p.out.Printf("%s %s\n",
+			outputs.IconInfo,
+			consoleInfoColorF("Discovering clusters in folder... [%s]", folder),
+		)
 		results, err := p.discovery.GetClustersInFolder(folder)
 		if err != nil {
 			return nil, err
@@ -81,7 +87,10 @@ func (p *PolicyAutomationApp) discoverClusters() ([]string, error) {
 	}
 	for _, project := range p.config.ClusterDiscovery.Projects {
 		log.Infof("Discovering clusters in project %s", project)
-		p.out.ColorPrintf("%s [light_gray][bold]Discovering clusters in project... [%s]\n", outputs.IconInfo, project)
+		p.out.Printf("%s %s\n",
+			outputs.IconInfo,
+			consoleInfoColorF("Discovering clusters in project... [%s]", project),
+		)
 		results, err := p.discovery.GetClustersInProject(project)
 		if err != nil {
 			return nil, err
@@ -99,13 +108,16 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 		return err
 	}
 	if len(files) == 0 {
-		p.out.ColorPrintf("[yellow][bold]No policies to check against\n")
+		p.out.Printf("%s\n", consoleWarnColorF("No policies to check against"))
 		log.Errorf("No policies to check against")
 		return errNoPolicies
 	}
 	// create a PolicyAgent client instance
 	pa := policy.NewPolicyAgent(p.ctx)
-	p.out.ColorPrintf("%s [light_gray][bold]Parsing REGO policies...\n", outputs.IconInfo)
+	p.out.Printf("%s %s\n",
+		outputs.IconInfo,
+		consoleInfoColorF("Parsing REGO policies..."),
+	)
 	log.Info("Parsing rego policies")
 	// parsing policies before running checks
 	if err := pa.WithFiles(files, p.config.PolicyExclusions); err != nil {
@@ -121,13 +133,18 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 		return err
 	}
 	if len(clusterIds) < 1 {
-		p.out.ColorPrintf("%s [yellow][bold]No clusters to check, finishing...\n", outputs.IconInfo)
+		p.out.Printf("%s\n", consoleWarnColorF("No clusters to check, finishing..."))
 		log.Info("Cluster review finished")
-		p.out.ColorPrintf("%s [light_gray][bold]Cluster review finished\n", outputs.IconInfo)
+		p.out.Printf("%s %s\n",
+			outputs.IconInfo,
+			consoleInfoColorF("Cluster review finished"),
+		)
 		return nil
 	}
-	p.out.ColorPrintf("%s [light_gray][bold]Fetching data from %d input(s) for %d cluster(s)\n",
-		outputs.IconInfo, len(p.inputs), len(clusterIds))
+	p.out.Printf("%s %s\n",
+		outputs.IconInfo,
+		consoleInfoColorF("Fetching data from %d input(s) for %d cluster(s)", len(p.inputs), len(clusterIds)),
+	)
 	clusterData, errors := inputs.GetAllInputsData(p.inputs, clusterIds)
 	if len(errors) > 0 {
 		p.out.ErrorPrint("could not fetch the cluster details", errors[0])
@@ -139,8 +156,10 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 
 	evalResults := &evaluationResults{}
 	for _, cluster := range clusterData {
-		p.out.ColorPrintf("%s [light_gray][bold]Evaluating policies against GKE cluster... [%s]\n",
-			outputs.IconInfo, cluster.Name)
+		p.out.Printf("%s %s\n",
+			outputs.IconInfo,
+			consoleInfoColorF("Evaluating policies against GKE cluster... [%s]", cluster.Name),
+		)
 		log.Infof("Evaluating policies against GKE cluster %s", cluster.Name)
 		for _, pkgBase := range regoPackageBases {
 			evalResult, err := pa.Evaluate(cluster, pkgBase)
@@ -156,7 +175,10 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 
 	for _, c := range p.collectors {
 		log.Infof("Collector %s registering the results", c.Name())
-		p.out.ColorPrintf("%s [light_gray][bold]Writing evaluation results ... [%s]\n", outputs.IconInfo, c.Name())
+		p.out.Printf("%s %s\n",
+			outputs.IconInfo,
+			consoleInfoColorF("Writing evaluation results ... [%s]", c.Name()),
+		)
 		if err = c.RegisterResult(evalResults.List()); err != nil {
 			p.out.ErrorPrint("failed to register evaluation results", err)
 			log.Errorf("could not register evaluation results: %s", err)
@@ -170,7 +192,10 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 		log.Infof("Collector %s processing closed", c.Name())
 	}
 	log.Info("Cluster review finished")
-	p.out.ColorPrintf("%s [light_gray][bold]Cluster review finished\n", outputs.IconInfo)
+	p.out.Printf("%s %s\n",
+		outputs.IconInfo,
+		consoleInfoColorF("Cluster review finished"),
+	)
 	return nil
 }
 

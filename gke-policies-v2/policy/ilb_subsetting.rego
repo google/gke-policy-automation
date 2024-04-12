@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE L4 ILB Subsetting
+# title: Enable GKE L4 ILB Subsetting
 # description: GKE cluster should use GKE L4 ILB Subsetting if nodes > 250
 # custom:
 #   group: Scalability
@@ -37,7 +37,5 @@ valid {
 violation[msg] {
 	input.data.gke.current_node_count > 250
     not input.data.gke.network_config.enable_l4ilb_subsetting = true
-
-	msg := sprintf("The GKE cluster has %v nodes but is not configured to use L4 ILB Subsetting", [input.data.gke.current_node_count])
-
+	msg := sprintf("Cluster has %v nodes and is not configured with L4 ILB Subsetting", [input.data.gke.current_node_count])
 }

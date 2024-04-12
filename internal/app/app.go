@@ -23,6 +23,7 @@ import (
 	"os"
 	"reflect"
 
+	"github.com/fatih/color"
 	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/inputs"
@@ -38,6 +39,8 @@ const (
 )
 
 var errNoPolicies = errors.New("no policies to check against")
+var consoleInfoColorF = color.New(color.Bold, color.FgHiWhite).Sprintf
+var consoleWarnColorF = color.New(color.Bold, color.FgHiYellow).Sprintf
 
 type PolicyAutomation interface {
 	LoadCliConfig(cliConfig *CliConfig, defaultsFn setConfigDefaults, validateFn validateConfig) error
@@ -127,9 +130,15 @@ func (p *PolicyAutomationApp) CheckBestPractices() error {
 }
 
 func (p *PolicyAutomationApp) CheckScalability() error {
-	p.out.ColorPrintf("%s [yellow][bold]Running scalability check requires metrics from kube-state-metrics!\n", outputs.IconInfo)
+	p.out.Printf("%s %s\n",
+		outputs.IconInfo,
+		consoleWarnColorF("Running scalability check requires metrics from kube-state-metrics!"),
+	)
 	docsTitle := fmt.Sprintf("%s \x1b]8;;%s\x07%s\x1b]8;;\x07", outputs.IconHyperlink, "https://github.com/google/gke-policy-automation/blob/scalability-docs/docs/user-guide.md#checking-scalability-limits", "documentation")
-	p.out.ColorPrintf("%s [yellow][bold]Check the %s for more details.\n", outputs.IconInfo, docsTitle)
+	p.out.Printf("%s %s\n",
+		outputs.IconInfo,
+		consoleWarnColorF("Check the %s for more details", docsTitle),
+	)
 	return p.evaluateClusters([]string{regoPackageBaseScalability})
 }
 
@@ -185,7 +194,10 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 	for _, dumpCollector := range p.clusterDumpCollectors {
 		colType := reflect.TypeOf(dumpCollector).String()
 		log.Debugf("closing cluster dump collector %s", colType)
-		p.out.ColorPrintf("%s [light_gray][bold]closing cluster dump collector ...\n", outputs.IconInfo)
+		p.out.Printf("%s %s\n",
+			outputs.IconInfo,
+			consoleInfoColorF("Closing cluster dump collector ..."),
+		)
 		if err := dumpCollector.Close(); err != nil {
 			log.Errorf("failed to close cluster dump collector %s due to %s", colType, err)
 			return err
@@ -213,7 +225,8 @@ func (p *PolicyAutomationApp) PolicyCheck() error {
 		log.Errorf("could not parse policy files: %s", err)
 		return err
 	}
-	p.out.ColorPrintf("%s [bold][green] All policies validated correctly\n", outputs.IconInfo)
+	correctF := color.New(color.Bold, color.FgHiGreen).Sprint
+	p.out.Printf("%s\n", correctF("All policies validated correctly"))
 	log.Info("All policies validated correctly")
 	return nil
 }
@@ -242,7 +255,10 @@ func (p *PolicyAutomationApp) PolicyGenerateDocumentation() error {
 	}
 
 	documentationGenerator := outputs.NewMarkdownPolicyDocumentation(pa.GetPolicies())
-	p.out.ColorPrintf("%s [light_gray][bold]Writing policy documentation ... [%s]\n", outputs.IconInfo, p.policyDocsFile)
+	p.out.Printf("%s %s\n",
+		outputs.IconInfo,
+		consoleInfoColorF("Writing policy documentation ... [%s]", p.policyDocsFile),
+	)
 	log.Infof("Writing policy documentation to file %s", p.policyDocsFile)
 	if _, err := w.Write([]byte(documentationGenerator.GenerateDocumentation())); err != nil {
 		p.out.ErrorPrint("could not write documentation file", err)
@@ -264,7 +280,10 @@ func (p *PolicyAutomationApp) loadPolicyFiles() ([]*policy.PolicyFile, error) {
 				policyConfig.GitBranch,
 				policyConfig.GitDirectory)
 		}
-		p.out.ColorPrintf("%s [light_gray][bold]Reading policy files... [%s]\n", outputs.IconInfo, policySrc)
+		p.out.Printf("%s %s\n",
+			outputs.IconInfo,
+			consoleInfoColorF("Reading policy files... [%s]", policySrc),
+		)
 		log.Infof("Reading policy files from %s", policySrc)
 		files, err := policySrc.GetPolicyFiles()
 		if err != nil {

@@ -56,6 +56,7 @@ func TestGetReport(t *testing.T) {
 			Group:          "group",
 			Recommendation: "do this and that",
 			ExternalURI:    "https://cloud.google.com/kubernetes-engine",
+			Severity:       "Medium",
 		},
 		{
 			Name:           "policy-two",
@@ -64,6 +65,7 @@ func TestGetReport(t *testing.T) {
 			Group:          "group",
 			Recommendation: "delete your cluster",
 			ExternalURI:    "https://cloud.google.com/kubernetes-engine/docs/concepts/kubernetes-engine-overview",
+			Severity:       "Critical",
 		},
 	}
 	expectedClusterEvaluations := [][]*ValidationReportClusterEvaluation{
@@ -89,6 +91,7 @@ func TestGetReport(t *testing.T) {
 					Valid:          true,
 					Recommendation: policies[0].Recommendation,
 					ExternalURI:    policies[0].ExternalURI,
+					Severity:       policies[0].Severity,
 				}, {
 					Name:           policies[1].Name,
 					Title:          policies[1].Title,
@@ -98,6 +101,7 @@ func TestGetReport(t *testing.T) {
 					Violations:     []string{"violation"},
 					Recommendation: policies[1].Recommendation,
 					ExternalURI:    policies[1].ExternalURI,
+					Severity:       policies[1].Severity,
 				},
 			},
 		},
@@ -113,6 +117,7 @@ func TestGetReport(t *testing.T) {
 					Violations:     []string{"violation"},
 					Recommendation: policies[0].Recommendation,
 					ExternalURI:    policies[0].ExternalURI,
+					Severity:       policies[0].Severity,
 				}, {
 					Name:           policies[1].Name,
 					Title:          policies[1].Title,
@@ -122,6 +127,7 @@ func TestGetReport(t *testing.T) {
 					Violations:     []string{"violation"},
 					Recommendation: policies[1].Recommendation,
 					ExternalURI:    policies[1].ExternalURI,
+					Severity:       policies[1].Severity,
 				},
 			},
 		},
@@ -141,6 +147,8 @@ func TestGetReport(t *testing.T) {
 			PolicyDescription:  policies[i].Description,
 			Recommendation:     policies[i].Recommendation,
 			ExternalURI:        policies[i].ExternalURI,
+			Severity:           policies[i].Severity,
+			SeverityNumber:     mapSeverityToNumber(policies[i].Severity),
 			ClusterEvaluations: expectedClusterEvaluations[i],
 		}, "report policies contains valid policy %v", policies[0].Name)
 	}
@@ -148,10 +156,13 @@ func TestGetReport(t *testing.T) {
 		ClusterID:             clusterOneName,
 		ValidPoliciesCount:    1,
 		ViolatedPoliciesCount: 1,
+		ViolatedCriticalCount: 1,
 	}, "report cluster stats contains valid stats for cluster %v", clusterOneName)
 	assert.Contains(t, report.ClusterStats, &ValidationReportClusterStats{
 		ClusterID:             clusterTwoName,
 		ViolatedPoliciesCount: 2,
+		ViolatedCriticalCount: 1,
+		ViolatedMediumCount:   1,
 	}, "report cluster stats contains valid stats for cluster %v", clusterTwoName)
 }
 

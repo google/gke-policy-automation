@@ -69,3 +69,8 @@ func TestSliceAndValidateClusterID_negative(t *testing.T) {
 		t.Fatalf("err = nil; want err")
 	}
 }
+
+func TestMustSliceClusterID(t *testing.T) {
+	input := "projects/demo-project-123/locations/europe-central2/clusters/cluster-waw"
+	MustSliceClusterID(input)
+}

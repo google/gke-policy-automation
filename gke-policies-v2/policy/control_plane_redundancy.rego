@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Control Plane redundancy
+# title: Ensure redundancy of the Control Plane
 # description: GKE cluster should be regional for maximum availability of control plane during upgrades and zonal outages
 # custom:
 #   group: Availability
@@ -37,10 +37,10 @@ valid {
 
 violation[msg] {
   not input.data.gke.location
-  msg := "Missing GKE cluster location object"
+  msg := "Cluster location infromation is missing"
 }
 
 violation[msg] {
   not location.regional(input.data.gke.location)
-  msg := sprintf("Invalid GKE Control plane location %q (not regional)", [input.data.gke.location])
+  msg := sprintf("Cluster location %q is not regional", [input.data.gke.location])
 }

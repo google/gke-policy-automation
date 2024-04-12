@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Use Container-Optimized OS
+# title: Configure Container-Optimized OS for node pools
 # description: GKE node pools should use Container-Optimized OS which is maintained by Google and optimized for running Docker containers with security and efficiency.
 # custom:
 #   group: Security
@@ -45,5 +45,5 @@ violation[msg] {
   some pool
   not lower(input.data.gke.node_pools[pool].config.image_type) in {"cos", "cos_containerd"}
   not startswith(lower(input.data.gke.node_pools[pool].config.image_type), "windows")
-  msg := sprintf("Node pool %q does not use Container-Optimized OS.", [input.data.gke.node_pools[pool].name])
+  msg := sprintf("Node pool %q is not configured with COS", [input.data.gke.node_pools[pool].name])
 }

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Cloud Monitoring and Logging
+# title: Enable Cloud Monitoring and Logging
 # description: GKE cluster should use Cloud Logging and Monitoring
 # custom:
 #   group: Maintenance
@@ -43,12 +43,10 @@ valid {
 
 violation[msg] {
 	not input.data.gke.logging_config.component_config.enable_components
-
-	msg := "The GKE cluster does not have Cloud Logging enabled"
+	msg := "Cluster is not configured with Cloud Logging"
 }
 
 violation[msg] {
 	not input.data.gke.monitoring_config.component_config.enable_components
-
-	msg := "The GKE cluster does not have Cloud Monitoring enabled"
+	msg := "Cluster is not configured with Cloud Monitoring"
 }

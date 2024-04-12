@@ -8,10 +8,10 @@ require (
 	cloud.google.com/go/pubsub v1.33.0
 	cloud.google.com/go/securitycenter v1.24.3
 	cloud.google.com/go/storage v1.36.0
+	github.com/fatih/color v1.16.0
 	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/googleapis/gax-go/v2 v2.12.0
-	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 	github.com/open-policy-agent/opa v0.60.0
 	github.com/prometheus/client_golang v1.18.0
 	github.com/prometheus/common v0.46.0
@@ -73,6 +73,8 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect

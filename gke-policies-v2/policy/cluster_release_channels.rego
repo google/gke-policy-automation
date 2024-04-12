@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Enrollment in Release Channels
+# title: Enroll cluster in Release Channels
 # description: GKE cluster should be enrolled in release channels
 # custom:
 #   group: Security
@@ -40,5 +40,5 @@ valid {
 
 violation[msg] {
   not input.data.gke.release_channel.channel
-  msg := "GKE cluster is not enrolled in release channel"
+  msg := "Cluster is not enrolled in any release channel"
 }

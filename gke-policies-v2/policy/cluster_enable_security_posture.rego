@@ -38,5 +38,5 @@ valid {
 
 violation[msg] {
   not input.data.gke.security_posture_config.mode == 2
-  msg := "GKE cluster has not enabled Security Posture"
+  msg := "Cluster is not configure with Security Posture"
 }

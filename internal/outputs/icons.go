@@ -18,4 +18,5 @@ const (
 	IconMagnifier = "\U0001f50e"
 	IconInfo      = "\u2139"
 	IconHyperlink = "\U0001F517"
+	IconMiddleDot = "\u00b7"
 )

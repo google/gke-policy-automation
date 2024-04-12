@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Ensure that nodes in Node Auto-Provisioning node pools will use Container-Optimized OS
+# title: Configure Container-Optimized OS for Node Auto-Provisioning node pools
 # description: Nodes in Node Auto-Provisioning should use Container-Optimized OS
 # custom:
 #   group: Security
@@ -42,6 +42,5 @@ valid {
 violation[msg] {
 	input.data.gke.autoscaling.enable_node_autoprovisioning == true
 	not lower(input.data.gke.autoscaling.autoprovisioning_node_pool_defaults.image_type) in { "cos", "cos_containerd"}
-
-	msg := "GKE cluster Node Auto-Provisioning configuration use Container-Optimized OS"
+	msg := "Cluster is not configured with COS for NAP node pools"
 }

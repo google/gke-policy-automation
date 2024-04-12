@@ -24,6 +24,14 @@ func GetClusterID(project string, location string, name string) string {
 	return fmt.Sprintf("projects/%s/locations/%s/clusters/%s", project, location, name)
 }
 
+func MustSliceClusterID(id string) (string, string, string) {
+	p, l, c, err := SliceAndValidateClusterID(id)
+	if err != nil {
+		panic("invalid cluster id: " + err.Error())
+	}
+	return p, l, c
+}
+
 func SliceAndValidateClusterID(id string) (string, string, string, error) {
 	r := regexp.MustCompile(`projects/(.+)/(locations|zones)/(.+)/clusters/(.+)`)
 	if !r.MatchString(id) {

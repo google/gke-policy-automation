@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Forbid default compute SA on node_pool
+# title: Change default Service Accounts in node pools
 # description: GKE node pools should have a dedicated sa with a restricted set of permissions
 # custom:
 #   group: Security
@@ -42,5 +42,5 @@ violation[msg] {
 	not input.data.gke.autopilot.enabled
 	some pool
 	input.data.gke.node_pools[pool].config.service_account == "default"
-	msg := sprintf("GKE cluster node_pool %q should have a dedicated SA", [input.data.gke.node_pools[pool].name])
+	msg := sprintf("Node pool %q is configured with default SA", [input.data.gke.node_pools[pool].name])
 }

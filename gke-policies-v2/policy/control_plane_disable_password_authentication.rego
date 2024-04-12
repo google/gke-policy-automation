@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Control plane user basic authentication
+# title: Disalbe control plane basic authentication
 # description: >-
 #   Disable Basic Authentication (basic auth) for API server authentication as it uses static
 #   passwords which need to be rotated.
@@ -41,10 +41,10 @@ valid {
 
 violation[msg] {
 	input.data.gke.master_auth.password
-	msg := "The GKE cluster authentication should not be configured with a client password"
+	msg := "Cluster authentication is configured with a client password"
 }
 
 violation[msg] {
 	input.data.gke.master_auth.username
-	msg := "The GKE cluster authentication should not be configured with a client username"
+	msg := "Cluster authentication is configured with a client username"
 }
