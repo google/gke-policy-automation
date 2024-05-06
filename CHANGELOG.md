@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.0 (May 6, 2024)
+
+IMPROVEMENTS:
+
+* Unified policies metadata and new console output [#208](https://github.com/google/gke-policy-automation/pull/208)
+
+BUG FIXES:
+
+* Policy recommendations not present in SCC finding summary [#206](https://github.com/google/gke-policy-automation/pull/206)
+
 ## 1.3.4 (Dec 29, 2023)
 
 IMPROVEMENTS:
