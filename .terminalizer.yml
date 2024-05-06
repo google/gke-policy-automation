@@ -1,0 +1,257 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The configurations that used for the recording, feel free to edit them
+config:
+
+  # Specify a command to be executed
+  # like `/bin/bash -l`, `ls`, or any other commands
+  # the default is bash for Linux
+  # or powershell.exe for Windows
+  command: "bash -l"
+  
+  # Specify the current working directory path
+  # the default is the current working directory path
+  cwd: null
+  
+  # Export additional ENV variables
+  env:
+    recording: true
+  
+  # Explicitly set the number of columns
+  # or use `auto` to take the current
+  # number of columns of your shell
+  cols: 140
+  
+  # Explicitly set the number of rows
+  # or use `auto` to take the current
+  # number of rows of your shell
+  rows: 40
+  
+  # Amount of times to repeat GIF
+  # If value is -1, play once
+  # If value is 0, loop indefinitely
+  # If value is a positive number, loop n times
+  repeat: 0
+  
+  # Quality
+  # 1 - 100
+  quality: 100
+  
+  # Delay between frames in ms
+  # If the value is `auto` use the actual recording delays
+  frameDelay: auto
+  
+  # Maximum delay between frames in ms
+  # Ignored if the `frameDelay` isn't set to `auto`
+  # Set to `auto` to prevent limiting the max idle time
+  maxIdleTime: 2000
+  
+  # The surrounding frame box
+  # The `type` can be null, window, floating, or solid`
+  # To hide the title use the value null
+  # Don't forget to add a backgroundColor style with a null as type
+  frameBox:
+    type: null
+    title: null
+    style:
+      backgroundColor: "#081227"
+      # border: 0px black solid
+      # boxShadow: none
+      # margin: 0px
+  
+  # Add a watermark image to the rendered gif
+  # You need to specify an absolute path for
+  # the image on your machine or a URL, and you can also
+  # add your own CSS styles
+  watermark:
+    imagePath: assets/gke-policy-automation-logo.png
+    style:
+      position: absolute
+      right: 15px
+      bottom: 15px
+      width: 70px
+      opacity: 0.4
+      filter: grayscale(80%)
+  
+  # Cursor style can be one of
+  # `block`, `underline`, or `bar`
+  cursorStyle: block
+  
+  # Font family
+  # You can use any font that is installed on your machine
+  # in CSS-like syntax
+  fontFamily: "Monaco, Lucida Console, Ubuntu Mono, Monospace"
+  
+  # The size of the font
+  fontSize: 12
+  
+  # The height of lines
+  lineHeight: 1
+  
+  # The spacing between letters
+  letterSpacing: 0
+  
+  # Theme
+  theme:
+    background: "transparent"
+    foreground: "#afafaf"
+    cursor: "#c7c7c7"
+    black: "#000000"
+    red: "#c91b00"
+    green: "#00c200"
+    yellow: "#c7c400"
+    blue: "#0225c7"
+    magenta: "#c930c7"
+    cyan: "#00c5c7"
+    white: "#c7c7c7"
+    brightBlack: "#676767"
+    brightRed: "#ff6d67"
+    brightGreen: "#5ff967"
+    brightYellow: "#fefb67"
+    brightBlue: "#6871ff"
+    brightMagenta: "#ff76ff"
+    brightCyan: "#5ffdff"
+    brightWhite: "#fffefe"
+  
+# Records, feel free to edit them
+records:
+  - delay: 50
+    content: "\r"
+  - delay: 50
+    content: '~$ '
+  - delay: 50
+    content: .
+  - delay: 50
+    content: /
+  - delay: 50
+    content: g
+  - delay: 50
+    content: k
+  - delay: 50
+    content: e
+  - delay: 50
+    content: '-'
+  - delay: 50
+    content: p
+  - delay: 50
+    content: o
+  - delay: 50
+    content: l
+  - delay: 50
+    content: i
+  - delay: 50
+    content: c
+  - delay: 50
+    content: 'y'
+  - delay: 50
+    content: ' '
+  - delay: 50
+    content: c
+  - delay: 50
+    content: h
+  - delay: 79
+    content: e
+  - delay: 50
+    content: c
+  - delay: 50
+    content: k
+  - delay: 50
+    content: ' '
+  - delay: 50
+    content: '-'
+  - delay: 50
+    content: '-'
+  - delay: 50
+    content: d
+  - delay: 50
+    content: i
+  - delay: 50
+    content: s
+  - delay: 50
+    content: c
+  - delay: 50
+    content: o
+  - delay: 50
+    content: v
+  - delay: 50
+    content: e
+  - delay: 50
+    content: r
+  - delay: 50
+    content: 'y'
+  - delay: 50
+    content: ' '
+  - delay: 50
+    content: '-'
+  - delay: 50
+    content: p
+  - delay: 50
+    content: ' '
+  - delay: 50
+    content: g
+  - delay: 50
+    content: k
+  - delay: 50
+    content: e
+  - delay: 50
+    content: '-'
+  - delay: 50
+    content: p
+  - delay: 50
+    content: o
+  - delay: 50
+    content: l
+  - delay: 50
+    content: i
+  - delay: 50
+    content: c
+  - delay: 50
+    content: 'y'
+  - delay: 50
+    content: '-'
+  - delay: 50
+    content: d
+  - delay: 50
+    content: e
+  - delay: 50
+    content: m
+  - delay: 50
+    content: o
+  - delay: 50
+    content: '-'
+  - delay: 50
+    content: '9'
+  - delay: 50
+    content: '1'
+  - delay: 50
+    content: '1'
+  - delay: 50
+    content: "\r\n"
+  - delay: 94
+    content: "ℹ \e[1;97mReading policy files... [GIT repository: https://github.com/google/gke-policy-automation, branch: main, directory: gke-policies-v2]\e[22;0m\r\n"
+  - delay: 1205
+    content: "ℹ \e[1;97mParsing REGO policies...\e[22;0m\r\n"
+  - delay: 24
+    content: "ℹ \e[1;97mDiscovering clusters in project... [gke-policy-demo-911]\e[22;0m\r\n"
+  - delay: 761
+    content: "ℹ \e[1;97mFetching data from 1 input(s) for 3 cluster(s)\e[22;0m\r\n"
+  - delay: 301
+    content: "ℹ \e[1;97mEvaluating policies against GKE cluster... [projects/gke-policy-demo-911/locations/europe-central2/clusters/cluster-waw]\e[22;0m\r\n"
+  - delay: 7
+    content: "ℹ \e[1;97mEvaluating policies against GKE cluster... [projects/gke-policy-demo-911/zones/europe-central2-b/clusters/cluster-weak]\e[22;0m\r\nℹ \e[1;97mEvaluating policies against GKE cluster... [projects/gke-policy-demo-911/locations/europe-north1/clusters/cluster-auto]\e[22;0m\r\nℹ \e[1;97mWriting evaluation results ... [console]\e[22;0m\r\n\r\n\U0001F50E #1 \e[1;91mCRITICAL\e[22;0m \e[1;97mEnsure acceptable version skew in a cluster\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/upgrading-a-cluster#upgrading-nodes\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #2 \e[1;91mCRITICAL\e[22;0m \e[1;97mUse VPC-native cluster\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/concepts/alias-ips\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with VPC-native routing\e[23;0m                                           \r\n      \e[3;31m· Nodepool \"default-pool\" is not configured with use VPC-native routing\e[23;0m                       \r\n      \e[3;31m· Nodepool \"nap-e2-highcpu-2-chdyiged\" is not configured with use VPC-native routing\e[23;0m          \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #3 \e[1;91mCRITICAL\e[22;0m \e[1;97mLimit Control Plane endpoint access\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/authorized-networks\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with master authorized networks\e[23;0m                                   \r\n      \e[3;31m· Cluster is not configured with master authorized networks CIDRs\e[23;0m                             \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with master authorized networks\e[23;0m                                   \r\n      \e[3;31m· Cluster is not configured with master authorized networks CIDRs\e[23;0m                             \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with master authorized networks\e[23;0m                                   \r\n      \e[3;31m· Cluster is not configured with master authorized networks CIDRs\e[23;0m                             \r\n\r\n\U0001F50E #4 \e[1;91mCRITICAL\e[22;0m \e[1;97mDisalbe control plane basic authentication\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/api-server-authentication#disabling_authentication_with_a_static_password\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #5 \e[1;91mCRITICAL\e[22;0m \e[1;97mDisable legacy ABAC authorization\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/api-server-authentication#legacy-auth\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster authorization is configured with legacy ABAC\e[23;0m                                        \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #6 \e[1;91mCRITICAL\e[22;0m \e[1;97mChange default Service Accounts in Node Auto-Provisioning\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning#identity\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is configured with default service account for Node Auto-Provisioning\e[23;0m               \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #7 \e[1;91mCRITICAL\e[22;0m \e[1;97mEnable integrity monitoring for Node Auto-Provisioning node pools\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning#node_integrity\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #8 \e[1;91mCRITICAL\e[22;0m \e[1;97mChange default Service Accounts in node pools\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/hardening-your-cluster#use_least_privilege_sa\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Node pool \"default-pool\" is configured with default SA\e[23;0m                                      \r\n      \e[3;31m· Node pool \"nap-e2-highcpu-2-chdyiged\" is configured with default SA\e[23;0m                         \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #9 \e[1;91mCRITICAL\e[22;0m \e[1;97mEnable integrity monitoring for node pools\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/shielded-gke-nodes#node_integrity\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Node pool \"default-pool\" is not configured with integrity monitoring\e[23;0m                        \r\n      \e[3;31m· Node pool \"nap-e2-highcpu-2-chdyiged\" is not configured with integrity monitoring\e[23;0m           \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #10 \e[1;91mCRITICAL\e[22;0m \e[1;97mUse GKE Workload Identity\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with Workload Identity\e[23;0m                                            \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #11 \e[91mHIGH\e[0m \e[1;97mEnsure redundancy of the Control Plane\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/concepts/regional-clusters\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster location \"europe-central2-b\" is not regional\e[23;0m                                        \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #12 \e[91mHIGH\e[0m \e[1;97mEnable node auto-repair\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-repair\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Node pool \"nap-e2-highcpu-2-chdyiged\" is not configured with auto-repair\e[23;0m                    \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #13 \e[91mHIGH\e[0m \e[1;97mEnsure redudndancy of the node pools\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/concepts/node-pools#multiple-zones\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Node pool \"default-pool\" is not configured with multiple zones\e[23;0m                              \r\n      \e[3;31m· Node pool \"nap-e2-highcpu-2-chdyiged\" is not configured with multiple zones\e[23;0m                 \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #14 \e[91mHIGH\e[0m \e[1;97mEnable GKE L4 ILB Subsetting\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balancing#subsetting\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #15 \e[91mHIGH\e[0m \e[1;97mEnroll cluster in Release Channels\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/concepts/release-channels\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not enrolled in any release channel\e[23;0m                                              \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #16 \e[91mHIGH\e[0m \e[1;97mDisable control plane certificate authentication\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/api-server-authentication#disabling_authentication_with_a_client_certificate\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #17 \e[91mHIGH\e[0m \e[1;97mEnable control plane private endpoint\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/concepts/private-cluster-concept#endpoints_in_private_clusters\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with private endpoint\e[23;0m                                             \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with private endpoint\e[23;0m                                             \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with private endpoint\e[23;0m                                             \r\n\r\n\U0001F50E #18 \e[91mHIGH\e[0m \e[1;97mEnsure redundancy of Node Auto-provisioning node pools\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning#auto-provisioning_locations\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #19 \e[91mHIGH\e[0m \e[1;97mConfigure Container-Optimized OS for Node Auto-Provisioning node pools\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning#default-image-type\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with COS for NAP node pools\e[23;0m                                       \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #20 \e[91mHIGH\e[0m \e[1;97mEnable GKE intranode visibility\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/intranode-visibility\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with Intranode Visibility\e[23;0m                                         \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with Intranode Visibility\e[23;0m                                         \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with Intranode Visibility\e[23;0m                                         \r\n\r\n\U0001F50E #21 \e[91mHIGH\e[0m \e[1;97mEnable Kubernetes Network Policies\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/tutorials/network-policy\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with Kubneretes Network Policies\e[23;0m                                  \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #22 \e[91mHIGH\e[0m \e[1;97mEnable node auto-upgrade\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-upgrades\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Node pool \"nap-e2-highcpu-2-chdyiged\" is not configured with auto-upgrade\e[23;0m                   \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #23 \e[91mHIGH\e[0m \e[1;97mConfigure Container-Optimized OS for node pools\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/concepts/node-images\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Node pool \"default-pool\" is not configured with COS\e[23;0m                                         \r\n      \e[3;31m· Node pool \"nap-e2-highcpu-2-chdyiged\" is not configured with COS\e[23;0m                            \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #24 \e[91mHIGH\e[0m \e[1;97mUse private nodes\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/private-clusters\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with private nodes\e[23;0m                                                \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with private nodes\e[23;0m                                                \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with private nodes\e[23;0m                                                \r\n\r\n\U0001F50E #25 \e[91mHIGH\e[0m \e[1;97mEnable Shielded Nodes\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/shielded-gke-nodes\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with shielded nodes\e[23;0m                                               \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #26 \e[1;93mMEDIUM\e[22;0m \e[1;97mEnable Cloud Monitoring and Logging\e[22;0m (\e]8;;https://cloud.google.com/stackdriver/docs/solutions/gke/installing\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with Cloud Logging\e[23;0m                                                \r\n      \e[3;31m· Cluster is not configured with Cloud Monitoring\e[23;0m                                             \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #27 \e[1;93mMEDIUM\e[22;0m \e[1;97mUse GKE Autopilot mode\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/concepts/choose-cluster-mode\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not using Autopilot mode\e[23;0m                                                         \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not using Autopilot mode\e[23;0m                                                         \r\n\r\n\U0001F50E #28 \e[1;93mMEDIUM\e[22;0m \e[1;97mEnable Compute Engine persistent disk CSI driver\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/gce-pd-csi-driver\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;92m VALID \e[22;0m]\r\n\r\n\U0001F50E #29 \e[1;93mMEDIUM\e[22;0m \e[1;97mEnable maintenance windows\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/concepts/maintenance-windows-and-exclusions\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· GKE cluster is not configured with maintenance window\e[23;0m                                       \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· GKE cluster is not configured with maintenance window\e[23;0m                                       \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· GKE cluster is not configured with maintenance window\e[23;0m                                       \r\n\r\n\U0001F50E #30 \e[1;93mMEDIUM\e[22;0m \e[1;97mEnable GKE node local DNS cache\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/nodelocal-dns-cache\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with node local DNS cache\e[23;0m                                         \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with node local DNS cache\e[23;0m                                         \r\n\r\n\U0001F50E #31 \e[1;93mMEDIUM\e[22;0m \e[1;97mEnable node pool auto-scaling\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-autoscaler\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Node pool \"default-pool\" is not configured with autoscaling\e[23;0m                                 \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Node pool \"default-pool\" is not configured with autoscaling\e[23;0m                                 \r\n\r\n\U0001F50E #32 \e[1;93mMEDIUM\e[22;0m \e[1;97mEnable Security Posture dashboard\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/concepts/about-security-posture-dashboard\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configure with Security Posture\e[23;0m                                              \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configure with Security Posture\e[23;0m                                              \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configure with Security Posture\e[23;0m                                              \r\n\r\n\U0001F50E #33 \e[1;93mMEDIUM\e[22;0m \e[1;97mEnable Workload vulnerability scanning\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/concepts/about-workload-vulnerability-scanning\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with workload vulnerability scanning\e[23;0m                              \r\n\r\n\U0001F50E #34 \e[1;93mMEDIUM\e[22;0m \e[1;97mEnable Customer-Managed Encryption Keys for persistent disks\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/using-cmek\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Node pool \"default-pool\" is not configured with CMEK for the boot disk\e[23;0m                      \r\n      \e[3;31m· Node pool \"nap-e2-highcpu-2-chdyiged\" is not configured with CMEK for the boot disk\e[23;0m         \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Node pool \"nap-wtpbo5ne\" is not configured with CMEK for the boot disk\e[23;0m                      \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Node pool \"default-pool\" is not configured with CMEK for the boot disk\e[23;0m                      \r\n\r\n\U0001F50E #35 \e[1;93mMEDIUM\e[22;0m \e[1;97mEnable Secure boot for node pools\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/shielded-gke-nodes#secure_boot\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Node pool \"default-pool\" is not configured with secure boot\e[23;0m                                 \r\n      \e[3;31m· Node pool \"nap-e2-highcpu-2-chdyiged\" is not configured with secure boot\e[23;0m                    \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;92m VALID \e[22;0m]\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Node pool \"default-pool\" is not configured with secure boot\e[23;0m                                 \r\n\r\n\U0001F50E #36 \e[1;93mMEDIUM\e[22;0m \e[1;97mEnable Google Groups for RBAC\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/google-groups-rbac\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with Google Groups for RBAC\e[23;0m                                       \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with Google Groups for RBAC\e[23;0m                                       \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with Google Groups for RBAC\e[23;0m                                       \r\n\r\n\U0001F50E  #37  \e[1;93mMEDIUM\e[22;0m \e[1;97mEnable Kubernetes secrets encryption\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/how-to/encrypting-secrets\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with kubernetes secrets encryption\e[23;0m                                \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with kubernetes secrets encryption\e[23;0m                                \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with kubernetes secrets encryption\e[23;0m                                \r\n\r\n\U0001F50E  #38  \e[97mLOW\e[0m \e[1;97mEnable binary authorization in the cluster\e[22;0m (\e]8;;https://cloud.google.com/binary-authorization/docs/setting-up\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with binary authorization\e[23;0m                                         \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with binary authorization\e[23;0m                                         \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with binary authorization\e[23;0m                                         \r\n\r\n\U0001F50E  #39  \e[97mLOW\e[0m \e[1;97mEnable GKE upgrade notifications\e[22;0m (\e]8;;https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-notifications\adocumentation\e]8;;\a)\r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m    [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with upgrade notifications\e[23;0m                                        \r\n      \e[3;31m· Cluster is not configured with upgrade notofications topic\e[23;0m                                  \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m        [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with upgrade notifications\e[23;0m                                        \r\n      \e[3;31m· Cluster is not configured with upgrade notofications topic\e[23;0m                                  \r\n   - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m       [\e[1;91mINVALID\e[22;0m]\r\n      \e[3;31m· Cluster is not configured with upgrade notifications\e[23;0m                                        \r\n      \e[3;31m· Cluster is not configured with upgrade notofications topic\e[23;0m                                  \r\n\r\nℹ \e[1;97mEvaluated 39 policies on 3 clusters\r\n\e[22;0m  - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2-b\e[0m/clusters/\e[36mcluster-weak\e[0m  : \e[91m7 Critical\e[0m, \e[31m12 High\e[0m, \e[33m10 Medium\e[0m, \e[97m2 Low\e[0m\r\n  - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-north1\e[0m/clusters/\e[36mcluster-auto\e[0m      : \e[91m1 Critical\e[0m, \e[31m3 High\e[0m, \e[33m5 Medium\e[0m, \e[97m2 Low\e[0m\r\n  - projects/\e[36mgke-policy-demo-911\e[0m/locations/\e[36meurope-central2\e[0m/clusters/\e[36mcluster-waw\e[0m     : \e[91m1 Critical\e[0m, \e[31m3 High\e[0m, \e[33m10 Medium\e[0m, \e[97m2 Low\e[0m\r\n\r\nℹ \e[1;97mCluster review finished\e[22;0m\r\n"
+  - delay: 5
+    content: '~$ '
+  - delay: 2500
+    content: "\r"
