@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Control plane user certificate authentication
+# title: Disable control plane certificate authentication
 # description: >-
 #   Disable Client Certificates, which require certificate rotation, for authentication. Instead,
 #   use another authentication method like OpenID Connect.
@@ -40,10 +40,10 @@ valid {
 
 violation[msg] {
 	input.data.gke.master_auth.client_certificate
-	msg := "The GKE cluster authentication should not be configured with a client certificate"
+	msg := "Cluster authentication is configured with a client certificate"
 }
 
 violation[msg] {
 	input.data.gke.master_auth.client_key
-	msg := "The GKE cluster authentication should not be configured with a client key"
+	msg := "Cluster authentication is configured with a client key"
 }

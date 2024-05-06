@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Use Node Auto-Upgrade
+# title: Enable node auto-upgrade
 # description: GKE node pools should have Node Auto-Upgrade enabled to configure Kubernetes Engine
 # custom:
 #   group: Security
@@ -41,5 +41,5 @@ valid {
 violation[msg] {
   some pool
   not input.data.gke.node_pools[pool].management.auto_upgrade
-  msg := sprintf("autoupgrade not set for GKE node pool %q", [input.data.gke.node_pools[pool].name])
+  msg := sprintf("Node pool %q is not configured with auto-upgrade", [input.data.gke.node_pools[pool].name])
 }

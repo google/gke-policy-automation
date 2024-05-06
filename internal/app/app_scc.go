@@ -18,6 +18,7 @@ import (
 	"errors"
 
 	"github.com/google/gke-policy-automation/internal/log"
+	"github.com/google/gke-policy-automation/internal/outputs"
 	"github.com/google/gke-policy-automation/internal/outputs/scc"
 )
 
@@ -29,7 +30,10 @@ func (p *PolicyAutomationApp) ConfigureSCC(orgNumber string) error {
 	if err != nil {
 		return err
 	}
-	p.out.ColorPrintf("\u2139 [light_gray][bold]Searching for GKE Policy Automation in SCC organization... [%s]\n", orgNumber)
+	p.out.Printf("%s %s\n",
+		outputs.IconMagnifier,
+		consoleInfoColorF("Searching for GKE Policy Automation in SCC organization... [%s]", orgNumber),
+	)
 	log.Infof("Searching for GKE Policy Automation in SCC organization %s", orgNumber)
 	id, err := cli.FindSource()
 	if err != nil {
@@ -37,18 +41,27 @@ func (p *PolicyAutomationApp) ConfigureSCC(orgNumber string) error {
 		return err
 	}
 	if id != nil {
-		p.out.ColorPrintf("\u2139 [light_gray][bold]Found GKE Policy Automation in SCC... [%s]\n", *id)
+		p.out.Printf("%s %s\n",
+			outputs.IconMagnifier,
+			consoleInfoColorF("Found GKE Policy Automation in SCC... [%s]", *id),
+		)
 		log.Infof("Found GKE Policy Automation in SCC: %s", *id)
 		return nil
 	}
-	p.out.ColorPrintf("\u2139 [light_gray][bold]GKE Policy Automation was not found in SCC, creating it...\n")
+	p.out.Printf("%s %s\n",
+		outputs.IconMagnifier,
+		consoleInfoColorF("GKE Policy Automation was not found in SCC, creating it..."),
+	)
 	log.Info("Creating GKE Policy Automation in SCC")
 	*id, err = cli.CreateSource()
 	if err != nil {
 		p.out.ErrorPrint("could not create GKE Policy Automation source in SCC", err)
 		return err
 	}
-	p.out.ColorPrintf("\u2139 [light_gray][bold]Created GKE Policy Automation in SCC... [%s]\n", *id)
+	p.out.Printf("%s %s\n",
+		outputs.IconMagnifier,
+		consoleInfoColorF("Created GKE Policy Automation in SCC... [%s]", *id),
+	)
 	log.Infof("Created GKE Policy Automation in SCC: %s", *id)
 	return nil
 }

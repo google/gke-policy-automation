@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Use Node Auto-Repair
+# title: Enable node auto-repair
 # description: GKE node pools should have Node Auto-Repair enabled to configure Kubernetes Engine
 # custom:
 #   group: Availability
@@ -41,5 +41,5 @@ valid {
 violation[msg] {
   some pool
   not input.data.gke.node_pools[pool].management.auto_repair
-  msg := sprintf("autorepair not set for GKE node pool %q", [input.data.gke.node_pools[pool].name])
+  msg := sprintf("Node pool %q is not configured with auto-repair", [input.data.gke.node_pools[pool].name])
 }

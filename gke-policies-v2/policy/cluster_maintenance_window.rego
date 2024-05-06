@@ -13,8 +13,8 @@
 # limitations under the License.
 
 # METADATA
-# title: Schedule maintenance windows and exclusions
-# description: GKE cluster should schedule maintenance windows and exclusions to upgrade predictability and to align updates with off-peak business hours.
+# title: Enable maintenance windows
+# description: GKE cluster should use maintenance windows and exclusions to upgrade predictability and to align updates with off-peak business hours.
 # custom:
 #   group: Management
 #   severity: Medium
@@ -38,5 +38,5 @@ valid {
 
 violation[msg] {
   not input.data.gke.maintenance_policy.window.Policy
-  msg := "GKE cluster has not configured maintenance window"
+  msg := "GKE cluster is not configured with maintenance window"
 }

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE VPC-native cluster
+# title: Use VPC-native cluster
 # description: GKE cluster nodepool should be VPC-native as per our best-practices
 # custom:
 #   group: Management
@@ -40,10 +40,10 @@ valid {
 violation[msg] {
   some pool
   not input.data.gke.node_pools[pool].network_config.pod_ipv4_cidr_block
-  msg := sprintf("Nodepool %q of the GKE cluster is not configured to use VPC-native routing", [input.data.gke.node_pools[pool].name])
+  msg := sprintf("Nodepool %q is not configured with use VPC-native routing", [input.data.gke.node_pools[pool].name])
 }
 
 violation[msg] {
   not input.data.gke.ip_allocation_policy.use_ip_aliases
-  msg := "the GKE cluster is not configured to use VPC-native routing"
+  msg := "Cluster is not configured with VPC-native routing"
 }

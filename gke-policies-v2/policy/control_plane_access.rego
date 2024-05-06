@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Control Plane endpoint access
+# title: Limit Control Plane endpoint access
 # description: Control Plane endpoint access should be limited to authorized networks only
 # custom:
 #   group: Security
@@ -41,15 +41,15 @@ valid {
 
 violation[msg] {
   not input.data.gke.master_authorized_networks_config.enabled
-  msg := "GKE cluster has not enabled master authorized networks configuration"
+  msg := "Cluster is not configured with master authorized networks"
 }
 
 violation[msg] {
   not input.data.gke.master_authorized_networks_config.cidr_blocks
-  msg := "GKE cluster's master authorized networks has no CIDR blocks element"
+  msg := "Cluster is not configured with master authorized networks CIDRs"
 }
 
 violation[msg] {
   count(input.data.gke.master_authorized_networks_config.cidr_blocks) < 1
-  msg := "GKE cluster's master authorized networks has no CIDR blocks defined"
+  msg := "Cluster is not configured with master authorized networks CIDRs"
 }

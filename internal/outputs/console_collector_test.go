@@ -36,13 +36,13 @@ func TestConsoleResultCollector(t *testing.T) {
 						PolicyTitle:       "test-title",
 						PolicyDescription: "test-desc",
 						ClusterEvaluations: []*ValidationReportClusterEvaluation{
-							{ClusterID: "cluster-one", Valid: true},
-							{ClusterID: "cluster-two", Valid: false, Violations: []string{"violation"}},
+							{ClusterID: "projects/test-proj/locations/europe-central2/clusters/cluster-one", Valid: true},
+							{ClusterID: "projects/test-proj/locations/europe-central2/clusters/cluster-two", Valid: false, Violations: []string{"violation"}},
 						},
 					},
 				},
 				ClusterStats: []*ValidationReportClusterStats{
-					{ClusterID: "cluster-one", ValidPoliciesCount: 1},
+					{ClusterID: "projects/test-proj/locations/europe-central2/clusters/cluster-one", ValidPoliciesCount: 1},
 				},
 			}
 		},

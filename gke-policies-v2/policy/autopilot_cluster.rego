@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE Autopilot mode
+# title: Use GKE Autopilot mode
 # description: GKE Autopilot mode is the recommended way to operate a GKE cluster
 # custom:
 #   group: Management
@@ -35,5 +35,5 @@ valid {
 
 violation[msg] {
 	not input.data.gke.autopilot.enabled
-	msg := "GKE Autopilot mode is the recommended way to operate a GKE cluster"
+	msg := "Cluster is not using Autopilot mode"
 }

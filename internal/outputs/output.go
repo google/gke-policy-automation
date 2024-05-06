@@ -21,7 +21,7 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/mitchellh/colorstring"
+	"github.com/fatih/color"
 )
 
 const (
@@ -34,14 +34,12 @@ const (
 type Output struct {
 	w         io.Writer
 	tabWriter *tabwriter.Writer
-	colorize  *colorstring.Colorize
 }
 
 func NewStdOutOutput() *Output {
 	return &Output{
 		w:         os.Stdout,
 		tabWriter: initTabWriter(os.Stdout, defColWidth, tabWidth, tabPadding, tabChar),
-		colorize:  NewColorize(),
 	}
 }
 
@@ -60,11 +58,7 @@ func (o *Output) TabPrintf(format string, a ...interface{}) (n int, err error) {
 	return fmt.Fprintf(o.tabWriter, format, a...)
 }
 
-func (o *Output) ColorPrintf(format string, a ...interface{}) (n int, err error) {
-	return fmt.Fprintf(o.w, o.Color(format), a...)
-}
-
-func (o *Output) InitTabs(minColWidth int) {
+func (o *Output) InitTabs(minColWidth int, tabPadding int) {
 	o.tabWriter.Flush()
 	o.tabWriter = initTabWriter(o.w, minColWidth, tabWidth, tabPadding, tabChar)
 }
@@ -74,24 +68,13 @@ func (o *Output) TabFlush() (err error) {
 }
 
 func (o *Output) ErrorPrint(message string, cause error) (n int, err error) {
-	if o.colorize != nil {
-		return fmt.Fprint(o.w, o.colorize.Color(fmt.Sprintf("[bold][red]Error: [light_gray]%s: [reset][light_gray]%v\n", message, cause)))
-	}
-	return fmt.Fprint(o.w, o.colorize.Color(fmt.Sprintf("Error: %s: %s\n", message, cause)))
-}
-
-func (o *Output) Color(v string) string {
-	if o.colorize != nil {
-		return o.colorize.Color(v)
-	}
-	return v
-}
-
-func NewColorize() *colorstring.Colorize {
-	return &colorstring.Colorize{
-		Colors: colorstring.DefaultColors,
-		Reset:  true,
-	}
+	errF := color.New(color.Bold, color.FgHiRed).Sprint
+	errTitleF := color.New(color.Bold, color.FgHiWhite).Sprintf
+	return fmt.Fprintf(o.w, "%s %s %v\n",
+		errF("Error:"),
+		errTitleF("%s:", message),
+		cause,
+	)
 }
 
 func initTabWriter(output io.Writer, minWidth, tabWidth, padding int, padChar byte) *tabwriter.Writer {

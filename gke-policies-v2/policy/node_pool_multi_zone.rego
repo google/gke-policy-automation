@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Multi-zone node pools
+# title: Ensure redudndancy of the node pools
 # description: GKE node pools should be regional (multiple zones) for maximum nodes availability during zonal outages
 # custom:
 #   group: Availability
@@ -38,5 +38,5 @@ valid {
 violation[msg] {
   some pool
   count(input.data.gke.node_pools[pool].locations) < 2
-  msg := sprintf("Node pool %q is not on multiple zones.", [input.data.gke.node_pools[pool].name])
+  msg := sprintf("Node pool %q is not configured with multiple zones", [input.data.gke.node_pools[pool].name])
 }
