@@ -35,7 +35,7 @@ jobs:
       - name: Setup OPA
         uses: open-policy-agent/setup-opa@v2
         with:
-          version: 0.57
+          version: 0.64
       - name: Run Policy tests - v1 policies
         run: opa test ${{ env.GKE_POLICY_DIRECTORY_V1 }} -v
       - name: Run Policy tests - v2 policies
