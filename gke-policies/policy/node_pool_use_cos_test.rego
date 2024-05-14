@@ -12,36 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.node_pool_use_cos
+package gke.policy.node_pool_use_cos_test
 
-test_node_pool_using_cos {
-    valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos"}}]}
+import future.keywords.if
+import data.gke.policy.node_pool_use_cos
+
+test_node_pool_using_cos if {
+    node_pool_use_cos.valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos"}}]}
 }
 
-test_node_pool_using_cos_containerd {
-    valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos_containerd"}}]}
+test_node_pool_using_cos_containerd if {
+    node_pool_use_cos.valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos_containerd"}}]}
 }
 
-test_node_pool_using_cos_uppercase {
-    valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "COS"}}]}
+test_node_pool_using_cos_uppercase if {
+    node_pool_use_cos.valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "COS"}}]}
 }
 
-test_node_pool_using_cos_containerd_uppercase {
-    valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "COS_CONTAINERD"}}]}
+test_node_pool_using_cos_containerd_uppercase if {
+    node_pool_use_cos.valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "COS_CONTAINERD"}}]}
 }
 
-test_node_pool_not_using_cos {
-    not valid with input as {"name": "cluster-not-cos", "node_pools": [{"name": "default", "config": {"image_type": "another_image"}}]}
+test_node_pool_not_using_cos if {
+    not node_pool_use_cos.valid with input as {"name": "cluster-not-cos", "node_pools": [{"name": "default", "config": {"image_type": "another_image"}}]}
 }
 
-test_multiple_node_pool_using_cos_but_only_one {
-    not valid with input as {"name": "cluster-not-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos"}},{"name": "custom", "config": {"image_type": "other"}}]}
+test_multiple_node_pool_using_cos_but_only_one if {
+    not node_pool_use_cos.valid with input as {"name": "cluster-not-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos"}},{"name": "custom", "config": {"image_type": "other"}}]}
 }
 
-test_multiple_node_pool_using_cos {
-    valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos"}},{"name": "custom", "config": {"image_type": "cos_containerd"}}]}
+test_multiple_node_pool_using_cos if {
+    node_pool_use_cos.valid with input as {"name": "cluster-cos", "node_pools": [{"name": "default", "config": {"image_type": "cos"}},{"name": "custom", "config": {"image_type": "cos_containerd"}}]}
 }
 
-test_windows_node_pool {
-    valid with input as {"name": "cluster-windows", "node_pools": [{"name": "default", "config": {"image_type": "windows-server"}}]}
+test_windows_node_pool if {
+    node_pool_use_cos.valid with input as {"name": "cluster-windows", "node_pools": [{"name": "default", "config": {"image_type": "windows-server"}}]}
 }

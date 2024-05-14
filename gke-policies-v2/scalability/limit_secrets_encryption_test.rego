@@ -12,18 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.scalability.secrets_with_enc
+package gke.scalability.secrets_with_enc_test
 
-test_secrets_with_enc_above_warn_limit {
-	not valid with input as {"data": {"monitoring": {"secrets": { "name": "secrets", "scalar": 28000}}, "gke": {"name": "cluster-1", "database_encryption": {"state": 1}}}}
+import future.keywords.if
+import data.gke.scalability.secrets_with_enc
+
+test_secrets_with_enc_above_warn_limit if {
+	not secrets_with_enc.valid with input as {"data": {"monitoring": {"secrets": { "name": "secrets", "scalar": 28000}}, "gke": {"name": "cluster-1", "database_encryption": {"state": 1}}}}
 }
 
-test_secrets_with_enc_below_warn_limit {
-	valid with input as {"data": {"monitoring": {"secrets": { "name": "secrets", "scalar": 307}}, "gke": {"name": "cluster-1", "database_encryption": {"state": 1}}}}
+test_secrets_with_enc_below_warn_limit if {
+	secrets_with_enc.valid with input as {"data": {"monitoring": {"secrets": { "name": "secrets", "scalar": 307}}, "gke": {"name": "cluster-1", "database_encryption": {"state": 1}}}}
 }
 
-test_secrets_no_enc_above_warn_limit {
-	valid with input as {"data": {"monitoring": {"secrets": { "name": "secrets", "scalar": 28000}}, "gke": {"name": "cluster-1", "database_encryption": {"state": 2}}}}
+test_secrets_no_enc_above_warn_limit if {
+	secrets_with_enc.valid with input as {"data": {"monitoring": {"secrets": { "name": "secrets", "scalar": 28000}}, "gke": {"name": "cluster-1", "database_encryption": {"state": 2}}}}
 }
 
 

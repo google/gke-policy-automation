@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Forbid default Service Accounts in Node Auto-Provisioning
+# title: Change default Service Accounts in Node Auto-Provisioning
 # description: Node Auto-Provisioning configuration should not allow default Service Accounts
 # custom:
 #   group: Security
@@ -28,18 +28,21 @@
 #   cis:
 #     version: "1.4"
 #     id: "5.2.1"
-
+#   dataSource: gke
 package gke.policy.nap_forbid_default_sa
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	not input.autopilot.enabled
 	input.autoscaling.enable_node_autoprovisioning == true
 	input.autoscaling.autoprovisioning_node_pool_defaults.service_account == "default"
-	msg := "GKE cluster Node Auto-Provisioning should have a dedicated Service Account configured"
+	msg := "Cluster is configured with default service account for Node Auto-Provisioning"
 }

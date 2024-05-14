@@ -27,17 +27,20 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-autoscaler
 #   sccCategory: NODEPOOL_AUTOSCALING_DISABLED
 #   dataSource: gke
-
 package gke.policy.node_pool_autoscaling
+
+import future.keywords.if
+import future.keywords.in
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
-  some pool
-  not input.data.gke.node_pools[pool].autoscaling.enabled
-  msg := sprintf("Node pool %q is not configured with autoscaling", [input.data.gke.node_pools[pool].name])
+violation contains msg if {
+  some pool in input.data.gke.node_pools
+  not pool.autoscaling.enabled
+  msg := sprintf("Node pool %q is not configured with autoscaling", [pool.name])
 }

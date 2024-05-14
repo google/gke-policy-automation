@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Use Compute Engine persistent disk CSI driver
+# title: Enable Compute Engine persistent disk CSI driver
 # description: Automatic deployment and management of the Compute Engine persistent disk CSI driver. The driver provides support for features like customer managed encryption keys or volume snapshots.
 # custom:
 #   group: Management
@@ -24,16 +24,19 @@
 #     Select the "Enable Compute Engine Persistent Disk CSI Driver " checkbox and click "Save changes".
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/gce-pd-csi-driver
 #   sccCategory: GCE_CSI_DRIVER_DISABLED
-
+#   dataSource: gke
 package gke.policy.cluster_gce_csi_driver
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
   not input.addons_config.gce_persistent_disk_csi_driver_config.enabled
-  msg := "GKE cluster has not configured GCE persistent disk CSI driver"
+  msg := "Cluster is not configured with GCE persistent disk CSI driver"
 }

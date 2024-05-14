@@ -25,18 +25,20 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/planning-large-clusters#limits-best-practices-large-scale-clusters
 #   sccCategory: SERVICES_PER_NS_LIMIT
 #   dataSource: monitoring
-
 package gke.scalability.services_per_ns
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 default limit := 5000
 default threshold := 80
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	warn_limit := round(limit * threshold * 0.01)
 	some namespace
 	srv_cnt := input.data.monitoring.services_per_ns.vector[namespace]

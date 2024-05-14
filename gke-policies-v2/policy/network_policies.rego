@@ -28,30 +28,32 @@
 #     version: "1.4"
 #     id: "5.6.7"
 #   dataSource: gke
-
 package gke.policy.network_policies_engine
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	input.data.gke.addons_config.network_policy_config.disabled
 	not input.data.gke.network_policy
 	not input.data.gke.network_config.datapath_provider == 2
 	msg := "Cluster is not configured with Kubneretes Network Policies"
 }
 
-violation[msg] {
+violation contains msg if {
 	count(input.data.gke.addons_config.network_policy_config) == 0
 	not input.data.gke.network_policy.enabled
 	not input.data.gke.network_config.datapath_provider == 2
 	msg := "Cluster is configured with Kubneretes Network Policies without configuration"
 }
 
-violation[msg] {
+violation contains msg if {
 	input.data.gke.addons_config.network_policy_config.disabled
 	count(input.data.gke.network_policy) == 0
 	not input.data.gke.network_config.datapath_provider == 2

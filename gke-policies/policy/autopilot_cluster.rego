@@ -13,26 +13,29 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE Autopilot mode
+# title: Use GKE Autopilot mode
 # description: GKE Autopilot mode is the recommended way to operate a GKE cluster
 # custom:
 #   group: Management
 #   severity: Medium
 #   recommendation: >
-#     Autopilot mode (recommended): GKE manages the underlying infrastructure such as node configuration, 
+#     Autopilot mode (recommended): GKE manages the underlying infrastructure such as node configuration,
 #     autoscaling, auto-upgrades, baseline security configurations, and baseline networking configuration.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/choose-cluster-mode
 #   sccCategory: AUTOPILOT_DISABLED
-
+#   dataSource: gke
 package gke.policy.autopilot
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	not input.autopilot.enabled
-	msg := "GKE Autopilot mode is the recommended way to operate a GKE cluster"
+	msg := "Cluster is not using Autopilot mode"
 }

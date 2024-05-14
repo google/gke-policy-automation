@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE node local DNS cache
+# title: Enable GKE node local DNS cache
 # description: GKE cluster should use node local DNS cache
 # custom:
 #   group: Scalability
@@ -24,16 +24,19 @@
 #     Select the "Enable NodeLocal DNSCache" checkbox and click "Save changes" button.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/nodelocal-dns-cache
 #   sccCategory: DNS_CACHE_DISABLED
-
+#   dataSource: gke
 package gke.policy.node_local_dns_cache
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
-    not input.addons_config.dns_cache_config.enabled = true
-    msg := "The GKE cluster does not have node local DNS cache enabled"
+violation contains msg if {
+    not input.addons_config.dns_cache_config.enabled
+    msg := "Cluster is not configured with node local DNS cache"
 }

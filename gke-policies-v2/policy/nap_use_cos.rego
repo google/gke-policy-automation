@@ -28,18 +28,19 @@
 #     version: "1.4"
 #     id: "5.5.1"
 #   dataSource: gke
-
 package gke.policy.nap_use_cos
 
 import future.keywords.in
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	input.data.gke.autoscaling.enable_node_autoprovisioning == true
 	not lower(input.data.gke.autoscaling.autoprovisioning_node_pool_defaults.image_type) in { "cos", "cos_containerd"}
 	msg := "Cluster is not configured with COS for NAP node pools"

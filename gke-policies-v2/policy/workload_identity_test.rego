@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.workload_identity
+package gke.policy.workload_identity_test
 
-test_enabled_workload_identity {
-	valid with input as {"data": {"gke": {"name": "test-cluster", "workload_identity_config": { "workload_pool": "foo_pool.svc.id.goog" }}}}
+import future.keywords.if
+import data.gke.policy.workload_identity
+
+test_enabled_workload_identity if {
+	workload_identity.valid with input as {"data": {"gke": {"name": "test-cluster", "workload_identity_config": { "workload_pool": "foo_pool.svc.id.goog" }}}}
 }
 
-test_disabled_workload_identity {
-	not valid with input as {"data": {"gke": {"name": "test-cluster"}}}
+test_disabled_workload_identity  if {
+	not workload_identity.valid with input as {"data": {"gke": {"name": "test-cluster"}}}
 }

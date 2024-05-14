@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Multi-zone node pools
+# title: Ensure redudndancy of the node pools
 # description: GKE node pools should be regional (multiple zones) for maximum nodes availability during zonal outages
 # custom:
 #   group: Availability
@@ -25,16 +25,21 @@
 #     zones. Slick "Save" button once done.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/node-pools#multiple-zones
 #   sccCategory: NODEPOOL_ZONAL
-
+#   dataSource: gke
 package gke.policy.node_pool_multi_zone
 
-default valid = false
+import future.keywords.if
+import future.keywords.in
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {  
-  count(input.node_pools[pool].locations) < 2
-  msg := sprintf("Node pool %q is not on multiple zones.", [input.node_pools[pool].name])
-} 
+violation contains msg if {  
+  some pool in input.node_pools
+  count(pool.locations) < 2
+  msg := sprintf("Node pool %q is not configured with multiple zones", [pool.name])
+}

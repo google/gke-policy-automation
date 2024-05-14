@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE RBAC authorization
+# title: Disable legacy ABAC authorization
 # description: GKE cluster should use RBAC instead of legacy ABAC authorization
 # custom:
 #   group: Security
@@ -27,16 +27,19 @@
 #   cis:
 #     version: "1.4"
 #     id: "5.8.4"
-
+#   dataSource: gke
 package gke.policy.disable_legacy_authorization
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	input.legacy_abac.enabled
-	msg := "The GKE cluster is configured to use legacy ABAC authorization mechanism"
+	msg := "Cluster authorization is configured with legacy ABAC"
 }

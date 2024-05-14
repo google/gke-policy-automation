@@ -30,17 +30,20 @@
 #     version: "1.4"
 #     id: "5.9.1"
 #   dataSource: gke
-
 package gke.policy.node_pool_cmek
+
+import future.keywords.if
+import future.keywords.in
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
-  some pool
-  not input.node_pools[pool].config.boot_disk_kms_key
-  msg := sprintf("GKE cluster node_pool %q has no CMEK configured for the boot disks", [input.node_pools[pool].name])
+violation contains msg if {
+  some pool in input.node_pools
+  not pool.config.boot_disk_kms_key
+  msg := sprintf("Node pool %q is not configured with CMEK for the boot disk", [pool.name])
 }

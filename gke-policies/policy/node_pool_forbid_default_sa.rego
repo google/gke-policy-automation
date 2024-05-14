@@ -13,11 +13,12 @@
 # limitations under the License.
 
 # METADATA
-# title: Forbid default compute SA on node_pool
+# title: Change default Service Accounts in node pools
 # description: GKE node pools should have a dedicated sa with a restricted set of permissions
 # custom:
 #   group: Security
 #   severity: Critical
+#   recommendation: >
 #     Navigate to the GKE page in Google Cloud Console and select the name of the cluster.
 #     Select "Nodes" tab and click on the name of the target node pool. Within the node pool
 #     details pane, click EDIT. Under the "Management" heading, select the "Enable auto-upagde"
@@ -27,17 +28,22 @@
 #   cis:
 #     version: "1.4"
 #     id: "5.2.1"
-
+#   dataSource: gke
 package gke.policy.node_pool_forbid_default_sa
 
-default valid = false
+import future.keywords.if
+import future.keywords.in
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	not input.autopilot.enabled
-	input.node_pools[pool].config.service_account == "default"
-	msg := sprintf("GKE cluster node_pool %q should have a dedicated SA", [input.node_pools[pool].name])
+	some pool in input.node_pools
+	pool.config.service_account == "default"
+	msg := sprintf("Node pool %q is configured with default SA", [pool.name])
 }

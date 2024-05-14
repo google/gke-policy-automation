@@ -33,16 +33,18 @@
 #     version: "1.4"
 #     id: "5.5.6"
 #   dataSource: gke
-
 package gke.policy.nap_integrity_monitoring
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	input.data.gke.autoscaling.enable_node_autoprovisioning == true
 	input.data.gke.autoscaling.autoprovisioning_node_pool_defaults.shielded_instance_config.enable_integrity_monitoring == false
 	msg := "Cluster is not configured with integrity monitoring for NAP node pools"

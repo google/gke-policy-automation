@@ -12,32 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.node_pool_version_skew
+package gke.policy.node_pool_version_skew_test
 
-test_empty_master_version {
-    not valid with input as {"data": {"gke": {"name":"cluster","node_pools":[{"name":"default-pool","version":"1.22.1-gke.600"}]}}}
+import future.keywords.if
+import data.gke.policy.node_pool_version_skew
+
+test_empty_master_version if {
+    not node_pool_version_skew.valid with input as {"data": {"gke": {"name":"cluster","node_pools":[{"name":"default-pool","version":"1.22.1-gke.600"}]}}}
 }
 
-test_empty_nodepool_version {
-    not valid with input as {"data": {"gke": {"name":"cluster","current_master_version":"1.22.1-gke.600","node_pools":[{"name":"default-pool"}]}}}
+test_empty_nodepool_version if {
+    not node_pool_version_skew.valid with input as {"data": {"gke": {"name":"cluster","current_master_version":"1.22.1-gke.600","node_pools":[{"name":"default-pool"}]}}}
 }
 
-test_invalid_master_version {
-    not valid with input as {"data": {"gke": {"name":"cluster","current_master_version":"1.22.A","node_pools":[{"name":"default-pool","version":"1.22.1-gke.600"}]}}}
+test_invalid_master_version if {
+    not node_pool_version_skew.valid with input as {"data": {"gke": {"name":"cluster","current_master_version":"1.22.A","node_pools":[{"name":"default-pool","version":"1.22.1-gke.600"}]}}}
 }
 
-test_invalid_nodepool_version {
-    not valid with input as {"data": {"gke": {"name":"cluster","current_master_version":"1.22.1-gke.600","node_pools":[{"name":"default-pool","version":"1.22"}]}}}
+test_invalid_nodepool_version if {
+    not node_pool_version_skew.valid with input as {"data": {"gke": {"name":"cluster","current_master_version":"1.22.1-gke.600","node_pools":[{"name":"default-pool","version":"1.22"}]}}}
 }
 
-test_different_major {
-    not valid with input as {"data": {"gke": {"name":"cluster","current_master_version":"1.22.1-gke.600","node_pools":[{"name":"default-pool","version":"2.22.1-gke.200"}]}}}
+test_different_major if {
+    not node_pool_version_skew.valid with input as {"data": {"gke": {"name":"cluster","current_master_version":"1.22.1-gke.600","node_pools":[{"name":"default-pool","version":"2.22.1-gke.200"}]}}}
 }
 
-test_greater_minor {
-    not valid with input as {"data": {"gke": {"name":"cluster","current_master_version":"1.24.10-gke.200","node_pools":[{"name":"default-pool","version":"1.21.5-gke.200"}]}}}
+test_greater_minor if {
+    not node_pool_version_skew.valid with input as {"data": {"gke": {"name":"cluster","current_master_version":"1.24.10-gke.200","node_pools":[{"name":"default-pool","version":"1.21.5-gke.200"}]}}}
 }
 
-test_good_minor {
-    valid with input as {"data": {"gke": {"name":"cluster","current_master_version":"1.24.10-gke.200","node_pools":[{"name":"default-pool","version":"1.22.5-gke.200"}]}}}
+test_good_minor if {
+    node_pool_version_skew.valid with input as {"data": {"gke": {"name":"cluster","current_master_version":"1.24.10-gke.200","node_pools":[{"name":"default-pool","version":"1.22.5-gke.200"}]}}}
 }

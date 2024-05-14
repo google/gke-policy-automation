@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.node_local_dns_cache
+package gke.policy.node_local_dns_cache_test
 
-test_enabled_node_local_dns_cache {
-	valid with input as {"name": "test-cluster", "addons_config": { "dns_cache_config": { "enabled": true }}}
+import future.keywords.if
+import data.gke.policy.node_local_dns_cache
+
+test_enabled_node_local_dns_cache if {
+	node_local_dns_cache.valid with input as {"name": "test-cluster", "addons_config": { "dns_cache_config": { "enabled": true }}}
 }
 
-test_absent_dns_cache_config {
-	not valid with input as {"name": "test-cluster", "addons_config": {}}
+test_absent_dns_cache_config if {
+	not node_local_dns_cache.valid with input as {"name": "test-cluster", "addons_config": {}}
 }
 
-test_disabled_node_local_dns_cache {
-	not valid with input as {"name": "test-cluster", "addons_config": { "dns_cache_config": { "enabled": false }}}
+test_disabled_node_local_dns_cache if {
+	not node_local_dns_cache.valid with input as {"name": "test-cluster", "addons_config": { "dns_cache_config": { "enabled": false }}}
 }

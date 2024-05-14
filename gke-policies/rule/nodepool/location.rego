@@ -14,12 +14,15 @@
 
 package gke.rule.nodepool.location
 
-regional[nodepool] {
+import future.keywords.if
+import future.keywords.contains
+
+regional contains nodepool if {
     nodepool := input.node_pools[_]
     count(nodepool.locations) > 1
 }
 
-zonal[nodepool] {
+zonal contains nodepool if {
     nodepool := input.node_pools[_]
     count(nodepool.locations) < 2
 }

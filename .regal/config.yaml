@@ -18,15 +18,10 @@ rules:
       # not applicable to this project
       level: ignore
   style:
-    detached-metadata:
-      # style preference only
-      level: ignore
     line-length:
       level: ignore
     opa-fmt:
       level: ignore
-    prefer-some-in-iteration:
-      level: ignore
-  testing:
-    test-outside-test-package:
+  imports:
+    use-rego-v1:
       level: ignore

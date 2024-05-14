@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.cluster_workload_scanning
+package gke.policy.cluster_workload_scanning_test
 
-test_cluster_enabled_workload_scanning {
-    valid with input as {"data": {"gke": {
+import future.keywords.if
+import data.gke.policy.cluster_workload_scanning
+
+test_cluster_enabled_workload_scanning if {
+    cluster_workload_scanning.valid with input as {"data": {"gke": {
         "name": "cluster-test", 
         "security_posture_config": {
            "mode": 2,
@@ -24,8 +27,8 @@ test_cluster_enabled_workload_scanning {
     }}}
 }
 
-test_cluster_disabled_workload_scanning {
-    not valid with input as {"data": {"gke": {
+test_cluster_disabled_workload_scanning if {
+    not cluster_workload_scanning.valid with input as {"data": {"gke": {
         "name": "cluster-test", 
         "security_posture_config": {
            "mode": 1,
@@ -34,8 +37,8 @@ test_cluster_disabled_workload_scanning {
     }}}
 }
 
-test_cluster_unknown_workload_scanning {
-    not valid with input as {"data": {"gke": {
+test_cluster_unknown_workload_scanning if {
+    not cluster_workload_scanning.valid with input as {"data": {"gke": {
         "name": "cluster-test", 
         "security_posture_config": {
            "mode": 1,
@@ -44,8 +47,8 @@ test_cluster_unknown_workload_scanning {
     }}}
 }
 
-test_cluster_missing_security_posture {
-    not valid with input as {"data": {"gke": {
+test_cluster_missing_security_posture if {
+    not cluster_workload_scanning.valid with input as {"data": {"gke": {
         "name": "cluster-test"
     }}}
 }

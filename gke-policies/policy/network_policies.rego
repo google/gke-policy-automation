@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE Network Policies engine
+# title: Enable Kubernetes Network Policies
 # description: GKE cluster should have Network Policies or Dataplane V2 enabled
 # custom:
 #   group: Security
@@ -27,34 +27,35 @@
 #   cis:
 #     version: "1.4"
 #     id: "5.6.7"
-
+#   dataSource: gke
 package gke.policy.network_policies_engine
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	input.addons_config.network_policy_config.disabled
 	not input.network_policy
 	not input.network_config.datapath_provider == 2
-
-	msg := "No Network Policies Engines enabled"
+	msg := "Cluster is not configured with Kubneretes Network Policies"
 }
 
-violation[msg] {
+violation contains msg if {
 	count(input.addons_config.network_policy_config) == 0
 	not input.network_policy.enabled
 	not input.network_config.datapath_provider == 2
-	msg := "Network Policies enabled but without configuration"
+	msg := "Cluster is configured with Kubneretes Network Policies without configuration"
 }
 
-violation[msg] {
+violation contains msg if {
 	input.addons_config.network_policy_config.disabled
 	count(input.network_policy) == 0
 	not input.network_config.datapath_provider == 2
-
-	msg := "Not DPv2 nor Network Policies are enabled onto the cluster"
+	msg := "Cluster is not DPv2 and has not configured Kubneretes Network Policies"
 }

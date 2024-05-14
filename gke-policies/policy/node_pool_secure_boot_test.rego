@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.node_pool_secure_boot
+package gke.policy.node_pool_secure_boot_test
 
-test_empty_shielded_instance_config {
-    not valid with input as {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{}}}]}
+import future.keywords.if
+import data.gke.policy.node_pool_secure_boot
+
+test_empty_shielded_instance_config if {
+    not node_pool_secure_boot.valid with input as {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{}}}]}
 }
 
-test_disabled_secure_boot {
-    not valid with input as {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{"enable_secure_boot": false}}}]}
+test_disabled_secure_boot if {
+    not node_pool_secure_boot.valid with input as {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{"enable_secure_boot": false}}}]}
 }
 
-test_enabled_secure_boot {
-    valid with input as {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{"enable_secure_boot": true}}}]}
+test_enabled_secure_boot if {
+    node_pool_secure_boot.valid with input as {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{"enable_secure_boot": true}}}]}
 }

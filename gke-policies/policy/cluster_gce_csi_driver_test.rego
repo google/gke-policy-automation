@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.cluster_gce_csi_driver
+package gke.policy.cluster_gce_csi_driver_test
 
-test_gce_csi_driver_addon_empty {
-    not valid with input as {"name":"cluster-demo","addons_config":{"gce_persistent_disk_csi_driver_config":{}}}
+import future.keywords.if
+import data.gke.policy.cluster_gce_csi_driver
+
+test_gce_csi_driver_addon_empty if {
+    not cluster_gce_csi_driver.valid with input as {"name":"cluster-demo","addons_config":{"gce_persistent_disk_csi_driver_config":{}}}
 }
 
-test_gce_csi_driver_addon_empty {
-    not valid with input as {"name":"cluster-demo","addons_config":{"gce_persistent_disk_csi_driver_config":{"enabled":false}}}
+test_gce_csi_driver_addon_disabled if {
+    not cluster_gce_csi_driver.valid with input as {"name":"cluster-demo","addons_config":{"gce_persistent_disk_csi_driver_config":{"enabled":false}}}
 }
 
-test_gce_csi_driver_addon_enabled {
-   valid with input as {"name":"cluster-demo","addons_config":{"gce_persistent_disk_csi_driver_config":{"enabled":true}}}
+test_gce_csi_driver_addon_enabled if {
+   cluster_gce_csi_driver.valid with input as {"name":"cluster-demo","addons_config":{"gce_persistent_disk_csi_driver_config":{"enabled":true}}}
 }

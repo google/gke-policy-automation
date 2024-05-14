@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Ensure that nodes in Node Auto-Provisioning node pools will use integrity monitoring
+# title: Enable integrity monitoring for Node Auto-Provisioning node pools
 # description: Nodes in Node Auto-Provisioning should use integrity monitoring
 # custom:
 #   group: Security
@@ -32,18 +32,20 @@
 #   cis:
 #     version: "1.4"
 #     id: "5.5.6"
-
+#   dataSource: gke
 package gke.policy.nap_integrity_monitoring
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	input.autoscaling.enable_node_autoprovisioning == true
 	input.autoscaling.autoprovisioning_node_pool_defaults.shielded_instance_config.enable_integrity_monitoring == false
-	
-	msg := "GKE cluster Node Auto-Provisioning configuration use integrity monitoring"
+	msg := "Cluster is not configured with integrity monitoring for NAP node pools"
 }

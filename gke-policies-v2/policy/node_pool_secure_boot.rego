@@ -28,17 +28,20 @@
 #     version: "1.4"
 #     id: "5.5.7"
 #   dataSource: gke
-
 package gke.policy.node_pool_secure_boot
+
+import future.keywords.if
+import future.keywords.in
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
-  some pool
-  not input.data.gke.node_pools[pool].config.shielded_instance_config.enable_secure_boot
-  msg := sprintf("Node pool %q is not configured with secure boot", [input.data.gke.node_pools[pool].name])
+violation contains msg if {
+  some pool in input.data.gke.node_pools
+  not pool.config.shielded_instance_config.enable_secure_boot
+  msg := sprintf("Node pool %q is not configured with secure boot", [pool.name])
 }

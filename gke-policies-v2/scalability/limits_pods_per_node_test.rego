@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.scalability.pods_per_node
+package gke.scalability.pods_per_node_test
 
-test_pods_per_node_above_warn_limit {
-	not valid with input as {"data": {"monitoring": {"pods_per_node": { "name": "pods_per_node", "vector": {"default-pool": {"gke-cluster-demo-default-pool-0767d05a-lkkp": 46, "gke-cluster-demo-default-pool-0f74dd4f-3zsv": 97}}}}, "gke":{"node_pools":[{"name": "default-pool", "max_pods_constraint":{"max_pods_per_node":110}}]}}}
+import future.keywords.if
+import data.gke.scalability.pods_per_node
+
+test_pods_per_node_above_warn_limit if {
+	not pods_per_node.valid with input as {"data": {"monitoring": {"pods_per_node": { "name": "pods_per_node", "vector": {"default-pool": {"gke-cluster-demo-default-pool-0767d05a-lkkp": 46, "gke-cluster-demo-default-pool-0f74dd4f-3zsv": 97}}}}, "gke":{"node_pools":[{"name": "default-pool", "max_pods_constraint":{"max_pods_per_node":110}}]}}}
 }
 
-test_pods_per_node_below_warn_limit {
-	valid with input as {"data": {"monitoring": {"pods_per_node": { "name": "pods_per_node", "vector": {"default-pool": {"gke-cluster-demo-default-pool-0767d05a-lkkp": 46, "gke-cluster-demo-default-pool-0f74dd4f-3zsv": 32}}}}, "gke":{"node_pools":[{"name": "default-pool", "max_pods_constraint":{"max_pods_per_node":64}}]}}}
+test_pods_per_node_below_warn_limit if {
+	pods_per_node.valid with input as {"data": {"monitoring": {"pods_per_node": { "name": "pods_per_node", "vector": {"default-pool": {"gke-cluster-demo-default-pool-0767d05a-lkkp": 46, "gke-cluster-demo-default-pool-0f74dd4f-3zsv": 32}}}}, "gke":{"node_pools":[{"name": "default-pool", "max_pods_constraint":{"max_pods_per_node":64}}]}}}
 }

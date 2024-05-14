@@ -19,20 +19,20 @@
 #   group: Scalability
 #   severity: High
 #   sccCategory: CONFIGMAPS_LIMIT
-
 package gke.scalability.configmaps
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-default configmaps_limit = 2 #value is ONLY for demo purpose, does not reflect a real limit
+default valid := false
+default limit := 2 # value is ONLY for demo purpose, does not reflect a real limit
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	configmaps := {object | object := input.Resources[_]; object.Data.kind == "ConfigMap"}
-	count(configmaps) > configmaps_limit
-	msg := sprintf("Configmaps found: %d higher than the limit: %d", [count(configmaps), configmaps_limit])
-	print(msg)
+	count(configmaps) > limit
+	msg := sprintf("Configmaps found: %d higher than the limit: %d", [count(configmaps), limit])
 }

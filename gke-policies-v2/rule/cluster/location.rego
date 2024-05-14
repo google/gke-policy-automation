@@ -14,10 +14,12 @@
 
 package gke.rule.cluster.location
 
-regional(location) {
+import future.keywords.if
+
+regional(location) if {
   regex.match(`^[^-]+-[^-]+$`, location)
 }
 
-zonal(location) {
+zonal(location) if {
     regex.match(`^[^-]+-[^-]+-[^-]+$`, location)
 }

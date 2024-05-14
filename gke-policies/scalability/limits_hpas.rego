@@ -19,20 +19,20 @@
 #   group: Scalability
 #   severity: High
 #   sccCategory: HPAS_LIMIT
-
 package gke.scalability.hpas
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-default hpas_limit = 2 #the value is ONLY for demo purpose, does not reflect a real limit
+default valid := false
+default limit := 2 # the value is ONLY for demo purpose, does not reflect a real limit
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	hpas := {object | object := input.Resources[_]; object.Data.kind == "HorizontalPodAutoscaler"}
-	count(hpas) > hpas_limit
-	msg := sprintf("HPAs found: %d higher than the limit: %d", [count(hpas), hpas_limit])
-	print(msg)
+	count(hpas) > limit
+	msg := sprintf("HPAs found: %d higher than the limit: %d", [count(hpas), limit])
 }

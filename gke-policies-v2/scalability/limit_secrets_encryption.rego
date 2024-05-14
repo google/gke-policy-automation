@@ -24,18 +24,20 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/planning-large-clusters#limits-best-practices-large-scale-clusters
 #   sccCategory: SECRETS_WITH_ENCRYPTION_LIMIT
 #   dataSource: monitoring, gke
-
 package gke.scalability.secrets_with_enc
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 default limit := 30000
 default threshold := 80
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	warn_limit := round(limit * threshold * 0.01)
     secrets_cnt := input.data.monitoring.secrets.scalar
 	input.data.gke.database_encryption.state == 1

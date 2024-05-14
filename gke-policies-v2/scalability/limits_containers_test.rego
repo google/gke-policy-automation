@@ -12,20 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.scalability.containers
+package gke.scalability.containers_test
 
-test_containers_above_warn_limit_std {
-	not valid with input as {"data": {"monitoring": {"containers": { "name": "containers", "scalar": 352000}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": false}}}}
+import future.keywords.if
+import data.gke.scalability.containers
+
+test_containers_above_warn_limit_std if {
+	not containers.valid with input as {"data": {"monitoring": {"containers": { "name": "containers", "scalar": 352000}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": false}}}}
 }
 
-test_containers_below_warn_limit_std {
-	valid with input as {"data": {"monitoring": {"containers": { "name": "containers", "scalar": 121303}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": false}}}}
+test_containers_below_warn_limit_std if {
+	containers.valid with input as {"data": {"monitoring": {"containers": { "name": "containers", "scalar": 121303}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": false}}}}
 }
 
-test_containers_above_warn_limit_auto {
-	not valid with input as {"data": {"monitoring": {"containers": { "name": "containers", "scalar": 121303}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": true}}}}
+test_containers_above_warn_limit_auto if {
+	not containers.valid with input as {"data": {"monitoring": {"containers": { "name": "containers", "scalar": 121303}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": true}}}}
 }
 
-test_containers_below_warn_limit_auto {
-	valid with input as {"data": {"monitoring": {"containers": { "name": "containers", "scalar": 18403}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": true}}}}
+test_containers_below_warn_limit_auto if {
+	containers.valid with input as {"data": {"monitoring": {"containers": { "name": "containers", "scalar": 18403}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": true}}}}
 }

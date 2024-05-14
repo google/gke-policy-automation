@@ -29,16 +29,18 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/about-workload-vulnerability-scanning
 #   sccCategory: WORKLOAD_SCANNING_DISABLED
 #   dataSource: gke
-
 package gke.policy.cluster_workload_scanning
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
   not input.data.gke.security_posture_config.vulnerability_mode == 2
   msg := "Cluster is not configured with workload vulnerability scanning"
 }

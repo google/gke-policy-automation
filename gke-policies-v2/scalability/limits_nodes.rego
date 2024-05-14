@@ -26,8 +26,10 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/quotas
 #   sccCategory: NODES_LIMIT
 #   dataSource: monitoring, gke
-
 package gke.scalability.nodes
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
@@ -36,11 +38,11 @@ default public_nodes_limit := 5000
 default autopilot_nodes_limit := 1000
 default threshold := 80
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	warn_limit := round(private_nodes_limit * threshold * 0.01)
 	nodes := input.data.monitoring.nodes.scalar
 	is_private := input.data.gke.private_cluster_config.enable_private_nodes
@@ -49,7 +51,7 @@ violation[msg] {
 	msg := sprintf("nodes found: %d higher than the limit for private clusters: %d", [nodes, warn_limit])
 }
 
-violation[msg] {
+violation contains msg if {
 	warn_limit := round(public_nodes_limit * threshold * 0.01)
 	nodes := input.data.monitoring.nodes.scalar
 	is_private := input.data.gke.private_cluster_config.enable_private_nodes
@@ -58,7 +60,7 @@ violation[msg] {
 	msg := sprintf("nodes found: %d higher than the limit for non private clusters: %d", [nodes, warn_limit])
 }
 
-violation[msg] {
+violation contains msg if {
 	warn_limit := round(autopilot_nodes_limit * threshold * 0.01)
 	nodes := input.data.monitoring.nodes.scalar
 	input.data.gke.autopilot.enabled

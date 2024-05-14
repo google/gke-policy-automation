@@ -26,17 +26,20 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/node-pools#multiple-zones
 #   sccCategory: NODEPOOL_ZONAL
 #   dataSource: gke
-
 package gke.policy.node_pool_multi_zone
+
+import future.keywords.if
+import future.keywords.in
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
-  some pool
-  count(input.data.gke.node_pools[pool].locations) < 2
-  msg := sprintf("Node pool %q is not configured with multiple zones", [input.data.gke.node_pools[pool].name])
+violation contains msg if {
+  some pool in input.data.gke.node_pools
+  count(pool.locations) < 2
+  msg := sprintf("Node pool %q is not configured with multiple zones", [pool.name])
 }

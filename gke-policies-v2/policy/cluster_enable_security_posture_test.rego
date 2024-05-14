@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.cluster_security_posture
+package gke.policy.cluster_security_posture_test
 
-test_cluster_enabled_security_posture {
-    valid with input as {"data": {"gke": {
+import future.keywords.if
+import data.gke.policy.cluster_security_posture
+
+test_cluster_enabled_security_posture if {
+    cluster_security_posture.valid with input as {"data": {"gke": {
         "name": "cluster-test", 
         "security_posture_config": {
            "mode": 2,
@@ -24,8 +27,8 @@ test_cluster_enabled_security_posture {
     }}}
 }
 
-test_cluster_unknown_security_posture {
-    not valid with input as {"data": {"gke": {
+test_cluster_unknown_security_posture if {
+    not cluster_security_posture.valid with input as {"data": {"gke": {
         "name": "cluster-test", 
         "security_posture_config": {
            "mode": 0,
@@ -34,8 +37,8 @@ test_cluster_unknown_security_posture {
     }}}
 }
 
-test_cluster_disabled_security_posture {
-    not valid with input as {"data": {"gke": {
+test_cluster_disabled_security_posture if {
+    not cluster_security_posture.valid with input as {"data": {"gke": {
         "name": "cluster-test", 
         "security_posture_config": {
            "mode": 1,
@@ -44,8 +47,8 @@ test_cluster_disabled_security_posture {
     }}}
 }
 
-test_cluster_missing_security_posture {
-    not valid with input as {"data": {"gke": {
+test_cluster_missing_security_posture if {
+    not cluster_security_posture.valid with input as {"data": {"gke": {
         "name": "cluster-test"
     }}}
 }

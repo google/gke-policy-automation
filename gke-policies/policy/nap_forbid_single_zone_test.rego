@@ -12,18 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.nap_forbid_single_zone
+package gke.policy.nap_forbid_single_zone_test
 
-test_cluster_not_enabled_nap {
-    valid with input as {"name": "cluster-without-nap", "autoscaling": {"enable_node_autoprovisioning": false}}
+import future.keywords.if
+import data.gke.policy.nap_forbid_single_zone
+
+test_cluster_not_enabled_nap if {
+    nap_forbid_single_zone.valid with input as {"name": "cluster-without-nap", "autoscaling": {"enable_node_autoprovisioning": false}}
 }
 
-test_cluster_enabled_nap_without_enabled_autoprovisioning_locations_not_enabled {
-    valid with input as {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true}}
+test_cluster_enabled_nap_without_enabled_autoprovisioning_locations_not_enabled if {
+    nap_forbid_single_zone.valid with input as {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true}}
 }
 
-test_cluster_enabled_nap_with_enabled_autoprovisioning_locations_multiple {
-    valid with input as {
+test_cluster_enabled_nap_with_enabled_autoprovisioning_locations_multiple if {
+    nap_forbid_single_zone.valid with input as {
         "name": "cluster-with-nap", 
         "autoscaling": {
             "enable_node_autoprovisioning": true, 
@@ -35,8 +38,8 @@ test_cluster_enabled_nap_with_enabled_autoprovisioning_locations_multiple {
     }
 }
 
-test_cluster_enabled_nap_with_enabled_autoprovisioning_locations_single {
-    not valid with input as {
+test_cluster_enabled_nap_with_enabled_autoprovisioning_locations_single if {
+    not nap_forbid_single_zone.valid with input as {
         "name": "cluster-with-nap", 
         "autoscaling": {
             "enable_node_autoprovisioning": true, 

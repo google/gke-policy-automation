@@ -28,16 +28,18 @@
 #     version: "1.4"
 #     id: "5.6.4"
 #   dataSource: gke
-
 package gke.policy.control_plane_endpoint
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
   not input.data.gke.private_cluster_config.enable_private_endpoint
   msg := "Cluster is not configured with private endpoint"
 }

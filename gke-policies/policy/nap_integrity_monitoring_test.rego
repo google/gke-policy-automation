@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.nap_integrity_monitoring
+package gke.policy.nap_integrity_monitoring_test
 
-test_cluster_not_enabled_nap {
-    valid with input as {"name": "cluster-without-nap", "autoscaling": {"enable_node_autoprovisioning": false}}
+import future.keywords.if
+import data.gke.policy.nap_integrity_monitoring
+
+test_cluster_not_enabled_nap if {
+    nap_integrity_monitoring.valid with input as {"name": "cluster-without-nap", "autoscaling": {"enable_node_autoprovisioning": false}}
 }
 
-test_cluster_enabled_nap_with_integrity_monitoring_enabled {
-    valid with input as {
+test_cluster_enabled_nap_with_integrity_monitoring_enabled if {
+    nap_integrity_monitoring.valid with input as {
         "name": "cluster-with-nap", 
         "autoscaling": {
             "enable_node_autoprovisioning": true, 
@@ -30,8 +33,8 @@ test_cluster_enabled_nap_with_integrity_monitoring_enabled {
     }
 }
 
-test_cluster_enabled_nap_without_integrity_monitoring_enabled {
-    not valid with input as {
+test_cluster_enabled_nap_without_integrity_monitoring_enabled if {
+    not nap_integrity_monitoring.valid with input as {
         "name": "cluster-with-nap", 
         "autoscaling": {
             "enable_node_autoprovisioning": true, 

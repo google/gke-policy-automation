@@ -29,16 +29,18 @@
 #     version: "1.4"
 #     id: "5.5.4"
 #   dataSource: gke
-
 package gke.policy.cluster_release_channels
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
   not input.data.gke.release_channel.channel
   msg := "Cluster is not enrolled in any release channel"
 }

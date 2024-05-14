@@ -27,16 +27,18 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/about-security-posture-dashboard
 #   sccCategory: SECURITY_POSTURE_DISABLED
 #   dataSource: gke
-
 package gke.policy.cluster_security_posture
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
   not input.security_posture_config.mode == 2
-  msg := "GKE cluster has not enabled Security Posture"
+  msg := "Cluster is not configure with Security Posture"
 }

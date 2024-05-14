@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.logging_and_monitoring
+package gke.policy.logging_and_monitoring_test
 
-test_enabled_logging_and_monitoring {
-	valid with input as {"data": {"gke": {
+import future.keywords.if
+import data.gke.policy.logging_and_monitoring
+
+test_enabled_logging_and_monitoring if {
+	logging_and_monitoring.valid with input as {"data": {"gke": {
 	  "name": "test-cluster",
 	  "logging_config": {
 		"component_config": {
@@ -31,8 +34,8 @@ test_enabled_logging_and_monitoring {
 	}}}
 }
 
-test_disabled_logging {
-	not valid with input as {"data": {"gke": {
+test_disabled_logging if {
+	not logging_and_monitoring.valid with input as {"data": {"gke": {
 	  "name": "test-cluster",
 	  "logging_config": {"component_config": {}},
 	  "monitoring_config": {
@@ -43,8 +46,8 @@ test_disabled_logging {
 	}}}
 }
 
-test_disabled_monitoring {
-	not valid with input as {"data": {"gke": {
+test_disabled_monitoring if {
+	not logging_and_monitoring.valid with input as {"data": {"gke": {
 	  "name": "test-cluster",
 	  "logging_config": {
 		"component_config": {

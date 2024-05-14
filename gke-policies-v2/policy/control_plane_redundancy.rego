@@ -24,23 +24,25 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/regional-clusters
 #   sccCategory: CONTROL_PLANE_ZONAL
 #   dataSource: gke
-
 package gke.policy.control_plane_redundancy
+
+import future.keywords.if
+import future.keywords.contains
 
 import data.gke.rule.cluster.location
 
 default valid := false
 
-valid {
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
   not input.data.gke.location
   msg := "Cluster location infromation is missing"
 }
 
-violation[msg] {
+violation contains msg if {
   not location.regional(input.data.gke.location)
   msg := sprintf("Cluster location %q is not regional", [input.data.gke.location])
 }

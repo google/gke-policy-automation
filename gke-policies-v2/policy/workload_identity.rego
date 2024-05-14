@@ -30,16 +30,18 @@
 #     version: "1.4"
 #     id: "5.2.2"
 #   dataSource: gke
-
 package gke.policy.workload_identity
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	not input.data.gke.workload_identity_config.workload_pool
 	msg := "Cluster is not configured with Workload Identity"
 }

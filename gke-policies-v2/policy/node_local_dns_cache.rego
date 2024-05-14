@@ -25,16 +25,18 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/nodelocal-dns-cache
 #   sccCategory: DNS_CACHE_DISABLED
 #   dataSource: gke
-
 package gke.policy.node_local_dns_cache
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
     not input.data.gke.addons_config.dns_cache_config.enabled = true
     msg := "Cluster is not configured with node local DNS cache"
 }

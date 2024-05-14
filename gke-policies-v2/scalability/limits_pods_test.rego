@@ -11,21 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+package gke.scalability.pods_test
 
-package gke.scalability.pods
+import future.keywords.if
+import data.gke.scalability.pods
 
-test_pods_above_warn_limit_std {
-	not valid with input as {"data": {"monitoring": {"pods": { "name": "pods", "scalar": 160424}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": false}}}}
+test_pods_above_warn_limit_std if {
+	not pods.valid with input as {"data": {"monitoring": {"pods": { "name": "pods", "scalar": 160424}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": false}}}}
 }
 
-test_pods_below_warn_limit_std {
-	valid with input as {"data": {"monitoring": {"pods": { "name": "pods", "scalar": 98504}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": false}}}}
+test_pods_below_warn_limit_std if {
+	pods.valid with input as {"data": {"monitoring": {"pods": { "name": "pods", "scalar": 98504}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": false}}}}
 }
 
-test_pods_above_warn_limit_auto {
-	not valid with input as {"data": {"monitoring": {"pods": { "name": "pods", "scalar": 98504}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": true}}}}
+test_pods_above_warn_limit_auto if {
+	not pods.valid with input as {"data": {"monitoring": {"pods": { "name": "pods", "scalar": 98504}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": true}}}}
 }
 
-test_pods_below_warn_limit_auto {
-	valid with input as {"data": {"monitoring": {"pods": { "name": "pods", "scalar": 5050}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": true}}}}
+test_pods_below_warn_limit_auto if {
+	pods.valid with input as {"data": {"monitoring": {"pods": { "name": "pods", "scalar": 5050}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": true}}}}
 }
