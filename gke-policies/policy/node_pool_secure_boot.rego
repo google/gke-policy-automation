@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Secure boot on the nodes
+# title: Enable Secure boot for node pools
 # description: Secure Boot helps ensure that the system only runs authentic software by verifying the digital signature of all boot components, and halting the boot process if signature verification fails
 # custom:
 #   group: Security
@@ -27,16 +27,21 @@
 #   cis:
 #     version: "1.4"
 #     id: "5.5.7"
-
+#   dataSource: gke
 package gke.policy.node_pool_secure_boot
 
-default valid = false
+import future.keywords.if
+import future.keywords.in
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {  
-  not input.node_pools[pool].config.shielded_instance_config.enable_secure_boot
-  msg := sprintf("Node pool %q has disabled secure boot.", [input.node_pools[pool].name])
+violation contains msg if {  
+  some pool in input.node_pools
+  not pool.config.shielded_instance_config.enable_secure_boot
+  msg := sprintf("Node pool %q is not configured with secure boot", [pool.name])
 } 

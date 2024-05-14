@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Kubernetes secrets encryption
+# title: Enable Kubernetes secrets encryption
 # description: GKE cluster should use encryption for kubernetes application secrets
 # custom:
 #   group: Security
@@ -29,16 +29,19 @@
 #   cis:
 #     version: "1.4"
 #     id: "5.3.1"
-
+#   dataSource: gke
 package gke.policy.secret_encryption
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	input.database_encryption.state != 1
-	msg := "The GKE cluster is not configured to encrypt kubernetes application secrets"
+	msg := "Cluster is not configured with kubernetes secrets encryption"
 }

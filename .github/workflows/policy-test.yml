@@ -41,7 +41,7 @@ jobs:
       - name: Run Policy tests - v2 policies
         run: opa test ${{ env.GKE_POLICY_DIRECTORY_V2 }} -v
       - name: Setup Regal
-        uses: StyraInc/setup-regal@v0.2.0
+        uses: StyraInc/setup-regal@v1
         with:
-          version: v0.10.1
+          version: v0.20.1
       - run: regal lint --format github ${{ env.GKE_POLICY_DIRECTORY_V2 }}

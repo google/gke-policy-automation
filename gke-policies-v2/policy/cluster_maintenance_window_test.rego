@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.cluster_maintenance_window
+package gke.policy.cluster_maintenance_window_test
 
-test_cluster_not_configured_maintenance_window {
-    not valid with input as {"data": {"gke": {"name": "cluster-not-repairing", "release_channel": {}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}}}
+import future.keywords.if
+import data.gke.policy.cluster_maintenance_window
+
+test_cluster_not_configured_maintenance_window if {
+    not cluster_maintenance_window.valid with input as {"data": {"gke": {"name": "cluster-not-repairing", "release_channel": {}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}}}
 }
 
-test_cluster_configured_to_maintanace_window {
-    valid with input as {"data": {"gke": {
+test_cluster_configured_to_maintanace_window if {
+    cluster_maintenance_window.valid with input as {"data": {"gke": {
         "name": "cluster-not-repairing", 
         "maintenance_policy": {
             "window": {

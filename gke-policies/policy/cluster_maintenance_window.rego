@@ -13,8 +13,8 @@
 # limitations under the License.
 
 # METADATA
-# title: Schedule maintenance windows and exclusions
-# description: GKE cluster should schedule maintenance windows and exclusions to upgrade predictability and to align updates with off-peak business hours.
+# title: Enable maintenance windows
+# description: GKE cluster should use maintenance windows and exclusions to upgrade predictability and to align updates with off-peak business hours.
 # custom:
 #   group: Management
 #   severity: Medium
@@ -26,16 +26,19 @@
 #     Click "Save changes" once done.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/maintenance-windows-and-exclusions
 #   sccCategory: MAINTENANCE_WINDOWS_DISABLED
-
+#   dataSource: gke
 package gke.policy.cluster_maintenance_window
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
   not input.maintenance_policy.window.Policy
-  msg := "GKE cluster has not configured maintenance window"
+  msg := "GKE cluster is not configured with maintenance window"
 }

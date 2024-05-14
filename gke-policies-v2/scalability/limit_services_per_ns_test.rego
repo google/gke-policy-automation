@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.scalability.services_per_ns
+package gke.scalability.services_per_ns_test
 
-test_services_per_ns_above_warn_limit {
-	not valid with input as {"data": {"monitoring": {"services_per_ns": { "name": "services_per_ns", "vector": {"default": 1, "kube-system": 4, "demo-test":4523}}}}}
+import future.keywords.if
+import data.gke.scalability.services_per_ns
+
+test_services_per_ns_above_warn_limit if {
+	not services_per_ns.valid with input as {"data": {"monitoring": {"services_per_ns": { "name": "services_per_ns", "vector": {"default": 1, "kube-system": 4, "demo-test":4523}}}}}
 }
 
-test_services_per_ns_below_warn_limit {
-	valid with input as {"data": {"monitoring": {"services_per_ns": { "name": "services_per_ns", "vector": {"default": 1, "kube-system": 4, "demo-test":453}}}}}
+test_services_per_ns_below_warn_limit if {
+	services_per_ns.valid with input as {"data": {"monitoring": {"services_per_ns": { "name": "services_per_ns", "vector": {"default": 1, "kube-system": 4, "demo-test":453}}}}}
 }

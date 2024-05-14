@@ -24,16 +24,18 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/choose-cluster-mode
 #   sccCategory: AUTOPILOT_DISABLED
 #   dataSource: gke
-
 package gke.policy.autopilot
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	not input.data.gke.autopilot.enabled
 	msg := "Cluster is not using Autopilot mode"
 }

@@ -24,26 +24,28 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/quotas
 #   sccCategory: CONTAINERS_LIMIT
 #   dataSource: monitoring, gke
-
 package gke.scalability.containers
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 default limit_standard := 400000
 default limit_autopilot := 24000
 default threshold := 80
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	warn_limit := round(limit_standard * threshold * 0.01)
 	not input.data.gke.autopilot.enabled
     input.data.monitoring.containers.scalar > warn_limit
 	msg := sprintf("Total number of containers %d has reached warning level %d (limit is %d for standard clusters)", [input.data.monitoring.containers.scalar, warn_limit, limit_standard])
 }
 
-violation[msg] {
+violation contains msg if {
 	warn_limit := round(limit_autopilot * threshold * 0.01)
 	input.data.gke.autopilot.enabled
     input.data.monitoring.containers.scalar > warn_limit

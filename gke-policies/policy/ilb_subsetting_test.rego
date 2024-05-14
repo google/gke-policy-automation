@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.enable_ilb_subsetting
+package gke.policy.enable_ilb_subsetting_test
 
-test_enabled_ilb_subsetting_high_nodes {
-	valid with input as {"name": "test-cluster", "current_node_count": 251, "network_config": { "enable_l4ilb_subsetting": true }}
+import future.keywords.if
+import data.gke.policy.enable_ilb_subsetting
+
+test_enabled_ilb_subsetting_high_nodes if {
+	enable_ilb_subsetting.valid with input as {"name": "test-cluster", "current_node_count": 251, "network_config": { "enable_l4ilb_subsetting": true }}
 }
 
-test_disabled_ilb_subsetting_low_nodes {
-	valid with input as {"name": "test-cluster", "current_node_count": 3, "network_config": {}}
+test_disabled_ilb_subsetting_low_nodes if {
+	enable_ilb_subsetting.valid with input as {"name": "test-cluster", "current_node_count": 3, "network_config": {}}
 }
 
-test_disabled_ilb_subsetting_high_nodes {
-	not valid with input as {"name": "test-cluster", "current_node_count": 251, "network_config": {}}
+test_disabled_ilb_subsetting_high_nodes if {
+	not enable_ilb_subsetting.valid with input as {"name": "test-cluster", "current_node_count": 251, "network_config": {}}
 }

@@ -27,16 +27,19 @@
 #   cis:
 #     version: "1.4"
 #     id: "5.10.5"
-
+#   dataSource: gke
 package gke.policy.cluster_binary_authorization
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
   not input.binary_authorization.enabled
-  msg := "GKE cluster has not configured binary authorization policies"
+  msg := "Cluster is not configured with binary authorization"
 }

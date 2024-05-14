@@ -28,16 +28,18 @@
 #     version: "1.4"
 #     id: "5.8.4"
 #   dataSource: gke
-
 package gke.policy.disable_legacy_authorization
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	input.data.gke.legacy_abac.enabled
 	msg := "Cluster authorization is configured with legacy ABAC"
 }

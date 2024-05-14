@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.control_plane_redundancy
+package gke.policy.control_plane_redundancy_test
 
-test_control_plane_regional_location {
-    valid with input as {"data": {"gke": {"name": "test-cluster", "location": "europe-central2"}}}
+import future.keywords.if
+import data.gke.policy.control_plane_redundancy
+
+test_control_plane_regional_location if {
+    control_plane_redundancy.valid with input as {"data": {"gke": {"name": "test-cluster", "location": "europe-central2"}}}
 }
 
-test_control_plane_zonal_location {
-    not valid with input as {"data": {"gke": {"name": "test-cluster", "location": "europe-central2-a"}}}
+test_control_plane_zonal_location if {
+    not control_plane_redundancy.valid with input as {"data": {"gke": {"name": "test-cluster", "location": "europe-central2-a"}}}
 }
 
-test_control_plane_missing_location {
-    not valid with input as {"data": {"gke": {"name": "test-cluster"}}}
+test_control_plane_missing_location if {
+    not control_plane_redundancy.valid with input as {"data": {"gke": {"name": "test-cluster"}}}
 }

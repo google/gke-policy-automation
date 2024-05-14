@@ -12,24 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.node_pool_autorepair
+package gke.policy.node_pool_autorepair_test
 
-test_autorepair_for_node_pool_enabled {
-    valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}
+import future.keywords.if
+import data.gke.policy.node_pool_autorepair
+
+test_autorepair_for_node_pool_enabled if {
+    node_pool_autorepair.valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}
 }
 
-test_autorepair_for_node_pool_disabled{
-    not valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_repair": false, "auto_upgrade": true }}]}
+test_autorepair_for_node_pool_disabled if {
+    not node_pool_autorepair.valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_repair": false, "auto_upgrade": true }}]}
 }
 
-test_autorepair_for_multiple_node_pools_but_only_one_disabled{
-    not valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }},{"name": "custom", "management": {"auto_repair": false, "auto_upgrade": true }}]}
+test_autorepair_for_multiple_node_pools_but_only_one_disabled if {
+    not node_pool_autorepair.valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }},{"name": "custom", "management": {"auto_repair": false, "auto_upgrade": true }}]}
 }
 
-test_autorepair_for_node_pool_empty_managment{
-    not valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {}}]}
+test_autorepair_for_node_pool_empty_managment if {
+    not node_pool_autorepair.valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {}}]}
 }
 
-test_autorepair_for_managment_without_auto_repair_field{
-    not valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_upgrade": true }}]}
+test_autorepair_for_managment_without_auto_repair_field if {
+    not node_pool_autorepair.valid with input as {"name": "cluster-not-repairing", "node_pools": [{"name": "default", "management": {"auto_upgrade": true }}]}
 }

@@ -19,19 +19,21 @@
 #   group: Scalability
 #   severity: Low
 #   sccCategory: HPAS_UNUSED
-
 package gke.scalability.unused_hpas
 
-default valid = false
+import future.keywords.in
+import future.keywords.if
+import future.keywords.contains
 
-valid {
-	print(violation)
+default valid := false
+
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	hpas := {object | object := input.Resources[_]; object.Data.kind == "HorizontalPodAutoscaler"}
-	some i
-	not hpas[i].Data.status.lastScaleTime
-	msg := sprintf("HPA %s in namespace %s never executed since %s", [hpas[i].Data.metadata.name, hpas[i].Data.metadata.namespace, hpas[i].Data.metadata.creationTimestamp])
+	some hpa in hpas
+	not hpa.Data.status.lastScaleTime
+	msg := sprintf("HPA %s in namespace %s never executed since %s", [hpa.Data.metadata.name, hpa.Data.metadata.namespace, hpa.Data.metadata.creationTimestamp])
 }

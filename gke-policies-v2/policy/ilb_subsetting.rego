@@ -25,16 +25,18 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balancing#subsetting
 #   sccCategory: ILB_SUBSETTING_DISABLED
 #   dataSource: gke
-
 package gke.policy.enable_ilb_subsetting
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	input.data.gke.current_node_count > 250
     not input.data.gke.network_config.enable_l4ilb_subsetting = true
 	msg := sprintf("Cluster has %v nodes and is not configured with L4 ILB Subsetting", [input.data.gke.current_node_count])

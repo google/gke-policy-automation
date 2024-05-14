@@ -27,21 +27,23 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-notifications
 #   sccCategory: UPDATE_NOTIFICATIONS_DISABLED
 #   dataSource: gke
-
 package gke.policy.cluster_receive_updates
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
   not input.data.gke.notification_config.pubsub.enabled
   msg := "Cluster is not configured with upgrade notifications"
 }
 
-violation[msg] {
+violation contains msg if {
   not input.data.gke.notification_config.pubsub.topic
-  msg := "Cluster is not configured with upgrade notofications topic"
+  msg := "Cluster is not configured with upgrade notifications topic"
 }

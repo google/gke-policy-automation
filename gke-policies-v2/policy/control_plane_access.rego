@@ -30,26 +30,28 @@
 #     version: "1.4"
 #     id: "5.6.3"
 #   dataSource: gke
-
 package gke.policy.control_plane_access
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
   not input.data.gke.master_authorized_networks_config.enabled
   msg := "Cluster is not configured with master authorized networks"
 }
 
-violation[msg] {
+violation contains msg if {
   not input.data.gke.master_authorized_networks_config.cidr_blocks
   msg := "Cluster is not configured with master authorized networks CIDRs"
 }
 
-violation[msg] {
+violation contains msg if {
   count(input.data.gke.master_authorized_networks_config.cidr_blocks) < 1
   msg := "Cluster is not configured with master authorized networks CIDRs"
 }

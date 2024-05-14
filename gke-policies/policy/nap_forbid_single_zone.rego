@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Ensure that node pool locations within Node Auto-Provisioning are covering more than one zone (or not enforced at all)
+# title: Ensure redundancy of Node Auto-provisioning node pools
 # description: Node Auto-Provisioning configuration should cover more than one zone
 # custom:
 #   group: Security
@@ -24,17 +24,20 @@
 #     Under the "Node pool location", select multiple zone checkboxes. Click "Save changes" once done.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning#auto-provisioning_locations
 #   sccCategory: NAP_ZONAL
-
+#   dataSource: gke
 package gke.policy.nap_forbid_single_zone
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	input.autoscaling.enable_node_autoprovisioning == true
 	count(input.autoscaling.autoprovisioning_locations) == 1
-	msg := "GKE cluster Node Auto-Provisioning configuration should cover more than one zone"
+	msg := "Cluster is not configured with multiple zones for NAP node pools"
 }

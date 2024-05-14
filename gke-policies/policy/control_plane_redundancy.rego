@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Control Plane redundancy
+# title: Ensure redundancy of the Control Plane
 # description: GKE cluster should be regional for maximum availability of control plane during upgrades and zonal outages
 # custom:
 #   group: Availability
@@ -23,23 +23,25 @@
 #     The cluster must be recreated, ensuring that regional location type is choosen.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/regional-clusters
 #   sccCategory: CONTROL_PLANE_ZONAL
-
+#   dataSource: gke
 package gke.policy.control_plane_redundancy
 
-import data.gke.rule.cluster.location.regional
+import future.keywords.if
+import future.keywords.contains
+import data.gke.rule.cluster.location
 
-default valid = false
+default valid := false
 
-valid {
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
   not input.location
-  msg := "Missing GKE cluster location object"
+  msg := "Cluster location infromation is missing"
 }
 
-violation[msg] {
-  not regional(input.location)
-  msg := sprintf("Invalid GKE Control plane location %q (not regional)", [input.location])
+violation contains msg if {
+  not location.regional(input.location)
+  msg := sprintf("Cluster location %q is not regional", [input.location])
 }

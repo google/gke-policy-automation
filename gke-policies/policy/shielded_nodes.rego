@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE Shielded Nodes
+# title: Enable Shielded Nodes
 # description: GKE cluster should use shielded nodes
 # custom:
 #   group: Security
@@ -27,17 +27,19 @@
 #   cis:
 #     version: "1.4"
 #     id: "5.5.5"
-
+#   dataSource: gke
 package gke.policy.shielded_nodes
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	not input.shielded_nodes.enabled = true
-
-	msg := "The GKE cluster does not have shielded nodes enabled"
+	msg := "Cluster is not configured with shielded nodes"
 }

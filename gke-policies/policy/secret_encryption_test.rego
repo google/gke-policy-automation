@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.secret_encryption
+package gke.policy.secret_encryption_test
 
-test_enabled_encryption {
-	valid with input as {"name": "cluster-1", "database_encryption": {"state": 1}}
+import future.keywords.if
+import data.gke.policy.secret_encryption
+
+test_enabled_encryption if {
+	secret_encryption.valid with input as {"name": "cluster-1", "database_encryption": {"state": 1}}
 }
 
-test_disabled_encryption {
-	not valid with input as {"name": "cluster-1", "database_encryption": {"state": 2}}
+test_disabled_encryption if {
+	not secret_encryption.valid with input as {"name": "cluster-1", "database_encryption": {"state": 2}}
 }

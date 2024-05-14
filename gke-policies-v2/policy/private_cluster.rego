@@ -27,16 +27,18 @@
 #     version: "1.4"
 #     id: "5.6.5"
 #   dataSource: gke
-
 package gke.policy.private_cluster
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
   not input.data.gke.private_cluster_config.enable_private_nodes
   msg := "Cluster is not configured with private nodes"
 }

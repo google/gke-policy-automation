@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.private_cluster
+package gke.policy.private_cluster_test
 
-test_private_nodes_enabled {
-    valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": true}}
+import future.keywords.if
+import data.gke.policy.private_cluster
+
+test_private_nodes_enabled if {
+    private_cluster.valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": true}}
 }
 
-test_private_nodes_disabled {
-    not valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": false}}
+test_private_nodes_disabled if {
+    not private_cluster.valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": false}}
 }
 
-test_private_cluster_config_missing {
-    not valid with input as {"name": "test-cluster"}
+test_private_cluster_config_missing if {
+    not private_cluster.valid with input as {"name": "test-cluster"}
 }

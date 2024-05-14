@@ -25,16 +25,18 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning#auto-provisioning_locations
 #   sccCategory: NAP_ZONAL
 #   dataSource: gke
-
 package gke.policy.nap_forbid_single_zone
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	input.data.gke.autoscaling.enable_node_autoprovisioning == true
 	count(input.data.gke.autoscaling.autoprovisioning_locations) == 1
 	msg := "Cluster is not configured with multiple zones for NAP node pools"

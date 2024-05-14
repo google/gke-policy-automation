@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.control_plane_certificate_auth
+package gke.policy.control_plane_certificate_auth_test
 
-test_cluster_without_client_certificate {
-    valid with input as {
+import future.keywords.if
+import data.gke.policy.control_plane_certificate_auth
+
+test_cluster_without_client_certificate if {
+    control_plane_certificate_auth.valid with input as {
         "name": "cluster-test", 
         "master_auth": {
            "cluster_ca_certificate": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVMVENDQXBXZ0F3SUJBZ0lSQUpIeTI1V..."
@@ -23,8 +26,8 @@ test_cluster_without_client_certificate {
     }
 }
 
-test_cluster_client_certificate {
-    not valid with input as {
+test_cluster_client_certificate if {
+    not control_plane_certificate_auth.valid with input as {
         "name": "cluster-test", 
         "master_auth": {
            "cluster_ca_certificate": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVMVENDQXBXZ0F3SUJBZ0lSQUpIeTI1V...",

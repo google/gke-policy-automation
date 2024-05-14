@@ -30,16 +30,18 @@
 #     version: "1.4"
 #     id: "5.3.1"
 #   dataSource: gke
-
 package gke.policy.secret_encryption
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	input.data.gke.database_encryption.state != 1
 	msg := "Cluster is not configured with kubernetes secrets encryption"
 }

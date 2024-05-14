@@ -29,16 +29,18 @@
 #     version: "1.4"
 #     id: "5.2.1"
 #   dataSource: gke
-
 package gke.policy.nap_forbid_default_sa
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	not input.data.gke.autopilot.enabled
 	input.data.gke.autoscaling.enable_node_autoprovisioning == true
 	input.data.gke.autoscaling.autoprovisioning_node_pool_defaults.service_account == "default"

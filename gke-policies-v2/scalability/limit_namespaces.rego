@@ -24,18 +24,20 @@
 #   externalURI: https://github.com/kubernetes/community/blob/master/sig-scalability/configs-and-limits/thresholds.md
 #   sccCategory: NAMESPACES_LIMIT
 #   dataSource: monitoring
-
 package gke.scalability.namespaces
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 default limit := 10000
 default threshold := 80
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	warn_limit := round(limit * threshold * 0.01)
     input.data.monitoring.namespaces.scalar > warn_limit
 	msg := sprintf("Total number of namespaces %d has reached warning level %d (limit is %d)", [input.data.monitoring.namespaces.scalar, warn_limit, limit])

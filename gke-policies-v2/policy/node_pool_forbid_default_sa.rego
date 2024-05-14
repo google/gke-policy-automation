@@ -29,18 +29,21 @@
 #     version: "1.4"
 #     id: "5.2.1"
 #   dataSource: gke
-
 package gke.policy.node_pool_forbid_default_sa
+
+import future.keywords.if
+import future.keywords.in
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	not input.data.gke.autopilot.enabled
-	some pool
-	input.data.gke.node_pools[pool].config.service_account == "default"
-	msg := sprintf("Node pool %q is configured with default SA", [input.data.gke.node_pools[pool].name])
+	some pool in input.data.gke.node_pools
+	pool.config.service_account == "default"
+	msg := sprintf("Node pool %q is configured with default SA", [pool.name])
 }

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Receive updates about new GKE versions
+# title: Enable GKE upgrade notifications
 # description: GKE cluster should be proactively receive updates about GKE upgrades and GKE versions
 # custom:
 #   group: Management
@@ -26,19 +26,24 @@
 #     Click "Save changes" once done.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-notifications
 #   sccCategory: UPDATE_NOTIFICATIONS_DISABLED
-
+#   dataSource: gke
 package gke.policy.cluster_receive_updates
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
   not input.notification_config.pubsub.enabled 
-  msg := "Pub/Sub notifications are not enabled"
-} {
+  msg := "Cluster is not configured with upgrade notifications"
+}
+
+violation contains msg if {
   not input.notification_config.pubsub.topic 
-  msg := "Pub/Sub topic is not configured"
+  msg := "Cluster is not configured with upgrade notifications topic"
 }

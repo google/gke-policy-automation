@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Use node pool autoscaling
+# title: Enable node pool auto-scaling
 # description: GKE node pools should have autoscaling configured to proper resize nodes according to traffic
 # custom:
 #   group: Scalability
@@ -26,16 +26,21 @@
 #     fields. Slick "Save" button once done.
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-autoscaler
 #   sccCategory: NODEPOOL_AUTOSCALING_DISABLED
-
+#   dataSource: gke
 package gke.policy.node_pool_autoscaling
 
-default valid = false
+import future.keywords.if
+import future.keywords.in
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
-  not input.node_pools[pool].autoscaling.enabled
-  msg := sprintf("Node pool %q does not have autoscaling configured.", [input.node_pools[pool].name])
+violation contains msg if {
+  some pool in input.node_pools
+  not pool.autoscaling.enabled
+  msg := sprintf("Node pool %q is not configured with autoscaling", [pool.name])
 }

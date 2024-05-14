@@ -25,18 +25,20 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/quotas
 #   sccCategory: NODES_PER_POOL_ZONE_LIMIT
 #   dataSource: monitoring, gke
-
 package gke.scalability.nodes_per_pool_zone
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 default limit := 1000
 default threshold := 80
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	warn_limit := round(limit * threshold * 0.01)
 	some nodepool, zone
 	not input.data.gke.autopilot.enabled

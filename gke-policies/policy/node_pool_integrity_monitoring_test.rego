@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.node_pool_integrity_monitoring
+package gke.policy.node_pool_integrity_monitoring_test
 
-test_empty_shielded_instance_config {
-    not valid with input as {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{}}}]}
+import future.keywords.if
+import data.gke.policy.node_pool_integrity_monitoring
+
+test_empty_shielded_instance_config if {
+    not node_pool_integrity_monitoring.valid with input as {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{}}}]}
 }
 
-test_disabled_integrity_monitoring {
-    not valid with input as {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{"enable_integrity_monitoring": false}}}]}
+test_disabled_integrity_monitoring if {
+    not node_pool_integrity_monitoring.valid with input as {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{"enable_integrity_monitoring": false}}}]}
 }
 
-test_enabled_integrity_monitoring {
-    valid with input as {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{"enable_integrity_monitoring": true}}}]}
+test_enabled_integrity_monitoring if {
+    node_pool_integrity_monitoring.valid with input as {"name": "cluster", "node_pools": [{"name": "default-pool", "config": {"machine_type": "e2-medium", "shielded_instance_config":{"enable_integrity_monitoring": true}}}]}
 }

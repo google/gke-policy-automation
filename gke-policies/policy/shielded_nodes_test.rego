@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.shielded_nodes
+package gke.policy.shielded_nodes_test
 
-test_enabled_shielded_nodes {
-	valid with input as {"name": "test-cluster", "shielded_nodes": { "enabled": true }}
+import future.keywords.if
+import data.gke.policy.shielded_nodes
+
+test_enabled_shielded_nodes if {
+	shielded_nodes.valid with input as {"name": "test-cluster", "shielded_nodes": { "enabled": true }}
 }
 
-test_disabled_shielded_nodes {
-	not valid with input as {"name": "test-cluster", "shielded_nodes": {}}
+test_disabled_shielded_nodes if {
+	not shielded_nodes.valid with input as {"name": "test-cluster", "shielded_nodes": {}}
 }

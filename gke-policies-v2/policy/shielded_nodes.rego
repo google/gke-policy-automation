@@ -28,16 +28,18 @@
 #     version: "1.4"
 #     id: "5.5.5"
 #   dataSource: gke
-
 package gke.policy.shielded_nodes
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	not input.data.gke.shielded_nodes.enabled = true
 	msg := "Cluster is not configured with shielded nodes"
 }

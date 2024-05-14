@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.networkConfig
+package gke.policy.networkConfig_test
 
-test_enabled_intranode_visibility {
-	valid with input as {"name": "test-cluster", "networkConfig": { "enableIntraNodeVisibility": true }}
+import future.keywords.if
+import data.gke.policy.networkConfig
+
+test_enabled_intranode_visibility if {
+	networkConfig.valid with input as {"name": "test-cluster", "networkConfig": { "enableIntraNodeVisibility": true }}
 }
 
-test_disabled_intranode_visibility {
-	not valid with input as {"name": "test-cluster", "networkConfig": { "enableIntraNodeVisibility": false }}
+test_disabled_intranode_visibility if {
+	not networkConfig.valid with input as {"name": "test-cluster", "networkConfig": { "enableIntraNodeVisibility": false }}
 }

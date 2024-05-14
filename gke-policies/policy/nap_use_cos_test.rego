@@ -12,20 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.nap_use_cos
+package gke.policy.nap_use_cos_test
 
-test_cluster_not_enabled_nap {
-    valid with input as {"name": "cluster-without-nap", "autoscaling": {"enable_node_autoprovisioning": false}}
+import future.keywords.if
+import data.gke.policy.nap_use_cos
+
+test_cluster_not_enabled_nap if {
+    nap_use_cos.valid with input as {"name": "cluster-without-nap", "autoscaling": {"enable_node_autoprovisioning": false}}
 }
 
-test_cluster_enabled_nap_without_cos {
-    not valid with input as {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": {"image_type": "ANOTHER"}}}
+test_cluster_enabled_nap_without_cos if {
+    not nap_use_cos.valid with input as {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": {"image_type": "ANOTHER"}}}
 }
 
-test_cluster_enabled_nap_with_cos_containerd {
-    valid with input as {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": {"image_type": "COS_CONTAINERD"}} }
+test_cluster_enabled_nap_with_cos_containerd if {
+    nap_use_cos.valid with input as {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": {"image_type": "COS_CONTAINERD"}} }
 }
 
-test_cluster_enabled_nap_with_cos {
-    valid with input as {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": {"image_type": "COS"}} }
+test_cluster_enabled_nap_with_cos if {
+    nap_use_cos.valid with input as {"name": "cluster-with-nap", "autoscaling": {"enable_node_autoprovisioning": true, "autoprovisioning_node_pool_defaults": {"image_type": "COS"}} }
 }

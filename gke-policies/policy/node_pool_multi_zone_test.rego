@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.node_pool_multi_zone
+package gke.policy.node_pool_multi_zone_test
 
-test_node_pool_one_zone {
-    not valid with input as {"name": "cluster", "node_pools": [{"name": "default", "locations": ["us-central1-a"]}]}
+import future.keywords.if
+import data.gke.policy.node_pool_multi_zone
+
+test_node_pool_one_zone if {
+    not node_pool_multi_zone.valid with input as {"name": "cluster", "node_pools": [{"name": "default", "locations": ["us-central1-a"]}]}
 }
 
-test_node_pool_two_zones {
-    valid with input as {"name": "cluster", "node_pools": [{"name": "default", "locations": ["us-central1-a", "us-central1-b"]}]}
+test_node_pool_two_zones if {
+    node_pool_multi_zone.valid with input as {"name": "cluster", "node_pools": [{"name": "default", "locations": ["us-central1-a", "us-central1-b"]}]}
 }
 
-test_node_pool_three_zones {
-    valid with input as {"name": "cluster", "node_pools": [{"name": "default", "locations": ["us-central1-a", "us-central1-b", "us-central1-c"]}]}
+test_node_pool_three_zones if {
+    node_pool_multi_zone.valid with input as {"name": "cluster", "node_pools": [{"name": "default", "locations": ["us-central1-a", "us-central1-b", "us-central1-c"]}]}
 }

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE intranode visibility
+# title: Enable GKE intranode visibility
 # description: GKE cluster should have intranode visibility enabled
 # custom:
 #   group: Security
@@ -28,16 +28,18 @@
 #     version: "1.4"
 #     id: "5.6.1"
 #   dataSource: gke
-
 package gke.policy.networkConfig
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	not input.networkConfig.enableIntraNodeVisibility = true
-	msg := "The GKE cluster does not have Intranode Visibility enabled"
+	msg := "Cluster is not configured with Intranode Visibility"
 }

@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.cluster_release_channels
+package gke.policy.cluster_release_channels_test
 
-test_cluster_not_enrolled_to_release_channels {
-    not valid with input as {"data": {"gke": {"name": "cluster-not-repairing", "release_channel": {}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}}}
+import future.keywords.if
+import data.gke.policy.cluster_release_channels
+
+test_cluster_not_enrolled_to_release_channels if {
+    not cluster_release_channels.valid with input as {"data": {"gke": {"name": "cluster-not-repairing", "release_channel": {}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}}}
 }
 
-test_cluster_enrolled_to_release_channels {
-    valid with input as {"data": {"gke": {"name": "cluster-not-repairing", "release_channel": {"channel": 2 }, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}}}
+test_cluster_enrolled_to_release_channels if {
+    cluster_release_channels.valid with input as {"data": {"gke": {"name": "cluster-not-repairing", "release_channel": {"channel": 2 }, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true }}]}}}
 }

@@ -24,18 +24,20 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/horizontalpodautoscaler#scalability
 #   sccCategory: HPAS_OPTIMAL_LIMIT
 #   dataSource: monitoring
-
 package gke.scalability.hpas
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 default limit := 300
 default threshold := 80
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	warn_limit := round(limit * threshold * 0.01)
 	hpas := input.data.monitoring.hpas.scalar
 	hpas > warn_limit

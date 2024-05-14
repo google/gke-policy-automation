@@ -32,21 +32,23 @@
 #     version: "1.4"
 #     id: "5.7.1"
 #   dataSource: gke
-
 package gke.policy.logging_and_monitoring
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	not input.data.gke.logging_config.component_config.enable_components
 	msg := "Cluster is not configured with Cloud Logging"
 }
 
-violation[msg] {
+violation contains msg if {
 	not input.data.gke.monitoring_config.component_config.enable_components
 	msg := "Cluster is not configured with Cloud Monitoring"
 }

@@ -12,24 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.node_pool_autoscaling
+package gke.policy.node_pool_autoscaling_test
 
-test_node_pool_autoscaling_enabled {
-    valid with input as {"name": "cluster", "node_pools": [{"name": "default", "autoscaling": {"enabled": true}}]}
+import future.keywords.if
+import data.gke.policy.node_pool_autoscaling
+
+test_node_pool_autoscaling_enabled if {
+    node_pool_autoscaling.valid with input as {"name": "cluster", "node_pools": [{"name": "default", "autoscaling": {"enabled": true}}]}
 }
 
-test_node_pool_autoscaling_disabled {
-    not valid with input as {"name": "cluster", "node_pools": [{"name": "default", "autoscaling": {"enabled": false}}]}
+test_node_pool_autoscaling_disabled if {
+    not node_pool_autoscaling.valid with input as {"name": "cluster", "node_pools": [{"name": "default", "autoscaling": {"enabled": false}}]}
 }
 
-test_multiple_node_pool_autoscaling_but_only_one_enabled {
-    not valid with input as {"name": "cluster", "node_pools": [{"name": "default", "autoscaling": {"enabled": true}}, {"name": "custom", "autoscaling": {"enabled": false}}]}
+test_multiple_node_pool_autoscaling_but_only_one_enabled if {
+    not node_pool_autoscaling.valid with input as {"name": "cluster", "node_pools": [{"name": "default", "autoscaling": {"enabled": true}}, {"name": "custom", "autoscaling": {"enabled": false}}]}
 }
 
-test_multiple_node_pool_autoscaling_enabled {
-    valid with input as {"name": "cluster", "node_pools": [{"name": "default", "autoscaling": {"enabled": true}}, {"name": "custom", "autoscaling": {"enabled": true}}]}
+test_multiple_node_pool_autoscaling_enabled if {
+    node_pool_autoscaling.valid with input as {"name": "cluster", "node_pools": [{"name": "default", "autoscaling": {"enabled": true}}, {"name": "custom", "autoscaling": {"enabled": true}}]}
 }
 
-test_node_pool_without_autoscaling_field {
-    not valid with input as {"name": "cluster", "node_pools": [{"name": "default"}]}
+test_node_pool_without_autoscaling_field if {
+    not node_pool_autoscaling.valid with input as {"name": "cluster", "node_pools": [{"name": "default"}]}
 }

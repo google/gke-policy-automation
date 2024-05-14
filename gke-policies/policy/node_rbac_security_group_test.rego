@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.rbac_security_group_enabled
+package gke.policy.rbac_security_group_enabled_test
 
-test_rbac_group_enabled {
-    valid with input as {"name": "cluster1", "authenticator_groups_config": {"enabled": true}}
+import future.keywords.if
+import data.gke.policy.rbac_security_group_enabled
+
+test_rbac_group_enabled if {
+    rbac_security_group_enabled.valid with input as {"name": "cluster1", "authenticator_groups_config": {"enabled": true}}
 }
 
-test_rbac_group_disabled {
-    not valid with input as {"name": "cluster1", "authenticator_groups_config": {"enabled": false}}
+test_rbac_group_disabled if {
+    not rbac_security_group_enabled.valid with input as {"name": "cluster1", "authenticator_groups_config": {"enabled": false}}
 }
 
-test_rbac_group_without_authenticator_group {
-    not valid with input as {"name": "cluster1"}
+test_rbac_group_without_authenticator_group if {
+    not rbac_security_group_enabled.valid with input as {"name": "cluster1"}
 }

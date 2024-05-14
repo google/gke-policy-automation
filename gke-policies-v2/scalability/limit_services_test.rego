@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.scalability.services
+package gke.scalability.services_test
 
-test_services_above_warn_limit {
-	not valid with input as {"data": {"monitoring": {"services": { "name": "services", "scalar": 8840}}}}
+import future.keywords.if
+import data.gke.scalability.services
+
+test_services_above_warn_limit if {
+	not services.valid with input as {"data": {"monitoring": {"services": { "name": "services", "scalar": 8840}}}}
 }
 
-test_services_below_warn_limit {
-	valid with input as {"data": {"monitoring": {"services": { "name": "services", "scalar": 6400}}}}
+test_services_below_warn_limit if {
+	services.valid with input as {"data": {"monitoring": {"services": { "name": "services", "scalar": 6400}}}}
 }
 
 

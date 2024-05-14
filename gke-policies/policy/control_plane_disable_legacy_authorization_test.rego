@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.disable_legacy_authorization
+package gke.policy.disable_legacy_authorization_test
 
-test_enabled_legacy_authorization {
-	not valid with input as {"name": "cluster-1", "legacy_abac": {"enabled": true}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true}}]}
+import future.keywords.if
+import data.gke.policy.disable_legacy_authorization
+
+test_enabled_legacy_authorization if {
+	not disable_legacy_authorization.valid with input as {"name": "cluster-1", "legacy_abac": {"enabled": true}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true}}]}
 }
 
-test_disabled_legacy_authorization {
-	valid with input as {"name": "cluster-1", "legacy_abac": {}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true}}]}
+test_disabled_legacy_authorization if {
+	disable_legacy_authorization.valid with input as {"name": "cluster-1", "legacy_abac": {}, "node_pools": [{"name": "default", "management": {"auto_repair": true, "auto_upgrade": true}}]}
 }

@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.autopilot
+package gke.policy.autopilot_test
 
-test_autopilot_mode_enabled {
-	valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": true}, "autopilot": {"enabled": true}}
+import future.keywords.if
+import data.gke.policy.autopilot
+
+test_autopilot_mode_enabled if {
+	autopilot.valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": true}, "autopilot": {"enabled": true}}
 }
 
-test_autopilot_mode_disabled {
-	not valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": false}, "autopilot": {}}
+test_autopilot_mode_disabled if {
+	not autopilot.valid with input as {"name": "test-cluster", "private_cluster_config": {"enable_private_nodes": false}, "autopilot": {}}
 }

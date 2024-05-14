@@ -30,18 +30,20 @@
 #     version: "1.4"
 #     id: "5.5.1"
 #   dataSource: gke
-
 package gke.policy.node_pool_use_cos
+
+import future.keywords.if
+import future.keywords.contains
 
 import future.keywords.in
 
 default valid := false
 
-valid {
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
   some pool
   not lower(input.data.gke.node_pools[pool].config.image_type) in {"cos", "cos_containerd"}
   not startswith(lower(input.data.gke.node_pools[pool].config.image_type), "windows")

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE private cluster
+# title: Use private nodes
 # description: GKE cluster should be private to ensure network isolation
 # custom:
 #   group: Security
@@ -26,16 +26,19 @@
 #   cis:
 #     version: "1.4"
 #     id: "5.6.5"
-
+#   dataSource: gke
 package gke.policy.private_cluster
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
   not input.private_cluster_config.enable_private_nodes
-  msg := "GKE cluster has not enabled private nodes"
+  msg := "Cluster is not configured with private nodes"
 }

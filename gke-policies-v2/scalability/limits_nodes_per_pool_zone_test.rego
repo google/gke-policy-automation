@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.scalability.nodes_per_pool_zone
+package gke.scalability.nodes_per_pool_zone_test
 
-test_nodes_per_pool_zone_above_warn_limit {
-	not valid with input as {"data": {"monitoring": {"nodes_per_pool_zone": { "name": "nodes_per_pool_zone", "vector": {"default-pool": {"europe-central2-a": 642, "europe-central2-b": 734,"europe-central2-a": 821}}}}}}
+import future.keywords.if
+import data.gke.scalability.nodes_per_pool_zone
+
+test_nodes_per_pool_zone_above_warn_limit if {
+	not nodes_per_pool_zone.valid with input as {"data": {"monitoring": {"nodes_per_pool_zone": { "name": "nodes_per_pool_zone", "vector": {"default-pool": {"europe-central2-a": 642, "europe-central2-b": 734,"europe-central2-a": 821}}}}}}
 }
 
-test_nodes_per_pool_zone_below_warn_limit {
-    valid with input as {"data": {"monitoring": {"nodes_per_pool_zone": { "name": "nodes_per_pool_zone", "vector": {"default-pool": {"europe-central2-a": 642, "europe-central2-b": 734,"europe-central2-a": 690}}}}}}
+test_nodes_per_pool_zone_below_warn_limit if {
+    nodes_per_pool_zone.valid with input as {"data": {"monitoring": {"nodes_per_pool_zone": { "name": "nodes_per_pool_zone", "vector": {"default-pool": {"europe-central2-a": 642, "europe-central2-b": 734,"europe-central2-a": 690}}}}}}
 }
 
-test_nodes_per_pool_zone_autopilot {
-	valid with input as {"data": {"monitoring": {"nodes_per_pool_zone": { "name": "nodes_per_pool_zone", "vector": {"default-pool": {"europe-central2-a": 642, "europe-central2-b": 734,"europe-central2-a": 821}}}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": true}}}}
+test_nodes_per_pool_zone_autopilot if {
+	nodes_per_pool_zone.valid with input as {"data": {"monitoring": {"nodes_per_pool_zone": { "name": "nodes_per_pool_zone", "vector": {"default-pool": {"europe-central2-a": 642, "europe-central2-b": 734,"europe-central2-a": 821}}}}, "gke": {"name": "test-cluster", "autopilot": {"enabled": true}}}}
 }

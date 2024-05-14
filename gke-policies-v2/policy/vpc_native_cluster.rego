@@ -28,22 +28,25 @@
 #     version: "1.4"
 #     id: "5.6.2"
 #   dataSource: gke
-
 package gke.policy.vpc_native_cluster
+
+import future.keywords.if
+import future.keywords.in
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
-  some pool
-  not input.data.gke.node_pools[pool].network_config.pod_ipv4_cidr_block
-  msg := sprintf("Nodepool %q is not configured with use VPC-native routing", [input.data.gke.node_pools[pool].name])
+violation contains msg if {
+  some pool in input.data.gke.node_pools
+  not pool.network_config.pod_ipv4_cidr_block
+  msg := sprintf("Nodepool %q is not configured with use VPC-native routing", [pool.name])
 }
 
-violation[msg] {
+violation contains msg if {
   not input.data.gke.ip_allocation_policy.use_ip_aliases
   msg := "Cluster is not configured with VPC-native routing"
 }

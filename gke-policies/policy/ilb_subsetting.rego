@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE L4 ILB Subsetting
+# title: Enable GKE L4 ILB Subsetting
 # description: GKE cluster should use GKE L4 ILB Subsetting if nodes > 250
 # custom:
 #   group: Scalability
@@ -24,19 +24,20 @@
 #     Select the "Enable subsetting for L4 internal load balancers" checkbox and click "Save changes".
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balancing#subsetting
 #   sccCategory: ILB_SUBSETTING_DISABLED
-
+#   dataSource: gke
 package gke.policy.enable_ilb_subsetting
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	input.current_node_count > 250
     not input.network_config.enable_l4ilb_subsetting = true
-
-	msg := sprintf("The GKE cluster has %v nodes but is not configured to use L4 ILB Subsetting", [input.current_node_count])
-
+	msg := sprintf("Cluster has %v nodes and is not configured with L4 ILB Subsetting", [input.current_node_count])
 }

@@ -12,22 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.rule.cluster.location
+package gke.rule.cluster.location_test
 
-test_regional {
-    location := "europe-central2"
-    regional(location)
-    not zonal(location)
+import future.keywords.if
+import data.gke.rule.cluster.location
+
+test_regional if {
+    loc := "europe-central2"
+    location.regional(loc)
+    not location.zonal(loc)
 }
 
-test_zonal {
-    location := "europe-central2-a"
-    zonal(location)
-    not regional(location)
+test_zonal if {
+    loc := "europe-central2-a"
+    location.zonal(loc)
+    not location.regional(loc)
 }
 
-test_not_regional_nor_zonal {
-    location := "test"
-    not regional(location)
-    not zonal(location)
+test_not_regional_nor_zonal if {
+    loc := "test"
+    not location.regional(loc)
+    not location.zonal(loc)
 }

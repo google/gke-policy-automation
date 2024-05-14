@@ -29,21 +29,23 @@
 #     version: "1.4"
 #     id: "5.8.2"
 #   dataSource: gke
-
 package gke.policy.control_plane_certificate_auth
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	input.data.gke.master_auth.client_certificate
 	msg := "Cluster authentication is configured with a client certificate"
 }
 
-violation[msg] {
+violation contains msg if {
 	input.data.gke.master_auth.client_key
 	msg := "Cluster authentication is configured with a client key"
 }

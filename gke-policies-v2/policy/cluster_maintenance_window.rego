@@ -27,16 +27,18 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/docs/concepts/maintenance-windows-and-exclusions
 #   sccCategory: MAINTENANCE_WINDOWS_DISABLED
 #   dataSource: gke
-
 package gke.policy.cluster_maintenance_window
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 
-valid {
+valid if {
   count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
   not input.data.gke.maintenance_policy.window.Policy
   msg := "GKE cluster is not configured with maintenance window"
 }

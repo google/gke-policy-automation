@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package gke.policy.node_pool_cmek
+package gke.policy.node_pool_cmek_test
 
-test_cluster_node_pool_with_cmek {
-    valid with input as {
+import future.keywords.if
+import data.gke.policy.node_pool_cmek
+
+test_cluster_node_pool_with_cmek if {
+    node_pool_cmek.valid with input as {
         "name": "cluster-test", 
         "node_pools": [
             {
@@ -28,8 +31,8 @@ test_cluster_node_pool_with_cmek {
     }
 }
 
-test_cluster_node_pool_without_cmek {
-    not valid with input as {
+test_cluster_node_pool_without_cmek if {
+    not node_pool_cmek.valid with input as {
         "name": "cluster-test", 
         "node_pools": [
             {

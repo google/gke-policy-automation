@@ -25,17 +25,19 @@
 #   externalURI: https://cloud.google.com/kubernetes-engine/quotas
 #   sccCategory: PODS_PER_NODE_LIMIT
 #   dataSource: monitoring, gke
-
 package gke.scalability.pods_per_node
+
+import future.keywords.if
+import future.keywords.contains
 
 default valid := false
 default threshold := 80
 
-valid {
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	some nodepool, node
 	pods_cnt := input.data.monitoring.pods_per_node.vector[nodepool][node]
 	pooldata := [object | object := input.data.gke.node_pools[_]; object.name == nodepool]

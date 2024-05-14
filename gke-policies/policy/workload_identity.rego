@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: GKE Workload Identity
+# title: Use GKE Workload Identity
 # description: GKE cluster should have Workload Identity enabled
 # custom:
 #   group: Security
@@ -29,16 +29,19 @@
 #   cis:
 #     version: "1.4"
 #     id: "5.2.2"
-
+#   dataSource: gke
 package gke.policy.workload_identity
 
-default valid = false
+import future.keywords.if
+import future.keywords.contains
 
-valid {
+default valid := false
+
+valid if {
 	count(violation) == 0
 }
 
-violation[msg] {
+violation contains msg if {
 	not input.workload_identity_config.workload_pool
-	msg := "The GKE cluster does not have workload identity enabled"
+	msg := "Cluster is not configured with Workload Identity"
 }
