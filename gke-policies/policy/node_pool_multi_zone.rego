@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Ensure redudndancy of the node pools
+# title: Ensure redundancy of the node pools
 # description: GKE node pools should be regional (multiple zones) for maximum nodes availability during zonal outages
 # custom:
 #   group: Availability

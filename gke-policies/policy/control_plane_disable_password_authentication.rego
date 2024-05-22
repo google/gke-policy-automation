@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # METADATA
-# title: Disalbe control plane basic authentication
+# title: Disable control plane basic authentication
 # description: >-
 #   Disable Basic Authentication (basic auth) for API server authentication as it uses static
 #   passwords which need to be rotated.
