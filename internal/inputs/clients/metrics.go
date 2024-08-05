@@ -314,11 +314,11 @@ func getRoundTripper(ts TokenSource, username, password string) (http.RoundTripp
 		if err != nil {
 			return nil, err
 		}
-		return config.NewAuthorizationCredentialsRoundTripper("Bearer", config.Secret(authToken), getDefaultRoundTripper()), nil
+		return config.NewAuthorizationCredentialsRoundTripper("Bearer", config.NewInlineSecret(authToken), getDefaultRoundTripper()), nil
 	}
 	if username != "" && password != "" {
 		secret := b64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
-		return config.NewAuthorizationCredentialsRoundTripper("Basic", config.Secret(secret), getDefaultRoundTripper()), nil
+		return config.NewAuthorizationCredentialsRoundTripper("Basic", config.NewInlineSecret(secret), getDefaultRoundTripper()), nil
 	}
 	return getDefaultRoundTripper(), nil
 }
