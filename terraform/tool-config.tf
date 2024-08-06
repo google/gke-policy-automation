@@ -18,7 +18,7 @@ resource "google_secret_manager_secret" "config" {
   project   = data.google_project.project.project_id
   secret_id = "gke-policy-automation"
   replication {
-    automatic = true
+    auto {}
   }
   depends_on = [
     google_project_service.project
