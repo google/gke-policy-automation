@@ -30,6 +30,12 @@ variable "job_name" {
   description = "Name of a Cloud Run Job for GKE Policy Automation container."
 }
 
+variable "tool_version" {
+  type        = string
+  default     = "latest"
+  description = "The version of a GKE Policy Automation tool to deploy"
+}
+
 variable "config_file_path" {
   default     = "config.yaml"
   type        = string
@@ -40,12 +46,6 @@ variable "cron_interval" {
   default     = "0 1 * * *"
   type        = string
   description = "CRON interval for triggering the GKE Policy Automation job."
-}
-
-variable "run_script" {
-  default     = false
-  type        = bool
-  description = "Indicates whether to run script for populating Artifact Registry and Cloud Run Jobs"
 }
 
 variable "discovery" {
