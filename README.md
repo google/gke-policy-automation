@@ -27,7 +27,7 @@ Note: this is not an officially supported Google product.
 * [Installation](#installation)
 * [Usage](#usage)
   * [Checking best practices](#checking-best-practices)
-  * [Checking scalability limits](#checking-scalability-limits) (**New feature!**)
+  * [Checking scalability limits](#checking-scalability-limits)
   * [Common check options](#common-check-options)
   * [Defining inputs](#defining-inputs)
   * [Defining outputs](#defining-outputs)

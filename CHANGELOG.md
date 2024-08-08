@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.1 (Aug 8, 2024)
+
+IMPROVEMENTS:
+
+* Terraform with cloud run job and remote repo [#214](https://github.com/google/gke-policy-automation/pull/214)
+* Upgraded direct and transitive dependencies [#213](https://github.com/google/gke-policy-automation/pull/213)
+
 ## 1.4.0 (May 6, 2024)
 
 IMPROVEMENTS:
