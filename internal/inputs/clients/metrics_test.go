@@ -62,11 +62,11 @@ func (m *metricsAPIClientMock) Flags(ctx context.Context) (v1.FlagsResult, error
 	return nil, nil
 }
 
-func (m *metricsAPIClientMock) LabelNames(ctx context.Context, matches []string, startTime, endTime time.Time) ([]string, v1.Warnings, error) {
+func (m *metricsAPIClientMock) LabelNames(ctx context.Context, matches []string, startTime, endTime time.Time, opts ...v1.Option) ([]string, v1.Warnings, error) {
 	return nil, nil, nil
 }
 
-func (m *metricsAPIClientMock) LabelValues(ctx context.Context, label string, matches []string, startTime, endTime time.Time) (pmodel.LabelValues, v1.Warnings, error) {
+func (m *metricsAPIClientMock) LabelValues(ctx context.Context, label string, matches []string, startTime, endTime time.Time, opts ...v1.Option) (pmodel.LabelValues, v1.Warnings, error) {
 	return nil, nil, nil
 }
 
@@ -86,7 +86,7 @@ func (m *metricsAPIClientMock) Runtimeinfo(ctx context.Context) (v1.RuntimeinfoR
 	return v1.RuntimeinfoResult{}, nil
 }
 
-func (m *metricsAPIClientMock) Series(ctx context.Context, matches []string, startTime, endTime time.Time) ([]pmodel.LabelSet, v1.Warnings, error) {
+func (m *metricsAPIClientMock) Series(ctx context.Context, matches []string, startTime, endTime time.Time, opts ...v1.Option) ([]pmodel.LabelSet, v1.Warnings, error) {
 	return nil, nil, nil
 }
 
@@ -110,7 +110,7 @@ func (m *metricsAPIClientMock) Metadata(ctx context.Context, metric, limit strin
 	return nil, nil
 }
 
-func (m *metricsAPIClientMock) TSDB(ctx context.Context) (v1.TSDBResult, error) {
+func (m *metricsAPIClientMock) TSDB(ctx context.Context, opts ...v1.Option) (v1.TSDBResult, error) {
 	return v1.TSDBResult{}, nil
 }
 
