@@ -53,15 +53,15 @@ func (p *PolicyAutomationApp) ConfigureSCC(orgNumber string) error {
 		consoleInfoColorF("GKE Policy Automation was not found in SCC, creating it..."),
 	)
 	log.Info("Creating GKE Policy Automation in SCC")
-	*id, err = cli.CreateSource()
+	newId, err := cli.CreateSource()
 	if err != nil {
 		p.out.ErrorPrint("could not create GKE Policy Automation source in SCC", err)
 		return err
 	}
 	p.out.Printf("%s %s\n",
 		outputs.IconMagnifier,
-		consoleInfoColorF("Created GKE Policy Automation in SCC... [%s]", *id),
+		consoleInfoColorF("Created GKE Policy Automation in SCC... [%s]", newId),
 	)
-	log.Infof("Created GKE Policy Automation in SCC: %s", *id)
+	log.Infof("Created GKE Policy Automation in SCC: %s", newId)
 	return nil
 }

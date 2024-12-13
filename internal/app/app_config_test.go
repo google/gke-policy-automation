@@ -55,7 +55,7 @@ func TestLoadCliConfig_file(t *testing.T) {
 func TestLoadCliConfig_with_validation(t *testing.T) {
 	validationErrMsg := "wrong validation"
 	validateFnMock := func(config cfg.Config) error {
-		return fmt.Errorf(validationErrMsg)
+		return fmt.Errorf("%s", validationErrMsg)
 	}
 	cliConfig := &CliConfig{}
 	pa := PolicyAutomationApp{ctx: context.Background()}
