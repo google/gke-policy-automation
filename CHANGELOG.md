@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.4.4 (Dec 13, 2024)
+
+IMPROVEMENTS:
+
+* Upgraded direct and transitive dependencies [#218](https://github.com/google/gke-policy-automation/pull/218)
+[#219](https://github.com/google/gke-policy-automation/pull/219)
+
+## 1.4.3 (Sep 20, 2024)
+
+IMPROVEMENTS:
+
+* Upgraded direct and transitive dependencies [#217](https://github.com/google/gke-policy-automation/pull/217)
+
+## 1.4.2 (Sep 20, 2024)
+
+IMPROVEMENTS:
+
+* Upgraded direct and transitive dependencies [#216](https://github.com/google/gke-policy-automation/pull/216)
+
 ## 1.4.1 (Aug 8, 2024)
 
 IMPROVEMENTS:
