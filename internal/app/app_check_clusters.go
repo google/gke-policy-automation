@@ -152,7 +152,7 @@ func (p *PolicyAutomationApp) evaluateClusters(regoPackageBases []string) error 
 		return errors[0]
 	}
 	val, _ := json.MarshalIndent(clusterData, "", "    ")
-	log.Debugf("[DEBUG] cluster: " + string(val))
+	log.Debugf("[DEBUG] cluster: %s", string(val))
 
 	evalResults := &evaluationResults{}
 	for _, cluster := range clusterData {

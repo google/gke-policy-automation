@@ -80,10 +80,10 @@ func (p *PolicyAutomationApp) loadInputsConfig(config *cfg.Config) error {
 	if err := p.loadGKELocalInputConfig(config.Inputs.GKELocalInput); err != nil {
 		return err
 	}
-	if err := p.loadK8SApiInputConfig(config.Inputs.K8sAPI, config.CredentialsFile); err != nil {
+	if err := p.loadK8SApiInputConfig(config.Inputs.K8sAPI); err != nil {
 		return err
 	}
-	if err := p.loadMetricsAPIInputConfig(config.Inputs.MetricsAPI, config.CredentialsFile); err != nil {
+	if err := p.loadMetricsAPIInputConfig(config.Inputs.MetricsAPI); err != nil {
 		return err
 	}
 	return nil
@@ -114,7 +114,7 @@ func (p *PolicyAutomationApp) loadGKELocalInputConfig(config *cfg.GKELocalInput)
 	return nil
 }
 
-func (p *PolicyAutomationApp) loadK8SApiInputConfig(config *cfg.K8SAPIInput, credentialsFile string) error {
+func (p *PolicyAutomationApp) loadK8SApiInputConfig(config *cfg.K8SAPIInput) error {
 	if config == nil || !config.Enabled {
 		return nil
 	}
@@ -128,7 +128,7 @@ func (p *PolicyAutomationApp) loadK8SApiInputConfig(config *cfg.K8SAPIInput, cre
 	return nil
 }
 
-func (p *PolicyAutomationApp) loadMetricsAPIInputConfig(config *cfg.MetricsAPIInput, credentialsFile string) error {
+func (p *PolicyAutomationApp) loadMetricsAPIInputConfig(config *cfg.MetricsAPIInput) error {
 	if config == nil || !config.Enabled {
 		return nil
 	}

@@ -171,7 +171,7 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 		return errors[0]
 	}
 	val, err := json.MarshalIndent(clusterData, "", "    ")
-	log.Debugf("[DEBUG] cluster: " + string(val))
+	log.Debugf("[DEBUG] cluster: %s", string(val))
 
 	for _, cluster := range clusterData {
 
@@ -184,7 +184,7 @@ func (p *PolicyAutomationApp) ClusterJSONData() error {
 		if err != nil {
 			log.Debugf("could not format cluster details: %s", err)
 		}
-		log.Debugf("cluster: " + string(val))
+		log.Debugf("cluster: %s", string(val))
 
 		for _, dumpCollector := range p.clusterDumpCollectors {
 			log.Debugf("registering cluster data with cluster dump collector %s", reflect.TypeOf(dumpCollector).String())
