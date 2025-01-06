@@ -11,8 +11,8 @@ require (
 	cloud.google.com/go/securitycenter v1.35.2
 	cloud.google.com/go/storage v1.48.0
 	github.com/fatih/color v1.18.0
-	github.com/go-git/go-billy/v5 v5.6.0
-	github.com/go-git/go-git/v5 v5.12.0
+	github.com/go-git/go-billy/v5 v5.6.1
+	github.com/go-git/go-git/v5 v5.13.1
 	github.com/googleapis/gax-go/v2 v2.14.1
 	github.com/open-policy-agent/opa v0.70.0
 	github.com/prometheus/client_golang v1.20.5
