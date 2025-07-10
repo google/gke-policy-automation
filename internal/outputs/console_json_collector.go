@@ -43,7 +43,7 @@ func (p *consoleJSONResultCollector) Close() error {
 		return err
 	}
 
-	p.out.Printf(string(jsonResult))
+	p.out.Printf("%s", jsonResult)
 	return nil
 }
 

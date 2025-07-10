@@ -2,8 +2,8 @@
 
 ## Requirements
 
-* [Go](https://go.dev/doc/install) 1.23 or newer (to build the application)
-* [GNU Make](https://www.gnu.org/software/make) (to build and test easier)
+* [Go](https://go.dev/doc/install) 1.24 or newer (to build the application)
+* GNU Make (to build and test easier)
 * [Open Policy Agent](https://www.openpolicyagent.org/docs/latest/#1-download-opa) (to test REGO policies)
 
 ## Building the application

@@ -60,7 +60,7 @@ func (c *outputClusterDumpCollector) Close() (err error) {
 	if err != nil {
 		return
 	}
-	_, err = c.output.Printf(string(data))
+	_, err = c.output.Printf("%s", data)
 	return
 }
 
