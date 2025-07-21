@@ -21,8 +21,8 @@ import (
 	"testing"
 
 	cfg "github.com/google/gke-policy-automation/internal/config"
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
 )
 
 func TestCompile(t *testing.T) {

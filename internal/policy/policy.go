@@ -23,8 +23,8 @@ import (
 
 	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/log"
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
 )
 
 const regoTestFileSuffix = "_test.rego"

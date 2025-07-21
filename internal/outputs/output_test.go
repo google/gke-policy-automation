@@ -26,7 +26,7 @@ func TestPrintf(t *testing.T) {
 	testString := "some test message"
 	out := Output{w: &buff}
 
-	out.Printf(testString)
+	out.Printf("%s", testString)
 	result := buff.String()
 	if buff.String() != testString {
 		t.Errorf("Printf produced %s: want %s", result, testString)
