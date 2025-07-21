@@ -25,6 +25,8 @@ jobs:
   linting:
     name: Documentation linting
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,6 +49,8 @@ jobs:
   policy-doc:
     name: Policy documentation
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v3
