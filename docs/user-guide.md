@@ -338,16 +338,25 @@ Example:
 ### Excluding policies
 
 Specific policies or policy groups may be excluded during cluster review. Policy exclusion can only
-be configured using a [configuration file](#configuration-file). The below example skips all REGO
-policies in the `Scalability` group as well as the specific policy
-`gke.policy.cluster_binary_authorization`.
+be configured using a [configuration file](#configuration-file). Named policy lists can be defined
+once and referenced from `policyExclusions.policyLists` when the same set of policies should be
+reused across configurations. The below example skips all REGO policies in the `Scalability` group,
+the specific policy `gke.policy.cluster_binary_authorization`, and every policy in the
+`baseline-security` policy list.
 
 ```yaml
+policyLists:
+  - name: baseline-security
+    policies:
+      - gke.policy.private_cluster
+      - gke.policy.workload_identity
 policyExclusions:
   policies:
     - gke.policy.cluster_binary_authorization
   policyGroups:
     - Scalability
+  policyLists:
+    - baseline-security
 ```
 
 ## Inputs
@@ -574,11 +583,18 @@ policies:
     branch: main
     directory: gke-policies
   - local: ./my-policies
+policyLists:
+  - name: baseline-security
+    policies:
+      - gke.policy.private_cluster
+      - gke.policy.workload_identity
 policyExclusions:
   policies:
     - gke.policy.enable_ilb_subsetting
   policyGroups:
     - Scalability
+  policyLists:
+    - baseline-security
 outputs:
   - file: output-file.json
   - pubsub:

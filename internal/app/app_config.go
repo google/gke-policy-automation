@@ -54,6 +54,9 @@ func (p *PolicyAutomationApp) LoadCliConfig(cliConfig *CliConfig, defaultsFn set
 }
 
 func (p *PolicyAutomationApp) LoadConfig(config *cfg.Config) error {
+	if err := cfg.ResolvePolicyExclusions(config); err != nil {
+		return err
+	}
 	p.config = config
 	if p.config.JSONOutput {
 		p.collectors = []outputs.ValidationResultCollector{outputs.NewConsoleJSONResultCollector(outputs.NewStdOutOutput())}

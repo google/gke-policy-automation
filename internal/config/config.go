@@ -49,6 +49,7 @@ type Config struct {
 	Outputs          []ConfigOutput         `yaml:"outputs"`
 	ClusterDiscovery ClusterDiscovery       `yaml:"clusterDiscovery"`
 	PolicyExclusions ConfigPolicyExclusions `yaml:"policyExclusions"`
+	PolicyLists      []ConfigPolicyList     `yaml:"policyLists"`
 	Metrics          []ConfigMetric         `yaml:"metrics"`
 	K8SApiConfig     K8SApiConfig           `yaml:"kubernetesAPIClient"`
 }
@@ -141,6 +142,13 @@ type ClusterDiscovery struct {
 type ConfigPolicyExclusions struct {
 	Policies     []string `yaml:"policies"`
 	PolicyGroups []string `yaml:"policyGroups"`
+	PolicyLists  []string `yaml:"policyLists"`
+}
+
+// ConfigPolicyList defines a named, reusable set of policy package names.
+type ConfigPolicyList struct {
+	Name     string   `yaml:"name"`
+	Policies []string `yaml:"policies"`
 }
 
 type K8SApiConfig struct {
@@ -180,6 +188,7 @@ func ValidateClusterCheckConfig(config Config) error {
 	var errors = make([]error, 0)
 	errors = append(errors, validateClustersConfig(config)...)
 	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
+	errors = append(errors, validatePolicyListsConfig(config)...)
 	errors = append(errors, validateOutputConfig(config.Outputs)...)
 	if config.Inputs.GKEApi == nil && config.Inputs.GKELocalInput == nil {
 		errors = append(errors, fmt.Errorf("either gkeAPI input or gkeLocalInput has to be declared"))
@@ -205,6 +214,7 @@ func ValidateClusterCheckConfig(config Config) error {
 
 func ValidatePolicyCheckConfig(config Config) error {
 	errors := validatePolicySourceConfig(config.Policies)
+	errors = append(errors, validatePolicyListsConfig(config)...)
 	if len(errors) > 0 {
 		for _, err := range errors {
 			log.Warnf("configuration validation error: %s", err)
@@ -217,6 +227,7 @@ func ValidatePolicyCheckConfig(config Config) error {
 func ValidateGeneratePolicyDocsConfig(config Config) error {
 	var errors = make([]error, 0)
 	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
+	errors = append(errors, validatePolicyListsConfig(config)...)
 	if len(config.Outputs) != 1 {
 		errors = append(errors, fmt.Errorf("specify output file"))
 	}
@@ -233,6 +244,7 @@ func ValidateScalabilityCheckConfig(config Config) error {
 	var errors = make([]error, 0)
 	errors = append(errors, validateClustersConfig(config)...)
 	errors = append(errors, validatePolicySourceConfig(config.Policies)...)
+	errors = append(errors, validatePolicyListsConfig(config)...)
 	errors = append(errors, validateOutputConfig(config.Outputs)...)
 	if config.Inputs.MetricsAPI == nil || !config.Inputs.MetricsAPI.Enabled {
 		errors = append(errors, fmt.Errorf("metricsAPI input has to be enabled"))
@@ -320,6 +332,87 @@ func validatePolicySourceConfig(policies []ConfigPolicy) []error {
 		}
 	}
 	return errors
+}
+
+func validatePolicyListsConfig(config Config) []error {
+	var errors = make([]error, 0)
+	policyListsByName := make(map[string]ConfigPolicyList, len(config.PolicyLists))
+	for i, policyList := range config.PolicyLists {
+		if policyList.Name == "" {
+			errors = append(errors, fmt.Errorf("policy list [%v]: name is not set", i))
+			continue
+		}
+		if _, ok := policyListsByName[policyList.Name]; ok {
+			errors = append(errors, fmt.Errorf("policy list [%v]: duplicate name %q", i, policyList.Name))
+			continue
+		}
+		if len(policyList.Policies) < 1 {
+			errors = append(errors, fmt.Errorf("policy list [%v]: policies are not set", i))
+			continue
+		}
+		for j, policy := range policyList.Policies {
+			if policy == "" {
+				errors = append(errors, fmt.Errorf("policy list [%v]: policy [%v] is not set", i, j))
+			}
+		}
+		policyListsByName[policyList.Name] = policyList
+	}
+	for i, name := range config.PolicyExclusions.PolicyLists {
+		if name == "" {
+			errors = append(errors, fmt.Errorf("policy exclusion list reference [%v]: name is not set", i))
+			continue
+		}
+		if _, ok := policyListsByName[name]; !ok {
+			errors = append(errors, fmt.Errorf("policy exclusion list reference [%v]: policy list %q is not defined", i, name))
+		}
+	}
+	return errors
+}
+
+// ResolvePolicyExclusions expands named policy lists into explicit policy exclusions.
+func ResolvePolicyExclusions(config *Config) error {
+	if config == nil {
+		return nil
+	}
+	if errors := validatePolicyListsConfig(*config); len(errors) > 0 {
+		for _, err := range errors {
+			log.Warnf("configuration validation error: %s", err)
+		}
+		return errors[0]
+	}
+	if len(config.PolicyExclusions.PolicyLists) < 1 {
+		return nil
+	}
+	policyListsByName := make(map[string]ConfigPolicyList, len(config.PolicyLists))
+	for _, policyList := range config.PolicyLists {
+		policyListsByName[policyList.Name] = policyList
+	}
+	policies := appendUniqueStrings(nil, config.PolicyExclusions.Policies)
+	for _, name := range config.PolicyExclusions.PolicyLists {
+		policies = appendUniqueStrings(policies, policyListsByName[name].Policies)
+	}
+	config.PolicyExclusions.Policies = policies
+	return nil
+}
+
+func appendUniqueStrings(dst []string, values []string) []string {
+	seen := make(map[string]bool, len(dst)+len(values))
+	result := make([]string, 0, len(dst)+len(values))
+	for _, value := range dst {
+		if seen[value] {
+			continue
+		}
+		seen[value] = true
+		result = append(result, value)
+	}
+	for _, value := range values {
+		if seen[value] {
+			continue
+		}
+		seen[value] = true
+		result = append(result, value)
+	}
+	return result
 }
 
 func validateOutputConfig(outputs []ConfigOutput) []error {

@@ -33,6 +33,8 @@ func TestReadConfig(t *testing.T) {
 	policy2Repository := "https://github.com/test/test"
 	policy2Branch := "test"
 	policy2Directory := "policies"
+	policyListName := "baseline"
+	policyListPolicy := "gke.policy.private_cluster"
 	clusterDiscoveryEnabled := true
 	clusterDiscoveryOrg := "123456789"
 	clusterDiscoveryProject := "myProject"
@@ -49,6 +51,10 @@ func TestReadConfig(t *testing.T) {
 		"- repository: %s\n"+
 		"  branch: %s\n"+
 		"  directory: %s\n"+
+		"policyLists:\n"+
+		"- name: %s\n"+
+		"  policies:\n"+
+		"  - %s\n"+
 		"clusterDiscovery:\n"+
 		"  enabled: %v\n"+
 		"  organization: %s\n"+
@@ -59,6 +65,7 @@ func TestReadConfig(t *testing.T) {
 		silent, credsFile,
 		cluster1Name, cluster1Location, cluster1Project, cluster2Id,
 		policy1Directory, policy2Repository, policy2Branch, policy2Directory,
+		policyListName, policyListPolicy,
 		clusterDiscoveryEnabled, clusterDiscoveryOrg, clusterDiscoveryProject, clusterDiscoveryFolder,
 	)
 	readFn := func(path string) ([]byte, error) {
@@ -107,6 +114,18 @@ func TestReadConfig(t *testing.T) {
 	}
 	if config.Policies[1].GitDirectory != policy2Directory {
 		t.Errorf("config policies[1] gitDirectory = %v; want %v", config.Policies[1].GitDirectory, policy2Directory)
+	}
+	if len(config.PolicyLists) != 1 {
+		t.Fatalf("config policy lists length = %v; want %v", len(config.PolicyLists), 1)
+	}
+	if config.PolicyLists[0].Name != policyListName {
+		t.Errorf("config policyLists[0] name = %v; want %v", config.PolicyLists[0].Name, policyListName)
+	}
+	if len(config.PolicyLists[0].Policies) != 1 {
+		t.Fatalf("config policyLists[0] policies length = %v; want %v", len(config.PolicyLists[0].Policies), 1)
+	}
+	if config.PolicyLists[0].Policies[0] != policyListPolicy {
+		t.Errorf("config policyLists[0] policies[0] = %v; want %v", config.PolicyLists[0].Policies[0], policyListPolicy)
 	}
 	if config.ClusterDiscovery.Enabled != clusterDiscoveryEnabled {
 		t.Errorf("config clusterDiscovery = %v; want %v", config.ClusterDiscovery.Enabled, clusterDiscoveryEnabled)
@@ -221,6 +240,12 @@ func TestValidatePolicyCheckConfig(t *testing.T) {
 			{LocalDirectory: "./directory"},
 			{GitRepository: "repo", GitBranch: "main", GitDirectory: "./dir"},
 		},
+		PolicyExclusions: ConfigPolicyExclusions{
+			PolicyLists: []string{"baseline"},
+		},
+		PolicyLists: []ConfigPolicyList{
+			{Name: "baseline", Policies: []string{"gke.policy.cluster_binary_authorization"}},
+		},
 	}
 	if err := ValidatePolicyCheckConfig(config); err != nil {
 		t.Errorf("expected no error, got: %v", err)
@@ -239,6 +264,14 @@ func TestValidatePolicyCheckConfig_negative(t *testing.T) {
 			},
 		},
 		{},
+		{
+			Policies: []ConfigPolicy{
+				{LocalDirectory: "./directory"},
+			},
+			PolicyExclusions: ConfigPolicyExclusions{
+				PolicyLists: []string{"missing"},
+			},
+		},
 	}
 
 	for i, config := range badConfigs {
@@ -246,6 +279,78 @@ func TestValidatePolicyCheckConfig_negative(t *testing.T) {
 			t.Errorf("expected error on invalid cluster config [%d]", i)
 		}
 	}
+}
+
+func TestValidatePolicyListsConfig(t *testing.T) {
+	config := Config{
+		PolicyExclusions: ConfigPolicyExclusions{
+			PolicyLists: []string{"baseline", "strict"},
+		},
+		PolicyLists: []ConfigPolicyList{
+			{Name: "baseline", Policies: []string{"gke.policy.cluster_binary_authorization"}},
+			{Name: "strict", Policies: []string{"gke.policy.private_cluster"}},
+		},
+	}
+	if errors := validatePolicyListsConfig(config); len(errors) > 0 {
+		t.Fatalf("expected no error, got: %v", errors)
+	}
+}
+
+func TestValidatePolicyListsConfig_negative(t *testing.T) {
+	inputs := []Config{
+		{
+			PolicyLists: []ConfigPolicyList{{Policies: []string{"gke.policy.private_cluster"}}},
+		},
+		{
+			PolicyLists: []ConfigPolicyList{
+				{Name: "baseline", Policies: []string{"gke.policy.private_cluster"}},
+				{Name: "baseline", Policies: []string{"gke.policy.workload_identity"}},
+			},
+		},
+		{
+			PolicyLists: []ConfigPolicyList{{Name: "empty"}},
+		},
+		{
+			PolicyLists: []ConfigPolicyList{{Name: "empty-policy", Policies: []string{""}}},
+		},
+		{
+			PolicyExclusions: ConfigPolicyExclusions{PolicyLists: []string{""}},
+		},
+		{
+			PolicyExclusions: ConfigPolicyExclusions{PolicyLists: []string{"missing"}},
+			PolicyLists:      []ConfigPolicyList{{Name: "baseline", Policies: []string{"gke.policy.private_cluster"}}},
+		},
+	}
+
+	for i, input := range inputs {
+		if errors := validatePolicyListsConfig(input); len(errors) == 0 {
+			t.Errorf("expected error on invalid policy list config [%d]", i)
+		}
+	}
+}
+
+func TestResolvePolicyExclusions(t *testing.T) {
+	config := &Config{
+		PolicyExclusions: ConfigPolicyExclusions{
+			Policies:    []string{"gke.policy.cluster_binary_authorization", "gke.policy.private_cluster"},
+			PolicyLists: []string{"baseline", "strict"},
+		},
+		PolicyLists: []ConfigPolicyList{
+			{Name: "baseline", Policies: []string{"gke.policy.private_cluster", "gke.policy.workload_identity"}},
+			{Name: "strict", Policies: []string{"gke.policy.secret_encryption"}},
+		},
+	}
+
+	if err := ResolvePolicyExclusions(config); err != nil {
+		t.Fatalf("err = %v; want nil", err)
+	}
+	expected := []string{
+		"gke.policy.cluster_binary_authorization",
+		"gke.policy.private_cluster",
+		"gke.policy.workload_identity",
+		"gke.policy.secret_encryption",
+	}
+	assert.Equal(t, expected, config.PolicyExclusions.Policies)
 }
 
 func TestValidateOutputConfig(t *testing.T) {
