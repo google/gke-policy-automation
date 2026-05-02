@@ -14,33 +14,87 @@
 
 package gke.policy.control_plane_access_test
 
-import future.keywords.if
 import data.gke.policy.control_plane_access
+import future.keywords.if
 
 test_authorized_networks_enabled if {
-    control_plane_access.valid with input as {"name":"test-cluster","master_authorized_networks_config": {
-        "enabled":true,
-        "cidr_blocks":[
-            {"display_name":"Test Block","cidr_block":"192.168.0.0./16"}
-        ]
-    }}
+	control_plane_access.valid with input as {
+		"name": "test-cluster",
+		"master_authorized_networks_config": {
+			"enabled": true,
+			"cidr_blocks": [{
+				"display_name": "Test Block",
+				"cidr_block": "192.168.0.0/16",
+			}],
+		},
+	}
 }
 
-test_authoized_networks_missing if {
-    not control_plane_access.valid with input as {"name":"test-cluster"}
+test_authorized_networks_missing if {
+	not control_plane_access.valid with input as {"name": "test-cluster"}
 }
 
 test_authorized_networks_disabled if {
-    not control_plane_access.valid with input as {"name":"test-cluster","master_authorized_networks_config": {"enabled":false}}
+	not control_plane_access.valid with input as {
+		"name": "test-cluster",
+		"master_authorized_networks_config": {"enabled": false},
+	}
 }
 
 test_authorized_networks_no_cidrs_block if {
-    not control_plane_access.valid with input as {"name":"test-cluster","master_authorized_networks_config": {"enabled":true}}
+	not control_plane_access.valid with input as {
+		"name": "test-cluster",
+		"master_authorized_networks_config": {"enabled": true},
+	}
 }
 
-test_authorized_networks_empty_cidrs_block if { 
-    not control_plane_access.valid with input as {"name":"test-cluster","master_authorized_networks_config": {
-        "enabled":true,
-        "cidr_blocks":[]
-    }}
+test_authorized_networks_empty_cidrs_block if {
+	not control_plane_access.valid with input as {
+		"name": "test-cluster",
+		"master_authorized_networks_config": {
+			"enabled": true,
+			"cidr_blocks": [],
+		},
+	}
+}
+
+test_private_endpoint_only_without_authorized_networks if {
+	control_plane_access.valid with input as {
+		"name": "test-cluster",
+		"private_cluster_config": {"enable_private_endpoint": true},
+	}
+}
+
+test_public_endpoint_disabled_without_authorized_networks if {
+	control_plane_access.valid with input as {
+		"name": "test-cluster",
+		"control_plane_endpoints_config": {"ip_endpoints_config": {"enable_public_endpoint": false}},
+	}
+}
+
+test_ip_endpoints_disabled_without_authorized_networks if {
+	control_plane_access.valid with input as {
+		"name": "test-cluster",
+		"control_plane_endpoints_config": {"ip_endpoints_config": {"enabled": false}},
+	}
+}
+
+test_authorized_networks_enabled_on_control_plane_endpoints_config if {
+	control_plane_access.valid with input as {
+		"name": "test-cluster",
+		"control_plane_endpoints_config": {"ip_endpoints_config": {"authorized_networks_config": {
+			"enabled": true,
+			"cidr_blocks": [{
+				"display_name": "Test Block",
+				"cidr_block": "192.168.0.0/16",
+			}],
+		}}},
+	}
+}
+
+test_authorized_networks_on_control_plane_endpoints_config_no_cidrs_block if {
+	not control_plane_access.valid with input as {
+		"name": "test-cluster",
+		"control_plane_endpoints_config": {"ip_endpoints_config": {"authorized_networks_config": {"enabled": true}}},
+	}
 }

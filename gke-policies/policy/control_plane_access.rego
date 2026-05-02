@@ -32,26 +32,53 @@
 #   dataSource: gke
 package gke.policy.control_plane_access
 
-import future.keywords.if
 import future.keywords.contains
+import future.keywords.if
 
 default valid := false
 
 valid if {
-  count(violation) == 0
+	count(violation) == 0
+}
+
+# Authorized networks only apply when a public control plane endpoint exists.
+public_endpoint_disabled if {
+	input.private_cluster_config.enable_private_endpoint
+}
+
+public_endpoint_disabled if {
+	input.control_plane_endpoints_config.ip_endpoints_config.enabled == false
+}
+
+public_endpoint_disabled if {
+	input.control_plane_endpoints_config.ip_endpoints_config.enable_public_endpoint == false
+}
+
+authorized_networks_enabled if {
+	input.master_authorized_networks_config.enabled
+}
+
+authorized_networks_enabled if {
+	input.control_plane_endpoints_config.ip_endpoints_config.authorized_networks_config.enabled
+}
+
+authorized_networks_cidrs_configured if {
+	count(input.master_authorized_networks_config.cidr_blocks) > 0
+}
+
+authorized_networks_cidrs_configured if {
+	count(input.control_plane_endpoints_config.ip_endpoints_config.authorized_networks_config.cidr_blocks) > 0
 }
 
 violation contains msg if {
-  not input.master_authorized_networks_config.enabled
-  msg := "Cluster is not configured with master authorized networks"
+	not public_endpoint_disabled
+	not authorized_networks_enabled
+	msg := "Cluster is not configured with master authorized networks"
 }
 
 violation contains msg if {
-  not input.master_authorized_networks_config.cidr_blocks
-  msg := "Cluster is not configured with master authorized networks CIDRs"
-}
-
-violation contains msg if {
-  count(input.master_authorized_networks_config.cidr_blocks) < 1
-  msg := "Cluster is not configured with master authorized networks CIDRs"
+	not public_endpoint_disabled
+	authorized_networks_enabled
+	not authorized_networks_cidrs_configured
+	msg := "Cluster is not configured with master authorized networks CIDRs"
 }
