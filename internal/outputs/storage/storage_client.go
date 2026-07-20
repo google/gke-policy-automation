@@ -33,7 +33,7 @@ func NewCloudStorageClient(ctx context.Context) (*CloudStorageClient, error) {
 }
 
 func NewCloudStorageClientWithCredentialsFile(ctx context.Context, credentialsFile string) (*CloudStorageClient, error) {
-	return newCloudStorageClient(ctx, option.WithCredentialsFile(credentialsFile))
+	return newCloudStorageClient(ctx, option.WithAuthCredentialsFile(option.ServiceAccount, credentialsFile))
 }
 
 func newCloudStorageClient(ctx context.Context, opts ...option.ClientOption) (*CloudStorageClient, error) {

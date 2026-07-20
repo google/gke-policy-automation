@@ -22,6 +22,7 @@ import (
 
 	asset "cloud.google.com/go/asset/apiv1"
 	"cloud.google.com/go/asset/apiv1/assetpb"
+	"github.com/google/gke-policy-automation/internal/testutils"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/iterator"
 )
@@ -47,7 +48,7 @@ func (m assetInventorySearchResultIteratorMock) Next() (*assetpb.ResourceSearchR
 }
 
 func TestNewAssetInventoryDiscoveryClient(t *testing.T) {
-	testCredsFile := "test-fixtures/test_credentials.json"
+	testCredsFile := testutils.CreateTempSACredentialsFile(t)
 	client, err := NewDiscoveryClientWithCredentialsFile(context.Background(), testCredsFile)
 	if err != nil {
 		t.Fatalf("err is not nil; want nil; err = %s", err)

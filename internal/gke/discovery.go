@@ -60,7 +60,7 @@ func NewDiscoveryClient(ctx context.Context) (DiscoveryClient, error) {
 }
 
 func NewDiscoveryClientWithCredentialsFile(ctx context.Context, credentialsFile string) (DiscoveryClient, error) {
-	return newAssetInventoryDiscoveryClient(ctx, option.WithCredentialsFile(credentialsFile))
+	return newAssetInventoryDiscoveryClient(ctx, option.WithAuthCredentialsFile(option.ServiceAccount, credentialsFile))
 }
 
 func newAssetInventoryDiscoveryClient(ctx context.Context, opts ...option.ClientOption) (*AssetInventoryDiscoveryClient, error) {

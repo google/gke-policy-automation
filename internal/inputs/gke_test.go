@@ -22,6 +22,7 @@ import (
 
 	"cloud.google.com/go/container/apiv1/containerpb"
 	"github.com/google/gke-policy-automation/internal/gke"
+	"github.com/google/gke-policy-automation/internal/testutils"
 	gax "github.com/googleapis/gax-go/v2"
 )
 
@@ -50,7 +51,7 @@ func (mockClusterManagerClient) Close() error {
 }
 
 func TestNewGKEApiInputWithCredentials(t *testing.T) {
-	testCredsFile := "test-fixtures/test_credentials.json"
+	testCredsFile := testutils.CreateTempSACredentialsFile(t)
 	input, err := NewGKEApiInputWithCredentials(context.Background(), testCredsFile)
 	if err != nil {
 		t.Fatalf("err = %v; want nil", err)

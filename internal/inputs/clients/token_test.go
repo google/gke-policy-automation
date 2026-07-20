@@ -18,6 +18,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/gke-policy-automation/internal/testutils"
 	"golang.org/x/oauth2"
 )
 
@@ -30,7 +31,8 @@ func (m *tsMock) Token() (*oauth2.Token, error) {
 }
 
 func TestNewGoogleTokenSourceWithCredentials(t *testing.T) {
-	ts, err := NewGoogleTokenSourceWithCredentials(context.Background(), "../test-fixtures/test_credentials.json")
+	credsFile := testutils.CreateTempSACredentialsFile(t)
+	ts, err := NewGoogleTokenSourceWithCredentials(context.Background(), credsFile)
 	if err != nil {
 		t.Fatalf("error = %v; want nil", err)
 	}

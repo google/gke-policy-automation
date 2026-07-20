@@ -18,7 +18,7 @@ package pubsub
 import (
 	"context"
 
-	"cloud.google.com/go/pubsub"
+	"cloud.google.com/go/pubsub/v2"
 	"github.com/google/gke-policy-automation/internal/version"
 	"google.golang.org/api/option"
 )
@@ -33,7 +33,7 @@ func NewPubSubClient(ctx context.Context, project string) (*CollectorPubSubClien
 }
 
 func NewPubSubClientWithCredentialsFile(ctx context.Context, project string, credentialsFile string) (*CollectorPubSubClient, error) {
-	return newPubSubClient(ctx, project, option.WithCredentialsFile(credentialsFile))
+	return newPubSubClient(ctx, project, option.WithAuthCredentialsFile(option.ServiceAccount, credentialsFile))
 }
 
 func newPubSubClient(ctx context.Context, project string, opts ...option.ClientOption) (*CollectorPubSubClient, error) {
@@ -51,8 +51,9 @@ func newPubSubClient(ctx context.Context, project string, opts ...option.ClientO
 }
 
 func (c *CollectorPubSubClient) Publish(topicName string, message []byte) (string, error) {
-	topic := c.client.Topic(topicName)
-	pubResult := topic.Publish(c.ctx, &pubsub.Message{
+	publisher := c.client.Publisher(topicName)
+	defer publisher.Stop()
+	pubResult := publisher.Publish(c.ctx, &pubsub.Message{
 		Data: message,
 	})
 	return pubResult.Get(c.ctx)

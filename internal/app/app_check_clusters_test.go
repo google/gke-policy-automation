@@ -22,6 +22,7 @@ import (
 	cfg "github.com/google/gke-policy-automation/internal/config"
 	"github.com/google/gke-policy-automation/internal/gke"
 	"github.com/google/gke-policy-automation/internal/outputs"
+	"github.com/google/gke-policy-automation/internal/testutils"
 )
 
 func TestGetClusters_config(t *testing.T) {
@@ -48,7 +49,7 @@ func TestGetClusters_discovery(t *testing.T) {
 		out: outputs.NewSilentOutput(),
 		ctx: context.Background(),
 		config: &cfg.Config{
-			CredentialsFile: "test-fixtures/test_credentials.json",
+			CredentialsFile: testutils.CreateTempSACredentialsFile(t),
 			ClusterDiscovery: cfg.ClusterDiscovery{
 				Enabled: true,
 			},

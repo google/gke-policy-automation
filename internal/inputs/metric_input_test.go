@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/google/gke-policy-automation/internal/inputs/clients"
+	"github.com/google/gke-policy-automation/internal/testutils"
 )
 
 type metricsClientMock struct {
@@ -45,7 +46,7 @@ func (metricsClientMock) GetMetricsForCluster(queries []clients.MetricQuery, clu
 }
 
 func TestMetricsInputBuilder(t *testing.T) {
-	testCredsFile := "test-fixtures/test_credentials.json"
+	testCredsFile := testutils.CreateTempSACredentialsFile(t)
 	queries := []clients.MetricQuery{
 		{
 			Name:  "numberOfNodes",
@@ -107,7 +108,7 @@ func TestMetricsInputBuilder(t *testing.T) {
 }
 
 func TestMetricsInputBuilder_clusterScopedClient(t *testing.T) {
-	testCredsFile := "test-fixtures/test_credentials.json"
+	testCredsFile := testutils.CreateTempSACredentialsFile(t)
 	queries := []clients.MetricQuery{
 		{
 			Name:  "numberOfNodes",
@@ -218,7 +219,7 @@ func TestMetricsInputClose(t *testing.T) {
 }
 
 func TestCreateTokenSource_credsFile(t *testing.T) {
-	testCredsFile := "test-fixtures/test_credentials.json"
+	testCredsFile := testutils.CreateTempSACredentialsFile(t)
 	_, err := createTokenSource(context.Background(), testCredsFile)
 	if err != nil {
 		t.Fatalf("err = %v; want nil", err)
