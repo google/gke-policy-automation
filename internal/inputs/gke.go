@@ -46,7 +46,7 @@ func NewGKEApiInput(ctx context.Context) (Input, error) {
 }
 
 func NewGKEApiInputWithCredentials(ctx context.Context, credentialsFile string) (Input, error) {
-	opts := []option.ClientOption{option.WithCredentialsFile(credentialsFile)}
+	opts := []option.ClientOption{option.WithAuthCredentialsFile(option.ServiceAccount, credentialsFile)}
 	return newGKEApiInput(ctx, opts)
 }
 

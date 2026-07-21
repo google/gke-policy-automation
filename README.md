@@ -65,7 +65,7 @@ Binaries for Linux, Windows and Mac are available as tarballs in the
 
 ### Source code
 
-Go [v1.23](https://go.dev/doc/install) or newer is required. Check the [development guide](./DEVELOPMENT.md)
+Go [v1.26](https://go.dev/doc/install) or newer is required. Check the [development guide](./DEVELOPMENT.md)
 for more details.
 
 ```sh
@@ -150,7 +150,7 @@ clusters:
 #### Using cluster discovery
 
 Check multiple clusters by discovering them in a selected GCP projects, folders or in the entire organization
-using [Cloud Asset Inventory](https://cloud.google.com/asset-inventory) and configuration file.
+using [Cloud Asset Inventory](https://docs.cloud.google.com/asset-inventory/docs) and configuration file.
 
 ```sh
 ./gke-policy check -c config.yaml

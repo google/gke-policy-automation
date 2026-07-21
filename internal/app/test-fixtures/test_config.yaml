@@ -15,7 +15,6 @@
 silent: true
 jsonOutput: true
 dumpFile: ./dump.json
-credentialsFile: ./test-fixtures/test_credentials.json
 clusters:
   - name: warsaw
     project: my-project

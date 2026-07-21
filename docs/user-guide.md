@@ -218,7 +218,7 @@ clusters:
 
 #### Using cluster discovery
 
-The cluster discovery mechanism is leveraging [Cloud Asset Inventory](https://cloud.google.com/asset-inventory)
+The cluster discovery mechanism is leveraging [Cloud Asset Inventory](https://docs.cloud.google.com/asset-inventory/docs)
 API to find GKE clusters in a given GCP projects, folders or in an entire organization. The cluster
 discovery can be used in place of a fixed list of cluster identifiers.
 

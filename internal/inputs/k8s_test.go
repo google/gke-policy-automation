@@ -24,6 +24,7 @@ import (
 
 	"cloud.google.com/go/container/apiv1/containerpb"
 	"github.com/google/gke-policy-automation/internal/inputs/clients"
+	"github.com/google/gke-policy-automation/internal/testutils"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
@@ -90,7 +91,7 @@ func (k8sClientMock) GetResources(resourceType []*clients.ResourceType, namespac
 }
 
 func TestK8sApiInputBuilder(t *testing.T) {
-	credFile := "test-fixtures/test_credentials.json"
+	credFile := testutils.CreateTempSACredentialsFile(t)
 	apiVersions := []string{"policy/v1", "networking.k8s.io/v1"}
 	maxQPS := 69
 	b := NewK8sAPIInputBuilder(context.Background(), apiVersions).

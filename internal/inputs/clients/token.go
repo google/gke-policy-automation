@@ -51,7 +51,7 @@ func NewGoogleTokenSourceWithCredentials(ctx context.Context, credentialsFile st
 	if err != nil {
 		return nil, err
 	}
-	creds, err := google.CredentialsFromJSONWithParams(ctx, credsB, google.CredentialsParams{Scopes: defaultGoogleOAuthScopes})
+	creds, err := google.CredentialsFromJSONWithTypeAndParams(ctx, credsB, google.ServiceAccount, google.CredentialsParams{Scopes: defaultGoogleOAuthScopes})
 	if err != nil {
 		return nil, err
 	}

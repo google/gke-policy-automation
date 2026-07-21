@@ -20,19 +20,33 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 	"time"
 
 	cfg "github.com/google/gke-policy-automation/internal/config"
+	"github.com/google/gke-policy-automation/internal/testutils"
 	"gopkg.in/yaml.v3"
 )
 
 func TestLoadCliConfig_file(t *testing.T) {
-	testConfigPath := "./test-fixtures/test_config.yaml"
+	baseConfigPath := "./test-fixtures/test_config.yaml"
+	baseData, err := os.ReadFile(baseConfigPath)
+	if err != nil {
+		t.Fatalf("read test config file err is not nil; want nil; err = %s", err)
+	}
+
+	credsFile := testutils.CreateTempSACredentialsFile(t)
+	configContent := fmt.Sprintf("credentialsFile: %s\n%s", credsFile, string(baseData))
+	testConfigPath := filepath.Join(t.TempDir(), "test_config.yaml")
+	if err := os.WriteFile(testConfigPath, []byte(configContent), 0600); err != nil {
+		t.Fatalf("write temp config file err is not nil; want nil; err = %s", err)
+	}
+
 	cliConfig := &CliConfig{ConfigFile: testConfigPath}
 	pa := PolicyAutomationApp{ctx: context.Background()}
-	err := pa.LoadCliConfig(cliConfig, nil, nil)
+	err = pa.LoadCliConfig(cliConfig, nil, nil)
 	if err != nil {
 		t.Fatalf("err is not nil; want nil; err = %s", err)
 	}
@@ -70,7 +84,7 @@ func TestLoadCliConfig_with_validation(t *testing.T) {
 
 func TestLoadCliConfig_checkDefaults(t *testing.T) {
 	cliConfig := &CliConfig{
-		CredentialsFile: "./test-fixtures/test_credentials.json",
+		CredentialsFile: testutils.CreateTempSACredentialsFile(t),
 		ClusterName:     "test",
 		ClusterLocation: "europe-central2",
 		ProjectName:     "my-project",
@@ -96,7 +110,7 @@ func TestLoadCliConfig_checkDefaults(t *testing.T) {
 
 func TestLoadConfig(t *testing.T) {
 	config := &cfg.Config{
-		CredentialsFile: "./test-fixtures/test_credentials.json",
+		CredentialsFile: testutils.CreateTempSACredentialsFile(t),
 	}
 	pa := PolicyAutomationApp{ctx: context.Background()}
 	err := pa.LoadConfig(config)

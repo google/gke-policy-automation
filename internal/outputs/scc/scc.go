@@ -113,7 +113,7 @@ func NewSecurityCommandCenterClient(ctx context.Context, organizationNumber stri
 }
 
 func NewSecurityCommandCenterClientWithCredentialsFile(ctx context.Context, organizationNumber string, credsFile string) (SecurityCommandCenterClient, error) {
-	return newSecurityCommandCenterClient(ctx, organizationNumber, option.WithCredentialsFile(credsFile))
+	return newSecurityCommandCenterClient(ctx, organizationNumber, option.WithAuthCredentialsFile(option.ServiceAccount, credsFile))
 }
 
 func newSecurityCommandCenterClient(ctx context.Context, organizationNumber string, opts ...option.ClientOption) (SecurityCommandCenterClient, error) {
