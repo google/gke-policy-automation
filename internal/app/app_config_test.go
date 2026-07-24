@@ -126,6 +126,32 @@ func TestLoadConfig(t *testing.T) {
 	}
 }
 
+func TestLoadConfig_resolvesPolicyLists(t *testing.T) {
+	config := &cfg.Config{
+		PolicyExclusions: cfg.ConfigPolicyExclusions{
+			Policies:    []string{"gke.policy.private_cluster"},
+			PolicyLists: []string{"baseline"},
+		},
+		PolicyLists: []cfg.ConfigPolicyList{
+			{
+				Name: "baseline",
+				Policies: []string{
+					"gke.policy.private_cluster",
+					"gke.policy.workload_identity",
+				},
+			},
+		},
+	}
+	pa := PolicyAutomationApp{ctx: context.Background()}
+	if err := pa.LoadConfig(config); err != nil {
+		t.Fatalf("err is not nil; want nil; err = %s", err)
+	}
+	expected := []string{"gke.policy.private_cluster", "gke.policy.workload_identity"}
+	if !reflect.DeepEqual(pa.config.PolicyExclusions.Policies, expected) {
+		t.Errorf("policy exclusions = %v; want %v", pa.config.PolicyExclusions.Policies, expected)
+	}
+}
+
 func TestNewConfigFromCli(t *testing.T) {
 	input := &CliConfig{
 		SilentMode:      true,
