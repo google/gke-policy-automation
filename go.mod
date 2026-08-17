@@ -10,7 +10,7 @@ require (
 	cloud.google.com/go/storage v1.63.1
 	github.com/fatih/color v1.19.0
 	github.com/go-git/go-billy/v5 v5.9.0
-	github.com/go-git/go-git/v5 v5.19.1
+	github.com/go-git/go-git/v5 v5.19.2
 	github.com/googleapis/gax-go/v2 v2.23.0
 	github.com/open-policy-agent/opa v1.18.2
 	github.com/prometheus/client_golang v1.23.2
