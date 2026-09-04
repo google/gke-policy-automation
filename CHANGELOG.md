@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.4.8 (Sep 04, 2026)
+
+IMPROVEMENTS:
+
+* Upgraded direct and transitive dependencies [#233](https://github.com/google/gke-policy-automation/pull/233)
+
+FIXES:
+
+* Escape and control chars sanitization in console output [#234](https://github.com/google/gke-policy-automation/pull/234)
+
+## 1.4.6 and 1.4.7 (Jul 21, 2026)
+
+IMPROVEMENTS:
+
+* Upgraded direct and transitive dependencies [#231](https://github.com/google/gke-policy-automation/pull/231)
+
 ## 1.4.5 (Jul 21, 2025)
 
 IMPROVEMENTS:
