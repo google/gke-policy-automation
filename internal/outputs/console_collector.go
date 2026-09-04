@@ -16,7 +16,9 @@ package outputs
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
+	"unicode"
 
 	"github.com/fatih/color"
 	"github.com/google/gke-policy-automation/internal/gke"
@@ -51,11 +53,11 @@ func (p *consoleResultCollector) Close() error {
 		p.out.Printf("%s #%d %s %s",
 			IconMagnifier,
 			i+1,
-			severityf("%s", strings.ToUpper(policy.Severity)),
-			ruleTitleF("%s", policy.PolicyTitle),
+			severityf("%s", strings.ToUpper(sanitizeForTerminal(policy.Severity))),
+			ruleTitleF("%s", sanitizeForTerminal(policy.PolicyTitle)),
 		)
-		if policy.ExternalURI != "" {
-			extURI := fmt.Sprintf("(\x1b]8;;%s\x07%s\x1b]8;;\x07)", policy.ExternalURI, "documentation")
+		if safeURI := sanitizeExternalURI(policy.ExternalURI); safeURI != "" {
+			extURI := fmt.Sprintf("(\x1b]8;;%s\x07%s\x1b]8;;\x07)", safeURI, "documentation")
 			p.out.Printf(" %s\n", extURI)
 		} else {
 			p.out.Printf("\n")
@@ -76,7 +78,7 @@ func (p *consoleResultCollector) Close() error {
 				violationF := color.New(color.Italic, color.FgRed).Sprintf
 				for _, violation := range evaluation.Violations {
 					p.out.TabPrintf("      %s\t\n",
-						violationF("%s %s", IconMiddleDot, violation),
+						violationF("%s %s", IconMiddleDot, sanitizeForTerminal(violation)),
 					)
 				}
 			}
@@ -116,6 +118,39 @@ func (p *consoleResultCollector) Close() error {
 
 func (p *consoleResultCollector) Name() string {
 	return "console"
+}
+
+// sanitizeForTerminal neutralizes control characters and escape sequences
+// (C0, C1, ANSI CSI, OSC) from untrusted policy metadata and messages.
+// Whitespace control characters (\t, \r, \n) are converted to spaces to avoid
+// breaking tabwriter columns or joining words together.
+func sanitizeForTerminal(s string) string {
+	return strings.Map(func(r rune) rune {
+		switch {
+		case r == '\t' || r == '\n' || r == '\r':
+			return ' '
+		case r < 0x20 || r == 0x7f || (r >= 0x80 && r <= 0x9f):
+			return -1
+		case !unicode.IsPrint(r):
+			return -1
+		}
+		return r
+	}, s)
+}
+
+// sanitizeExternalURI ensures the external URI is a clean, absolute HTTP/HTTPS URL
+// before embedding it in an OSC-8 terminal hyperlink. If the raw string contains
+// control characters or invalid schemes, it is rejected.
+func sanitizeExternalURI(raw string) string {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" || sanitizeForTerminal(trimmed) != trimmed {
+		return ""
+	}
+	u, err := url.ParseRequestURI(trimmed)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return ""
+	}
+	return u.String()
 }
 
 type sprintfFunc func(format string, a ...interface{}) string
