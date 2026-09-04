@@ -31,91 +31,12 @@ import (
 )
 
 type metricsAPIClientMock struct {
+	v1.API
 	QueryFn func(ctx context.Context, query string, ts time.Time, opts ...v1.Option) (pmodel.Value, v1.Warnings, error)
 }
 
 func (m *metricsAPIClientMock) Query(ctx context.Context, query string, ts time.Time, opts ...v1.Option) (pmodel.Value, v1.Warnings, error) {
 	return m.QueryFn(ctx, query, ts, opts...)
-}
-
-func (m *metricsAPIClientMock) Alerts(ctx context.Context) (v1.AlertsResult, error) {
-	return v1.AlertsResult{}, nil
-}
-
-func (m *metricsAPIClientMock) AlertManagers(ctx context.Context) (v1.AlertManagersResult, error) {
-	return v1.AlertManagersResult{}, nil
-}
-
-func (m *metricsAPIClientMock) CleanTombstones(ctx context.Context) error {
-	return nil
-}
-
-func (m *metricsAPIClientMock) Config(ctx context.Context) (v1.ConfigResult, error) {
-	return v1.ConfigResult{}, nil
-}
-
-func (m *metricsAPIClientMock) DeleteSeries(ctx context.Context, matches []string, startTime, endTime time.Time) error {
-	return nil
-}
-
-func (m *metricsAPIClientMock) Flags(ctx context.Context) (v1.FlagsResult, error) {
-	return nil, nil
-}
-
-func (m *metricsAPIClientMock) LabelNames(ctx context.Context, matches []string, startTime, endTime time.Time, opts ...v1.Option) ([]string, v1.Warnings, error) {
-	return nil, nil, nil
-}
-
-func (m *metricsAPIClientMock) LabelValues(ctx context.Context, label string, matches []string, startTime, endTime time.Time, opts ...v1.Option) (pmodel.LabelValues, v1.Warnings, error) {
-	return nil, nil, nil
-}
-
-func (m *metricsAPIClientMock) QueryRange(ctx context.Context, query string, r v1.Range, opts ...v1.Option) (pmodel.Value, v1.Warnings, error) {
-	return nil, nil, nil
-}
-
-func (m *metricsAPIClientMock) QueryExemplars(ctx context.Context, query string, startTime, endTime time.Time) ([]v1.ExemplarQueryResult, error) {
-	return nil, nil
-}
-
-func (m *metricsAPIClientMock) Buildinfo(ctx context.Context) (v1.BuildinfoResult, error) {
-	return v1.BuildinfoResult{}, nil
-}
-
-func (m *metricsAPIClientMock) Runtimeinfo(ctx context.Context) (v1.RuntimeinfoResult, error) {
-	return v1.RuntimeinfoResult{}, nil
-}
-
-func (m *metricsAPIClientMock) Series(ctx context.Context, matches []string, startTime, endTime time.Time, opts ...v1.Option) ([]pmodel.LabelSet, v1.Warnings, error) {
-	return nil, nil, nil
-}
-
-func (m *metricsAPIClientMock) Snapshot(ctx context.Context, skipHead bool) (v1.SnapshotResult, error) {
-	return v1.SnapshotResult{}, nil
-}
-
-func (m *metricsAPIClientMock) Rules(ctx context.Context) (v1.RulesResult, error) {
-	return v1.RulesResult{}, nil
-}
-
-func (m *metricsAPIClientMock) Targets(ctx context.Context) (v1.TargetsResult, error) {
-	return v1.TargetsResult{}, nil
-}
-
-func (m *metricsAPIClientMock) TargetsMetadata(ctx context.Context, matchTarget, metric, limit string) ([]v1.MetricMetadata, error) {
-	return nil, nil
-}
-
-func (m *metricsAPIClientMock) Metadata(ctx context.Context, metric, limit string) (map[string][]v1.Metadata, error) {
-	return nil, nil
-}
-
-func (m *metricsAPIClientMock) TSDB(ctx context.Context, opts ...v1.Option) (v1.TSDBResult, error) {
-	return v1.TSDBResult{}, nil
-}
-
-func (m *metricsAPIClientMock) WalReplay(ctx context.Context) (v1.WalReplayStatus, error) {
-	return v1.WalReplayStatus{}, nil
 }
 
 type tokenSourceMock struct {
