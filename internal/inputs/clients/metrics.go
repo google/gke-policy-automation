@@ -317,7 +317,7 @@ func getRoundTripper(ts TokenSource, username, password string) (http.RoundTripp
 		return config.NewAuthorizationCredentialsRoundTripper("Bearer", config.NewInlineSecret(authToken), getDefaultRoundTripper()), nil
 	}
 	if username != "" && password != "" {
-		secret := b64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
+		secret := b64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))
 		return config.NewAuthorizationCredentialsRoundTripper("Basic", config.NewInlineSecret(secret), getDefaultRoundTripper()), nil
 	}
 	return getDefaultRoundTripper(), nil
